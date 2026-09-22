@@ -1,4 +1,4 @@
-import { BrowserRouter, Route, Routes } from 'react-router-dom'
+import { HashRouter, Route, Routes } from 'react-router-dom'
 import { I18nProvider } from '../i18n/I18nProvider'
 import { SettingsProvider } from '../settings/SettingsProvider'
 import { ProjectsPage } from '../project/ProjectsPage'
@@ -8,7 +8,7 @@ export function App() {
   return (
     <SettingsProvider>
       <I18nProvider>
-        <BrowserRouter>
+        <HashRouter>
           <Routes>
             <Route path="/" element={<HomeProjectRoute />} />
             <Route path="/draw" element={<HomeProjectRoute />} />
@@ -16,7 +16,7 @@ export function App() {
             <Route path="/p/:projectId" element={<ProjectRoute />} />
             <Route path="*" element={<HomeProjectRoute />} />
           </Routes>
-        </BrowserRouter>
+        </HashRouter>
       </I18nProvider>
     </SettingsProvider>
   )
