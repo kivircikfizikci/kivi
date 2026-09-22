@@ -1,13 +1,26 @@
-node_modules
-dist
-coverage
-.DS_Store
+# Dependencies and generated output
+node_modules/
+dist/
+coverage/
+
+# Local tooling and logs
+.vscode/
 *.local
 *.log
+
+# Environment files and credentials
 .env
 .env.*
 !.env.example
-.vscode/
+!.env.template
+.npmrc
+*.pem
+*.key
+*.p12
+*.pfx
+credentials*.json
+secrets*.json
+
+# Operating system files
 .DS_Store
 Thumbs.db
-coverage/
