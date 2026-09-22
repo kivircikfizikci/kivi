@@ -20,6 +20,14 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
+  useEffect(() => {
+    document.documentElement.dataset.theme = settings.theme
+    document.querySelector('meta[name="theme-color"]')?.setAttribute(
+      'content',
+      settings.theme === 'dark' ? '#111815' : '#f5f7f8',
+    )
+  }, [settings.theme])
+
   const updateSettings = useCallback((updates: Partial<Omit<AppSettings, 'id' | 'updatedAt'>>) => {
     setSettings((current) => {
       const next = { ...current, ...updates, updatedAt: new Date().toISOString() }

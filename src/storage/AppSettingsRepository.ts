@@ -1,5 +1,5 @@
-import { getDatabase } from './database'
-import { defaultSettings, type AppSettings } from '../types/settings'
+import { getDatabase } from './database.ts'
+import { defaultSettings, type AppSettings } from '../types/settings.ts'
 
 export const appSettingsRepository = {
   async get(): Promise<AppSettings> {

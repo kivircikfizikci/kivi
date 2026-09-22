@@ -40,7 +40,7 @@ button:focus-visible,
 a:focus-visible,
 select:focus-visible,
 input:focus-visible {
-  outline: 3px solid rgb(49 107 89 / 30%);
+  outline: 3px solid var(--focus-ring);
   outline-offset: 2px;
 }
 
@@ -58,7 +58,7 @@ p {
   place-items: center;
   padding: 0;
   color: var(--ink);
-  background: rgb(255 255 255 / 84%);
+  background: var(--control-surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   box-shadow: 0 2px 10px rgb(31 48 42 / 6%);
@@ -73,6 +73,11 @@ p {
 
 .icon-button:active {
   transform: scale(.96);
+}
+
+.icon-button:disabled {
+  opacity: .38;
+  cursor: default;
 }
 
 .icon-button svg {

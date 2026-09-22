@@ -3,6 +3,7 @@ import { useI18n } from '../../i18n/I18nContext'
 import { useSettings } from '../../settings/useSettings'
 import { useEscapeKey } from '../../hooks/useEscapeKey'
 import type { Locale } from '../../i18n/types'
+import type { AppTheme } from '../../types/settings'
 import type { ProjectSettings } from '../../types/project.ts'
 
 interface SettingsPanelProps {
@@ -34,6 +35,14 @@ export function SettingsPanel({ open, onClose, projectSettings, onProjectSetting
             <select value={settings.language} onChange={(event) => updateSettings({ language: event.target.value as Locale })}>
               <option value="en">{t('english')}</option>
               <option value="tr">{t('turkish')}</option>
+            </select>
+          </label>
+
+          <label className="setting-row">
+            <span>{t('theme')}</span>
+            <select value={settings.theme} onChange={(event) => updateSettings({ theme: event.target.value as AppTheme })}>
+              <option value="light">{t('light')}</option>
+              <option value="dark">{t('dark')}</option>
             </select>
           </label>
 

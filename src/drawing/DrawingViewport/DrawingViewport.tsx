@@ -28,8 +28,10 @@ import { SnapManager } from '../snap/SnapManager.ts'
 import { useI18n } from '../../i18n/I18nContext'
 import { useSettings } from '../../settings/useSettings'
 import type { DrawingStore } from '../../project/DrawingStore.ts'
+import type { WorkspaceMode } from '../../project/ProjectSession.ts'
 import type { ToolManager } from '../../tools/ToolManager.ts'
 import type { ProjectSettings } from '../../types/project.ts'
+import { Icon } from '../../ui/Icon/Icon.tsx'
 
 interface DrawingViewportProps {
   store: DrawingStore
@@ -37,6 +39,8 @@ interface DrawingViewportProps {
   projectSettings: ProjectSettings
   initialCamera?: Camera
   onCameraSettled: (camera: Camera) => void
+  mode?: WorkspaceMode
+  onEnterFullscreen?: () => void
 }
 
 interface TrackedPointer extends Point {
@@ -50,7 +54,7 @@ interface GestureStart {
   camera: Camera
 }
 
-export function DrawingViewport({ store, tools, projectSettings, initialCamera, onCameraSettled }: DrawingViewportProps) {
+export function DrawingViewport({ store, tools, projectSettings, initialCamera, onCameraSettled, mode = 'edit', onEnterFullscreen }: DrawingViewportProps) {
   const { t } = useI18n()
   const { settings } = useSettings()
   const drawing = useSyncExternalStore(store.subscribe, store.getSnapshot)
@@ -109,6 +113,7 @@ export function DrawingViewport({ store, tools, projectSettings, initialCamera, 
   }, [camera, drawing.state.entities, line.start, projectSettings.gridSpacing, settings, snapManager, viewport])
 
   const handleSinglePoint = useCallback((screenPoint: Point, pointerType: string) => {
+    if (mode === 'view') return
     const worldPoint = screenToWorld(screenPoint, camera, viewport)
     if (activeTool === 'line') {
       const resolved = resolveSnap(screenPoint, pointerType)
@@ -135,7 +140,7 @@ export function DrawingViewport({ store, tools, projectSettings, initialCamera, 
     const tolerance = pointerType === 'touch' ? SELECTION_TOLERANCE_TOUCH_PX : SELECTION_TOLERANCE_MOUSE_PX
     const entity = selectionManager.findEntity(worldPoint, drawing.state.entities, camera.zoom, tolerance)
     tools.select.select(entity?.id ?? null)
-  }, [activeTool, camera, drawing.state.entities, resolveSnap, selectionManager, store, tools, viewport])
+  }, [activeTool, camera, drawing.state.entities, mode, resolveSnap, selectionManager, store, tools, viewport])
 
   const onPointerDown = (event: ReactPointerEvent<SVGSVGElement>) => {
     const point = toScreenPoint(event)
@@ -188,7 +193,7 @@ export function DrawingViewport({ store, tools, projectSettings, initialCamera, 
       return
     }
 
-    if (activeTool === 'line' && line.phase === 'placing') {
+    if (mode === 'edit' && activeTool === 'line' && line.phase === 'placing') {
       const resolved = resolveSnap(point, event.pointerType)
       tools.line.updatePointer(resolved.point, resolved.snap)
     } else if (activeTool === 'dimension' && dimension.target) {
@@ -232,7 +237,7 @@ export function DrawingViewport({ store, tools, projectSettings, initialCamera, 
       <div ref={containerRef} className="drawing-viewport" style={{ backgroundColor: projectSettings.backgroundColor }}>
         <svg
           ref={svgRef}
-          className={`drawing-svg tool-${activeTool}`}
+          className={`drawing-svg tool-${mode === 'view' ? 'view' : activeTool}`}
           viewBox={`0 0 ${viewport.width} ${viewport.height}`}
           role="application"
           aria-label={t('drawingArea')}
@@ -252,17 +257,17 @@ export function DrawingViewport({ store, tools, projectSettings, initialCamera, 
           <g aria-hidden="true">
             {drawing.state.entities.map((entity) => {
               if (entity.type === 'line') {
-                return <LineRenderer key={entity.id} line={entity} camera={camera} viewport={viewport} selected={entity.id === selectedId} />
+                return <LineRenderer key={entity.id} line={entity} camera={camera} viewport={viewport} selected={mode === 'edit' && entity.id === selectedId} />
               }
               const target = drawing.state.entities.find((candidate) => candidate.type === 'line' && candidate.id === entity.targetEntityId)
               return target?.type === 'line'
-                ? <DimensionRenderer key={entity.id} dimension={entity} target={target} camera={camera} viewport={viewport} settings={projectSettings} selected={entity.id === selectedId} />
+                ? <DimensionRenderer key={entity.id} dimension={entity} target={target} camera={camera} viewport={viewport} settings={projectSettings} selected={mode === 'edit' && entity.id === selectedId} />
                 : null
             })}
-            {activeTool === 'dimension' && dimension.target && dimension.preview && (
+            {mode === 'edit' && activeTool === 'dimension' && dimension.target && dimension.preview && (
               <DimensionRenderer dimension={dimension.preview} target={dimension.target} camera={camera} viewport={viewport} settings={projectSettings} preview />
             )}
-            {activeTool === 'line' && (
+            {mode === 'edit' && activeTool === 'line' && (
               <>
                 <PreviewRenderer
                   start={line.start}
@@ -278,10 +283,10 @@ export function DrawingViewport({ store, tools, projectSettings, initialCamera, 
           </g>
         </svg>
 
-        {(activeTool === 'dimension' || (activeTool === 'line' && line.phase === 'placing')) && (
+        {mode === 'edit' && (activeTool === 'dimension' || (activeTool === 'line' && line.phase === 'placing')) && (
           <button className="finish-tool-button" type="button" onClick={() => tools.finishActiveTool()}>{t('done')}</button>
         )}
-        {line.phase === 'length' && (
+        {mode === 'edit' && line.phase === 'length' && (
           <LengthInput
             value={line.lengthInput}
             canConfirm={line.canConfirm}
@@ -289,6 +294,11 @@ export function DrawingViewport({ store, tools, projectSettings, initialCamera, 
             onBack={() => tools.line.back()}
             onConfirm={confirmLine}
           />
+        )}
+        {onEnterFullscreen && (
+          <button className="fullscreen-control icon-button" type="button" onClick={onEnterFullscreen} aria-label={t('fullscreen')} title={t('fullscreen')}>
+            <Icon name="expand" />
+          </button>
         )}
       </div>
     </main>

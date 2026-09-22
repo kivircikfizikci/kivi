@@ -14,9 +14,11 @@ export class DrawingStore {
   private snapshot: DrawingSnapshot
   private readonly history = new HistoryManager<DrawingState>()
   private readonly listeners = new Set<() => void>()
+  private readonly readOnly: boolean
 
-  constructor(initialState: DrawingState = EMPTY_DRAWING_STATE) {
+  constructor(initialState: DrawingState = EMPTY_DRAWING_STATE, readOnly = false) {
     this.state = initialState
+    this.readOnly = readOnly
     this.snapshot = this.createSnapshot()
   }
 
@@ -28,16 +30,20 @@ export class DrawingStore {
   getSnapshot = () => this.snapshot
 
   addLine(line: LineEntity) {
+    if (this.readOnly) return false
     this.commit({ ...this.state, entities: [...this.state.entities, line] })
+    return true
   }
 
   addDimension(dimension: DimensionEntity) {
+    if (this.readOnly) return false
     if (!this.state.entities.some((entity) => entity.type === 'line' && entity.id === dimension.targetEntityId)) return false
     this.commit({ ...this.state, entities: [...this.state.entities, dimension] })
     return true
   }
 
   deleteEntity(id: string) {
+    if (this.readOnly) return false
     const target = this.state.entities.find((entity) => entity.id === id)
     if (!target) return false
     const entities = this.state.entities.filter((entity) =>
@@ -49,6 +55,7 @@ export class DrawingStore {
   }
 
   undo() {
+    if (this.readOnly) return false
     const previous = this.history.undo(this.state)
     if (!previous) return false
     this.state = previous
@@ -57,6 +64,7 @@ export class DrawingStore {
   }
 
   redo() {
+    if (this.readOnly) return false
     const next = this.history.redo(this.state)
     if (!next) return false
     this.state = next

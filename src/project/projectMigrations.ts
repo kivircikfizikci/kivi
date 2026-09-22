@@ -5,6 +5,7 @@ import {
   type Project,
   type ProjectSettings,
 } from '../types/project.ts'
+import { generateProjectId } from '../ids/secureId.ts'
 
 export function migrateProject(value: unknown): Project {
   if (!isRecord(value)) throw new Error('Invalid project record')
@@ -24,7 +25,7 @@ export function migrateProject(value: unknown): Project {
   if (value.version === 1 && isDrawingState(value.data)) {
     const now = new Date().toISOString()
     return {
-      id: typeof value.id === 'string' ? value.id : globalThis.crypto.randomUUID(),
+      id: typeof value.id === 'string' ? value.id : generateProjectId(),
       name: typeof value.name === 'string' ? value.name : 'Untitled',
       version: CURRENT_PROJECT_VERSION,
       createdAt: typeof value.createdAt === 'string' ? value.createdAt : now,

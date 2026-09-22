@@ -1,10 +1,10 @@
-import { Link } from 'react-router-dom'
 import { Icon } from '../Icon/Icon'
 import { useI18n } from '../../i18n/I18nContext'
 import { useEscapeKey } from '../../hooks/useEscapeKey'
 import type { DrawingStore } from '../../project/DrawingStore.ts'
 import type { ToolManager } from '../../tools/ToolManager.ts'
 import type { ToolId } from '../../tools/Tool.ts'
+import { toggleDrawer } from './drawerActions.ts'
 
 interface BottomDrawerProps {
   open: boolean
@@ -35,11 +35,9 @@ export function BottomDrawer({ open, onOpen, onClose, store, tools, activeTool, 
 
   return (
     <>
-      {!open && (
-        <button className="drawer-handle" type="button" onClick={onOpen} aria-label={t('openTools')} aria-expanded="false">
-          <span />
-        </button>
-      )}
+      <button className={`drawer-toggle${open ? ' is-open' : ''}`} type="button" onClick={() => toggleDrawer(open, onOpen, onClose)} aria-label={t(open ? 'closeTools' : 'openTools')} aria-expanded={open}>
+        <Icon name={open ? 'chevronDown' : 'chevronUp'} />
+      </button>
       <div className={`sheet-backdrop${open ? ' is-visible' : ''}`} onClick={onClose} aria-hidden="true" />
       <section className={`bottom-sheet${open ? ' is-open' : ''}`} aria-hidden={!open} aria-label={t('tools')}>
         <div className="sheet-heading">
@@ -74,10 +72,6 @@ export function BottomDrawer({ open, onOpen, onClose, store, tools, activeTool, 
             <Icon name="trash" />
             <span>{t('delete')}</span>
           </button>
-          <Link className="tool-tile" to="/projects">
-            <Icon name="folder" />
-            <span>{t('projects')}</span>
-          </Link>
         </div>
       </section>
     </>

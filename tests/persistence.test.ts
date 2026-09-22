@@ -9,6 +9,7 @@ import { AutosaveManager } from '../src/project/AutosaveManager.ts'
 import { migrateProject } from '../src/project/projectMigrations.ts'
 import { CURRENT_PROJECT_VERSION, type Project } from '../src/types/project.ts'
 import type { LineEntity } from '../src/drawing/entities/LineEntity.ts'
+import { appSettingsRepository } from '../src/storage/AppSettingsRepository.ts'
 
 const service = new ProjectService(projectRepository)
 
@@ -25,6 +26,11 @@ function line(id: string): LineEntity {
     style: { color: '#123456', width: 2 },
   }
 }
+
+test('app theme preference persists in settings', async () => {
+  await appSettingsRepository.save(settings({ theme: 'dark' }))
+  assert.equal((await appSettingsRepository.get()).theme, 'dark')
+})
 
 test('repository creates, loads, lists, updates, and deletes a project', async () => {
   const project = await service.createProject(settings(), 'Repository test')

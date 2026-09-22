@@ -3,6 +3,8 @@ import type { Project, ProjectSettings } from '../types/project.ts'
 import { AutosaveManager, type AutosaveStatus } from './AutosaveManager.ts'
 import { DrawingStore } from './DrawingStore.ts'
 
+export type WorkspaceMode = 'edit' | 'view'
+
 export interface ProjectSessionSnapshot {
   project: Project
   saveStatus: AutosaveStatus
@@ -18,9 +20,9 @@ export class ProjectSession {
   private readonly unsubscribeStore: () => void
   private readonly unsubscribeAutosave: () => void
 
-  constructor(project: Project, saveProject: (project: Project) => Promise<void>, autosaveDelay = 400) {
+  constructor(project: Project, saveProject: (project: Project) => Promise<void>, autosaveDelay = 400, mode: WorkspaceMode = 'edit') {
     this.project = project
-    this.store = new DrawingStore(project.drawing)
+    this.store = new DrawingStore(project.drawing, mode === 'view')
     this.autosave = new AutosaveManager(saveProject, autosaveDelay)
     this.snapshot = this.createSnapshot()
     this.unsubscribeStore = this.store.subscribe(() => {

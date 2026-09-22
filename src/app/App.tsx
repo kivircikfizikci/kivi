@@ -3,6 +3,7 @@ import { I18nProvider } from '../i18n/I18nProvider'
 import { SettingsProvider } from '../settings/SettingsProvider'
 import { ProjectsPage } from '../project/ProjectsPage'
 import { HomeProjectRoute, ProjectRoute } from '../project/ProjectRoutes.tsx'
+import { PublicShareRoute } from '../share/PublicShareRoute.tsx'
 
 export function App() {
   return (
@@ -14,6 +15,7 @@ export function App() {
             <Route path="/draw" element={<HomeProjectRoute />} />
             <Route path="/projects" element={<ProjectsPage />} />
             <Route path="/p/:projectId" element={<ProjectRoute />} />
+            <Route path="/s/:shareId" element={<PublicShareRoute />} />
             <Route path="*" element={<HomeProjectRoute />} />
           </Routes>
         </HashRouter>

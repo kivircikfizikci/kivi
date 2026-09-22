@@ -8,6 +8,7 @@ import { EMPTY_DRAWING_STATE } from './DrawingState.ts'
 import { DEFAULT_CAMERA } from '../drawing/camera/Camera.ts'
 import { defaultSyncMetadata } from './projectMigrations.ts'
 import { projectRepository } from '../storage/ProjectRepository.ts'
+import { generateProjectId } from '../ids/secureId.ts'
 
 export interface ProjectRepositoryContract {
   createProject(project: Project): Promise<void>
@@ -19,15 +20,18 @@ export interface ProjectRepositoryContract {
 
 export class ProjectService {
   private readonly repository: ProjectRepositoryContract
+  private readonly createId: () => string
 
-  constructor(repository: ProjectRepositoryContract = projectRepository) {
+  constructor(repository: ProjectRepositoryContract = projectRepository, createId: () => string = generateProjectId) {
     this.repository = repository
+    this.createId = createId
   }
 
   async createProject(defaults: AppSettings, name: string): Promise<Project> {
     const now = new Date().toISOString()
+    const id = await this.createUniqueId()
     const project: Project = {
-      id: globalThis.crypto.randomUUID(),
+      id,
       name,
       version: CURRENT_PROJECT_VERSION,
       createdAt: now,
@@ -39,6 +43,14 @@ export class ProjectService {
     }
     await this.repository.createProject(project)
     return project
+  }
+
+  private async createUniqueId() {
+    for (let attempt = 0; attempt < 8; attempt += 1) {
+      const id = this.createId()
+      if (!await this.repository.getProject(id)) return id
+    }
+    throw new Error('Unable to create a unique project ID')
   }
 
   getProject(id: string) {

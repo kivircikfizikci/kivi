@@ -1,8 +1,11 @@
 import type { Locale } from '../i18n/types'
 
+export type AppTheme = 'light' | 'dark'
+
 export interface AppSettings {
   id: 'app'
   language: Locale
+  theme: AppTheme
   defaultBackground: string
   defaultGridColor: string
   gridEnabled: boolean
@@ -20,6 +23,7 @@ export interface AppSettings {
 export const defaultSettings: AppSettings = {
   id: 'app',
   language: 'en',
+  theme: 'light',
   defaultBackground: '#f8faf9',
   defaultGridColor: '#d8dfdc',
   gridEnabled: true,
