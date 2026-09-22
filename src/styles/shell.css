@@ -66,7 +66,7 @@
   place-items: center;
   color: var(--accent);
   background: var(--accent-soft);
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   font-size: 14px;
   font-weight: 750;
   letter-spacing: -.04em;
@@ -124,7 +124,7 @@
 .drawing-stage {
   min-width: 0;
   min-height: 0;
-  padding: 4px 8px calc(16px + env(safe-area-inset-bottom));
+  padding: 3px 6px calc(12px + env(safe-area-inset-bottom));
 }
 
 .drawing-viewport {
@@ -192,7 +192,7 @@
   transform: translateX(-50%);
   color: var(--accent-contrast);
   background: var(--accent);
-  border-radius: 20px;
+  border-radius: var(--radius-sm);
   box-shadow: var(--shadow-soft);
   font-weight: 650;
   cursor: pointer;
@@ -237,7 +237,7 @@
   color: var(--ink);
   background: var(--surface-soft);
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   font-size: 18px;
   font-variant-numeric: tabular-nums;
 }
@@ -258,7 +258,7 @@
 .secondary-button {
   min-height: 42px;
   padding: 0 14px;
-  border-radius: 11px;
+  border-radius: var(--radius-sm);
   font-weight: 650;
   cursor: pointer;
 }
@@ -507,12 +507,12 @@
 
 @media (min-width: 768px) {
   :root {
-    --top-bar-height: 64px;
+    --top-bar-height: 48px;
   }
 
   .top-bar {
-    padding-right: 18px;
-    padding-left: 18px;
+    align-items: center;
+    padding: env(safe-area-inset-top) 10px 3px;
   }
 
   .desktop-top-actions {
@@ -521,8 +521,9 @@
 
   .share-button {
     width: auto;
+    height: 34px;
     gap: 7px;
-    padding: 0 13px;
+    padding: 0 10px;
   }
 
   .share-button span {
@@ -532,8 +533,14 @@
   }
 
   .icon-button.compact {
-    width: 38px;
-    height: 38px;
+    width: 34px;
+    height: 34px;
+  }
+
+  .top-bar-left .icon-button,
+  .projects-header .icon-button {
+    width: 34px;
+    height: 34px;
   }
 
   .drawer-toggle {
@@ -541,18 +548,61 @@
   }
 
   .drawing-stage {
-    padding: 6px 18px 20px;
+    padding: 3px 10px 10px;
   }
 
   .drawing-viewport {
-    border-radius: var(--radius-lg);
+    border-radius: var(--radius-md);
   }
 
   .length-input {
-    right: 18px;
-    bottom: 18px;
-    left: auto;
-    width: 360px;
-    margin: 0;
+    top: var(--length-input-y);
+    right: auto;
+    bottom: auto;
+    left: var(--length-input-x);
+    grid-template-columns: 58px minmax(0, 1fr);
+    width: 252px;
+    gap: 7px 8px;
+    padding: 8px;
+    border-radius: var(--radius-md);
+  }
+
+  .length-field input {
+    height: 36px;
+    font-size: 15px;
+  }
+
+  .length-actions {
+    gap: 6px;
+  }
+
+  .length-actions .primary-button,
+  .length-actions .secondary-button {
+    min-height: 32px;
+    padding: 0 10px;
+    font-size: 12px;
+  }
+
+  .save-indicator {
+    display: none;
+  }
+
+  .brand-mark {
+    width: 28px;
+    height: 28px;
+    margin-bottom: 0;
+  }
+
+  .projects-page {
+    padding: 10px 12px;
+  }
+
+  .project-list {
+    margin-top: 12px;
+  }
+
+  .project-row {
+    min-height: 56px;
+    padding: 6px 7px 6px 10px;
   }
 }

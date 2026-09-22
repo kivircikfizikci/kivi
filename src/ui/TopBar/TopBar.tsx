@@ -4,14 +4,12 @@ import type { AutosaveStatus } from '../../project/AutosaveManager.ts'
 import type { DrawingStore } from '../../project/DrawingStore.ts'
 import type { ToolManager } from '../../tools/ToolManager.ts'
 import type { ToolId } from '../../tools/Tool.ts'
-import { CommandBar } from '../CommandBar/CommandBar.tsx'
 import { MainMenu } from '../MainMenu/MainMenu.tsx'
 import { ToolsMenu } from '../ToolsMenu/ToolsMenu.tsx'
 
 interface TopBarProps {
   onOpenSettings: () => void
   onOpenShare: () => void
-  onCommand: (command: string) => boolean
   saveStatus: AutosaveStatus
   store: DrawingStore
   tools: ToolManager
@@ -20,7 +18,7 @@ interface TopBarProps {
   canRedo: boolean
 }
 
-export function TopBar({ onOpenSettings, onOpenShare, onCommand, saveStatus, store, tools, activeTool, canUndo, canRedo }: TopBarProps) {
+export function TopBar({ onOpenSettings, onOpenShare, saveStatus, store, tools, activeTool, canUndo, canRedo }: TopBarProps) {
   const { t } = useI18n()
   return (
     <header className="top-bar">
@@ -35,7 +33,6 @@ export function TopBar({ onOpenSettings, onOpenShare, onCommand, saveStatus, sto
         <ToolsMenu tools={tools} activeTool={activeTool} />
         <button className="icon-button compact" type="button" disabled={!canUndo} onClick={() => store.undo()} aria-label={t('undo')}><Icon name="undo" /></button>
         <button className="icon-button compact" type="button" disabled={!canRedo} onClick={() => store.redo()} aria-label={t('redo')}><Icon name="redo" /></button>
-        <CommandBar onCommand={onCommand} />
       </div>
       <button className="share-button" type="button" onClick={onOpenShare} aria-label={t('share')} title={t('share')}>
         <Icon name="share" />

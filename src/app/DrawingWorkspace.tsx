@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, useSyncExternalStore } from 'react'
+import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { DrawingViewport } from '../drawing/DrawingViewport/DrawingViewport'
 import { useFullscreenMode } from '../hooks/useFullscreenMode'
@@ -12,6 +12,8 @@ import type { Project } from '../types/project.ts'
 import { ProjectSession, type WorkspaceMode } from '../project/ProjectSession.ts'
 import { projectService } from '../project/ProjectService.ts'
 import { useI18n } from '../i18n/I18nContext.ts'
+import { CommandBar } from '../ui/CommandBar/CommandBar.tsx'
+import type { CommandContext } from '../commands/commandRegistry.ts'
 
 export function DrawingWorkspace({ project, mode = 'edit' }: { project: Project; mode?: WorkspaceMode }) {
   const { t } = useI18n()
@@ -81,22 +83,18 @@ export function DrawingWorkspace({ project, mode = 'edit' }: { project: Project;
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [activeTool, drawerOpen, mode, selectedId, settingsOpen, shareOpen, store, tools])
 
-  const runCommand = useCallback((command: string) => {
-    if (mode === 'view') return false
-    if (command === 'line' || command === 'l') tools.activate('line')
-    else if (command === 'dim' || command === 'dimension') tools.activate('dimension')
-    else if (command === 'select') tools.activate('select')
-    else if (command === 'delete') {
+  const commandContext = useMemo<CommandContext>(() => ({
+    activateTool: (tool) => tools.activate(tool),
+    deleteSelection: () => {
       if (selectedId && store.deleteEntity(selectedId)) tools.select.select(null)
-    } else if (command === 'undo') store.undo()
-    else if (command === 'redo') store.redo()
-    else if (command === 'projects') navigate('/projects')
-    else if (command === 'settings') setSettingsOpen(true)
-    else if (command === 'fullscreen') void fullscreen.enter()
-    else if (command === 'share') setShareOpen(true)
-    else return false
-    return true
-  }, [fullscreen, mode, navigate, selectedId, store, tools])
+    },
+    undo: () => { store.undo() },
+    redo: () => { store.redo() },
+    openProjects: () => navigate('/projects'),
+    openSettings: () => setSettingsOpen(true),
+    enterFullscreen: () => { void fullscreen.enter() },
+    openShare: () => setShareOpen(true),
+  }), [fullscreen, navigate, selectedId, store, tools])
 
   return (
     <div ref={fullscreen.containerRef} className={`app-shell${fullscreen.active ? ' is-fullscreen' : ''}`}>
@@ -104,7 +102,6 @@ export function DrawingWorkspace({ project, mode = 'edit' }: { project: Project;
         <TopBar
           onOpenSettings={() => setSettingsOpen(true)}
           onOpenShare={() => setShareOpen(true)}
-          onCommand={runCommand}
           saveStatus={projectSnapshot.saveStatus}
           store={store}
           tools={tools}
@@ -123,6 +120,9 @@ export function DrawingWorkspace({ project, mode = 'edit' }: { project: Project;
         mode={mode}
         onEnterFullscreen={fullscreen.active ? undefined : () => void fullscreen.enter()}
       />
+      {!fullscreen.active && mode === 'edit' && (
+        <CommandBar context={commandContext} saveStatus={projectSnapshot.saveStatus} dirty={projectSnapshot.dirty} />
+      )}
       {fullscreen.active ? (
         <FullscreenExit onExit={() => void fullscreen.exit()} />
       ) : mode === 'edit' ? (

@@ -71,6 +71,11 @@ p {
   box-shadow: 0 4px 14px rgb(31 48 42 / 10%);
 }
 
+.primary-button:hover,
+.new-project-button:hover {
+  background: var(--color-accent-hover);
+}
+
 .icon-button:active {
   transform: scale(.96);
 }

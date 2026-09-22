@@ -3,6 +3,7 @@ import { dimensionGeometry } from '../drawing/geometry/dimension.ts'
 import { formatDimension } from '../drawing/geometry/formatDimension.ts'
 import type { Project } from '../types/project.ts'
 import { calculateDrawingBounds, type DrawingBounds } from './drawingBounds.ts'
+import { exportBoundsFromWorldBounds, worldPointToExportPoint } from './exportCoordinates.ts'
 
 export interface ExportStroke {
   start: Point
@@ -20,15 +21,15 @@ export interface ExportLabel {
   position: Point
   text: string
   color: string
-  haloColor: string
+  outlineColor: string
   size: number
   rotation: number
 }
 
 export interface DrawingExportModel {
   bounds: DrawingBounds
-  backgroundColor: string
-  grid: { enabled: boolean; spacing: number; color: string }
+  transparent: true
+  includesGrid: false
   strokes: ExportStroke[]
   polygons: ExportPolygon[]
   labels: ExportLabel[]
@@ -36,6 +37,8 @@ export interface DrawingExportModel {
 
 export function createDrawingExportModel(project: Pick<Project, 'drawing' | 'projectSettings'>): DrawingExportModel {
   const { entities } = project.drawing
+  const worldBounds = calculateDrawingBounds(entities, project.projectSettings)
+  const mapPoint = (point: Point) => worldPointToExportPoint(point, worldBounds)
   const lines = new Map(entities.filter((entity) => entity.type === 'line').map((line) => [line.id, line]))
   const strokes: ExportStroke[] = []
   const polygons: ExportPolygon[] = []
@@ -43,42 +46,44 @@ export function createDrawingExportModel(project: Pick<Project, 'drawing' | 'pro
 
   for (const entity of entities) {
     if (entity.type === 'line') {
-      strokes.push({ start: entity.start, end: entity.end, color: entity.style.color, width: entity.style.width })
+      strokes.push({ start: mapPoint(entity.start), end: mapPoint(entity.end), color: entity.style.color, width: entity.style.width })
       continue
     }
     const target = lines.get(entity.targetEntityId)
     if (!target) continue
     const geometry = dimensionGeometry(target, entity)
     if (!geometry) continue
-    const color = entity.style.color ?? contrastColor(project.projectSettings.backgroundColor)
-    const direction = unitDirection(geometry.start, geometry.end)
+    // Transparent exports cannot borrow contrast from the project canvas.
+    const color = entity.style.color ?? '#315c4c'
+    const targetStart = mapPoint(target.start)
+    const targetEnd = mapPoint(target.end)
+    const start = mapPoint(geometry.start)
+    const end = mapPoint(geometry.end)
+    const direction = unitDirection(start, end)
     strokes.push(
-      { start: target.start, end: geometry.start, color, width: 1.2 },
-      { start: target.end, end: geometry.end, color, width: 1.2 },
-      { start: geometry.start, end: geometry.end, color, width: 1.2 },
+      { start: targetStart, end: start, color, width: 1.2 },
+      { start: targetEnd, end, color, width: 1.2 },
+      { start, end, color, width: 1.2 },
     )
     polygons.push(
-      { points: arrow(geometry.start, direction, 1), color },
-      { points: arrow(geometry.end, direction, -1), color },
+      { points: arrow(start, direction, 1), color },
+      { points: arrow(end, direction, -1), color },
     )
+    const text = mapPoint(geometry.text)
     labels.push({
-      position: { x: geometry.text.x, y: geometry.text.y - 7 },
+      position: { x: text.x, y: text.y - 7 },
       text: formatDimension(geometry.length, project.projectSettings),
       color,
-      haloColor: project.projectSettings.backgroundColor,
+      outlineColor: contrastingOutline(color),
       size: entity.style.textSize ?? 13,
       rotation: geometry.rotation,
     })
   }
 
   return {
-    bounds: calculateDrawingBounds(entities, project.projectSettings),
-    backgroundColor: project.projectSettings.backgroundColor,
-    grid: {
-      enabled: project.projectSettings.gridEnabled,
-      spacing: project.projectSettings.gridSpacing,
-      color: project.projectSettings.gridColor,
-    },
+    bounds: exportBoundsFromWorldBounds(worldBounds),
+    transparent: true,
+    includesGrid: false,
     strokes,
     polygons,
     labels,
@@ -99,9 +104,9 @@ function arrow(tip: Point, direction: Point, sign: number): Point[] {
   ]
 }
 
-function contrastColor(background: string) {
-  const hex = background.replace('#', '')
-  if (!/^[\da-f]{6}$/i.test(hex)) return '#315c4c'
+function contrastingOutline(color: string) {
+  const hex = color.replace('#', '')
+  if (!/^[\da-f]{6}$/i.test(hex)) return '#ffffff'
   const [r, g, b] = [hex.slice(0, 2), hex.slice(2, 4), hex.slice(4, 6)].map((value) => parseInt(value, 16))
-  return ((r ?? 0) * 299 + (g ?? 0) * 587 + (b ?? 0) * 114) / 1000 < 128 ? '#d9f0e4' : '#315c4c'
+  return ((r ?? 0) * 299 + (g ?? 0) * 587 + (b ?? 0) * 114) / 1000 > 150 ? '#17201c' : '#ffffff'
 }

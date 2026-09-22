@@ -1,5 +1,6 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, type CSSProperties } from 'react'
 import { useI18n } from '../../i18n/I18nContext'
+import type { Point } from '../geometry/Point.ts'
 
 interface LengthInputProps {
   value: string
@@ -7,9 +8,10 @@ interface LengthInputProps {
   onChange: (value: string) => void
   onBack: () => void
   onConfirm: () => void
+  position?: Point
 }
 
-export function LengthInput({ value, canConfirm, onChange, onBack, onConfirm }: LengthInputProps) {
+export function LengthInput({ value, canConfirm, onChange, onBack, onConfirm, position }: LengthInputProps) {
   const { t } = useI18n()
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -19,7 +21,11 @@ export function LengthInput({ value, canConfirm, onChange, onBack, onConfirm }: 
   }, [])
 
   return (
-    <form className="length-input" onSubmit={(event) => { event.preventDefault(); if (canConfirm) onConfirm() }}>
+    <form
+      className="length-input"
+      style={position ? { '--length-input-x': `${position.x}px`, '--length-input-y': `${position.y}px` } as CSSProperties : undefined}
+      onSubmit={(event) => { event.preventDefault(); if (canConfirm) onConfirm() }}
+    >
       <label htmlFor="line-length">{t('length')}</label>
       <div className="length-field">
         <input

@@ -13,6 +13,7 @@ import {
   cameraForGesture,
   panCamera,
   screenToWorld,
+  worldToScreen,
   zoomCameraAt,
   type ViewportSize,
 } from '../camera/coordinateTransforms.ts'
@@ -32,6 +33,7 @@ import type { WorkspaceMode } from '../../project/ProjectSession.ts'
 import type { ToolManager } from '../../tools/ToolManager.ts'
 import type { ProjectSettings } from '../../types/project.ts'
 import { Icon } from '../../ui/Icon/Icon.tsx'
+import { positionLengthInput } from '../renderer/lengthInputPosition.ts'
 
 interface DrawingViewportProps {
   store: DrawingStore
@@ -231,6 +233,9 @@ export function DrawingViewport({ store, tools, projectSettings, initialCamera, 
     const entity = tools.line.confirm({ color: settings.defaultLineColor, width: settings.defaultLineWidth })
     if (entity) store.addLine(entity)
   }
+  const lengthInputPosition = line.end
+    ? positionLengthInput(worldToScreen(line.end, camera, viewport), viewport)
+    : undefined
 
   return (
     <main className="drawing-stage">
@@ -293,6 +298,7 @@ export function DrawingViewport({ store, tools, projectSettings, initialCamera, 
             onChange={(value) => tools.line.updateLength(value)}
             onBack={() => tools.line.back()}
             onConfirm={confirmLine}
+            position={lengthInputPosition}
           />
         )}
         {onEnterFullscreen && (

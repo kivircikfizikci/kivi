@@ -12,25 +12,10 @@ export function createDrawingPdf(model: DrawingExportModel) {
     (page.width - MARGIN * 2) / model.bounds.width,
     (page.height - MARGIN * 2) / model.bounds.height,
   )
-  const x = (value: number) => MARGIN + (value - model.bounds.minX) * scale
-  const y = (value: number) => page.height - MARGIN - (value - model.bounds.minY) * scale
-  const commands: string[] = [
-    'q',
-    `${rgb(model.backgroundColor)} rg`,
-    `0 0 ${n(page.width)} ${n(page.height)} re f`,
-    'Q',
-  ]
-
-  if (model.grid.enabled) {
-    commands.push(`${rgb(model.grid.color)} RG`, '0.45 w')
-    const spacing = Math.max(model.grid.spacing, Number.EPSILON)
-    for (let value = Math.ceil(model.bounds.minX / spacing) * spacing, count = 0; value <= model.bounds.maxX && count < 5000; value += spacing, count += 1) {
-      commands.push(`${n(x(value))} ${n(y(model.bounds.minY))} m ${n(x(value))} ${n(y(model.bounds.maxY))} l S`)
-    }
-    for (let value = Math.ceil(model.bounds.minY / spacing) * spacing, count = 0; value <= model.bounds.maxY && count < 5000; value += spacing, count += 1) {
-      commands.push(`${n(x(model.bounds.minX))} ${n(y(value))} m ${n(x(model.bounds.maxX))} ${n(y(value))} l S`)
-    }
-  }
+  const x = (value: number) => MARGIN + value * scale
+  // PDF pages use +Y up; export space uses +Y down, so this is the sole PDF inversion.
+  const y = (value: number) => page.height - MARGIN - value * scale
+  const commands: string[] = []
 
   for (const stroke of model.strokes) {
     commands.push(`${rgb(stroke.color)} RG`, `${n(Math.max(0.5, stroke.width * scale))} w`, `${n(x(stroke.start.x))} ${n(y(stroke.start.y))} m ${n(x(stroke.end.x))} ${n(y(stroke.end.y))} l S`)
@@ -46,20 +31,28 @@ export function createDrawingPdf(model: DrawingExportModel) {
     const radians = -label.rotation * Math.PI / 180
     const cosine = Math.cos(radians)
     const sine = Math.sin(radians)
+    const fontSize = Math.max(8, label.size * scale)
+    const textOffset = -estimateHelveticaWidth(label.text, fontSize) / 2
+    const anchorX = x(label.position.x) + cosine * textOffset
+    const anchorY = y(label.position.y) + sine * textOffset
     commands.push(
       'BT',
-      `/F1 ${n(Math.max(8, label.size * scale))} Tf`,
+      `/F1 ${n(fontSize)} Tf`,
       `${rgb(label.color)} rg`,
-      `${rgb(label.haloColor)} RG`,
+      `${rgb(label.outlineColor)} RG`,
       '2 Tr',
-      `${n(Math.max(1.5, 3 * scale))} w`,
-      `${n(cosine)} ${n(sine)} ${n(-sine)} ${n(cosine)} ${n(x(label.position.x))} ${n(y(label.position.y))} Tm`,
+      `${n(Math.max(1, scale * 1.5))} w`,
+      `${n(cosine)} ${n(sine)} ${n(-sine)} ${n(cosine)} ${n(anchorX)} ${n(anchorY)} Tm`,
       `(${escapePdf(label.text)}) Tj`,
       'ET',
     )
   }
 
   return assemblePdf(page.width, page.height, commands.join('\n'))
+}
+
+function estimateHelveticaWidth(value: string, fontSize: number) {
+  return value.length * fontSize * 0.53
 }
 
 export function exportProjectPdf(project: Project) {

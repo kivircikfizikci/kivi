@@ -74,7 +74,7 @@
   padding: 0 10px;
   color: var(--ink);
   background: transparent;
-  border-radius: 8px;
+  border-radius: 4px;
   font-size: 13px;
   text-align: left;
   text-decoration: none;
@@ -102,7 +102,7 @@
   color: var(--ink);
   background: var(--control-surface);
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   font-size: 12px;
   font-weight: 650;
   cursor: pointer;
@@ -122,17 +122,23 @@
   left: auto;
 }
 
+.desktop-command-area {
+  display: none;
+}
+
 .command-bar {
   display: flex;
-  width: 126px;
-  height: 38px;
+  width: 236px;
+  height: 34px;
   align-items: center;
   gap: 4px;
-  padding: 0 8px;
+  padding: 0 7px;
   color: var(--ink-muted);
   background: var(--surface-soft);
-  border: 1px solid var(--border);
-  border-radius: 10px;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  border-radius: var(--radius-sm) var(--radius-sm) 2px 2px;
+  box-shadow: 0 4px 14px rgb(31 48 42 / 8%);
 }
 
 .command-bar input {
@@ -143,6 +149,65 @@
   border: 0;
   outline: 0;
   font-size: 12px;
+}
+
+.command-bar:focus-within {
+  border-bottom-color: var(--accent);
+  box-shadow: 0 5px 18px rgb(31 75 59 / 13%);
+}
+
+.command-suggestions {
+  position: absolute;
+  bottom: calc(100% + 5px);
+  left: 0;
+  display: grid;
+  width: 236px;
+  padding: 4px;
+  background: var(--panel-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-soft);
+}
+
+.command-suggestions button {
+  display: flex;
+  min-height: 32px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 8px;
+  color: var(--ink);
+  background: transparent;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.command-suggestions button:hover,
+.command-suggestions button.is-active {
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.command-suggestions kbd {
+  color: var(--ink-muted);
+  font: 10px ui-monospace, SFMono-Regular, Consolas, monospace;
+}
+
+.command-save-status {
+  align-self: center;
+  color: var(--ink-muted);
+  font-size: 11px;
+  opacity: .58;
+}
+
+.command-save-status.is-saving {
+  color: var(--accent);
+  opacity: 1;
+}
+
+.command-save-status.is-error {
+  color: var(--danger);
+  opacity: 1;
 }
 
 .share-backdrop {
@@ -357,7 +422,7 @@ button.tool-tile {
   padding: 0 28px 0 10px;
   background: var(--surface-soft);
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
 }
 
 .color-control,
@@ -380,7 +445,7 @@ button.tool-tile {
   padding: 3px;
   background: var(--surface-soft);
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
 }
 
@@ -406,7 +471,7 @@ button.tool-tile {
   padding: 0 8px;
   background: var(--surface-soft);
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
 }
 
 .snap-settings {
@@ -427,7 +492,7 @@ button.tool-tile {
   padding: 0 10px;
   color: var(--accent);
   background: transparent;
-  border-radius: 9px;
+  border-radius: var(--radius-sm);
   font-size: 12px;
   font-weight: 650;
   cursor: pointer;
@@ -462,7 +527,7 @@ button.tool-tile {
   color: var(--ink-muted);
   background: var(--surface-soft);
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   font-size: 12px;
   cursor: pointer;
 }
@@ -479,8 +544,30 @@ button.tool-tile {
 }
 
 @media (min-width: 700px) {
+  .desktop-command-area {
+    position: absolute;
+    z-index: 8;
+    bottom: 20px;
+    left: 20px;
+    display: grid;
+    grid-template-columns: 236px auto;
+    gap: 8px;
+  }
+
   .bottom-sheet {
     display: none;
+  }
+
+  .compact-popover a,
+  .compact-popover button {
+    min-height: 34px;
+    gap: 7px;
+    padding: 0 7px;
+  }
+
+  .tools-menu-button {
+    min-height: 34px;
+    padding: 0 8px;
   }
 
   .sheet-backdrop {
@@ -488,13 +575,13 @@ button.tool-tile {
   }
 
   .settings-panel {
-    top: 12px;
+    top: 8px;
     right: auto;
-    bottom: 12px;
-    left: 12px;
-    width: min(380px, calc(100vw - 24px));
-    max-height: calc(100dvh - 24px);
-    padding: 16px;
+    bottom: 8px;
+    left: 8px;
+    width: min(360px, calc(100vw - 16px));
+    max-height: calc(100dvh - 16px);
+    padding: 10px;
     transform: translateX(calc(-100% - 20px));
     border-radius: var(--radius-lg);
     box-shadow: 12px 0 40px rgb(31 48 42 / 14%);
@@ -510,11 +597,11 @@ button.tool-tile {
 
   .share-panel {
     top: calc(var(--top-bar-height) + env(safe-area-inset-top) - 2px);
-    right: 18px;
+    right: 10px;
     bottom: auto;
     left: auto;
-    width: 260px;
-    padding: 10px;
+    width: 244px;
+    padding: 8px;
     transform: translateY(-8px) scale(.98);
     transform-origin: top right;
     border-radius: var(--radius-md);
@@ -527,6 +614,28 @@ button.tool-tile {
   }
 
   .share-actions button {
-    min-height: 62px;
+    min-height: 52px;
+  }
+
+  .setting-row {
+    min-height: 48px;
+    gap: 10px;
+    padding: 5px 8px;
+  }
+
+  .setting-row select,
+  .color-control input[type='color'],
+  .number-control input {
+    min-height: 34px;
+    height: 34px;
+  }
+
+  .settings-list {
+    margin-top: 5px;
+  }
+
+  .snap-settings {
+    gap: 5px;
+    padding: 8px;
   }
 }
