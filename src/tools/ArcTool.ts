@@ -63,5 +63,5 @@ export class ArcTool implements Tool {
 function makePreview(center: Point, start: Point, end: Point, style: LineStyle): ArcEntity {
   const startAngle = angleFromCenter(center, start)
   const endAngle = angleFromCenter(center, end)
-  return { id: 'preview-arc', type: 'arc', center: { ...center }, radius: distance(center, start), startAngle, endAngle, direction: shortestArcDirection(startAngle, endAngle), style }
+  return { id: 'preview-arc', type: 'arc', center: { ...center }, radius: distance(center, start), startAngle, endAngle, direction: shortestArcDirection(startAngle, endAngle), style, layerId: 'default' }
 }

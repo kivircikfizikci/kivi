@@ -11,14 +11,16 @@ export interface LineEntity {
   start: Point
   end: Point
   style: LineStyle
+  layerId: string
 }
 
-export function createLineEntity(start: Point, end: Point, style: LineStyle): LineEntity {
+export function createLineEntity(start: Point, end: Point, style: LineStyle, layerId = 'default'): LineEntity {
   return {
     id: globalThis.crypto.randomUUID(),
     type: 'line',
     start: { ...start },
     end: { ...end },
     style: { ...style },
+    layerId,
   }
 }

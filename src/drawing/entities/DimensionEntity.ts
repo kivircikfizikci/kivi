@@ -8,8 +8,9 @@ export interface DimensionEntity {
     color?: string
     textSize?: number
   }
+  layerId: string
 }
 
 export function createDimensionEntity(targetEntityId: string, offset: number, side: 1 | -1): DimensionEntity {
-  return { id: globalThis.crypto.randomUUID(), type: 'dimension', targetEntityId, offset, side, style: {} }
+  return { id: globalThis.crypto.randomUUID(), type: 'dimension', targetEntityId, offset, side, style: {}, layerId: 'dimensions' }
 }

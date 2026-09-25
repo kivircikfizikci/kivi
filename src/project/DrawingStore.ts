@@ -33,8 +33,8 @@ export class DrawingStore {
 
   getSnapshot = () => this.snapshot
 
-  addLine(line: LineEntity) {
-    return this.addEntity(line)
+  addLine(line: LineEntity, layerId?: string) {
+    return this.addEntity(layerId ? { ...line, layerId } : line)
   }
 
   addDimension(dimension: DimensionEntity) {
@@ -44,11 +44,11 @@ export class DrawingStore {
     return true
   }
 
-  addRectangle(rectangle: RectangleEntity) { return this.addEntity(rectangle) }
+  addRectangle(rectangle: RectangleEntity, layerId?: string) { return this.addEntity(layerId ? { ...rectangle, layerId } : rectangle) }
 
-  addCircle(circle: CircleEntity) { return this.addEntity(circle) }
+  addCircle(circle: CircleEntity, layerId?: string) { return this.addEntity(layerId ? { ...circle, layerId } : circle) }
 
-  addArc(arc: ArcEntity) { return this.addEntity(arc) }
+  addArc(arc: ArcEntity, layerId?: string) { return this.addEntity(layerId ? { ...arc, layerId } : arc) }
 
   addEntity(entity: Entity) {
     if (this.readOnly) return false
@@ -72,6 +72,33 @@ export class DrawingStore {
     )
     if (entities.length === this.state.entities.length) return false
     this.commit({ ...this.state, entities })
+    return true
+  }
+
+  moveEntitiesToLayer(ids: Iterable<string>, layerId: string) {
+    if (this.readOnly) return false
+    const requested = new Set(ids)
+    let changed = false
+    const entities = this.state.entities.map((entity) => {
+      if (!requested.has(entity.id) || entity.type === 'dimension' || entity.layerId === layerId) return entity
+      changed = true
+      return { ...entity, layerId }
+    })
+    if (!changed) return false
+    this.commit({ ...this.state, entities })
+    return true
+  }
+
+  reassignDeletedLayer(layerId: string, fallbackLayerId: string) {
+    if (this.readOnly) return false
+    const rewrite = (state: DrawingState): DrawingState => ({
+      ...state,
+      entities: state.entities.map((entity) => entity.layerId === layerId ? { ...entity, layerId: fallbackLayerId } : entity),
+    })
+    if (!this.state.entities.some((entity) => entity.layerId === layerId)) return false
+    this.state = rewrite(this.state)
+    this.history.rewrite(rewrite)
+    this.emit()
     return true
   }
 

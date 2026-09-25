@@ -79,6 +79,6 @@ export class CircleTool implements Tool {
 
   private setSnapshot(snapshot: CircleToolSnapshot) { this.snapshot = snapshot; this.listeners.forEach((listener) => listener()) }
 }
-function previewCircle(center: Point, radius: number, style: LineStyle): CircleEntity { return { id: 'preview-circle', type: 'circle', center: { ...center }, radius, style } }
+function previewCircle(center: Point, radius: number, style: LineStyle): CircleEntity { return { id: 'preview-circle', type: 'circle', center: { ...center }, radius, style, layerId: 'default' } }
 function parsePositive(value: string) { const parsed = Number(value.replace(',', '.')); return Number.isFinite(parsed) && parsed > 0 ? parsed : null }
 function formatNumber(value: number) { return String(Math.round(value * 10) / 10) }

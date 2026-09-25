@@ -9,9 +9,10 @@ export interface RectangleEntity {
   width: number
   height: number
   style: LineStyle
+  layerId: string
 }
 
-export function createRectangleEntity(origin: Point, width: number, height: number, style: LineStyle): RectangleEntity {
+export function createRectangleEntity(origin: Point, width: number, height: number, style: LineStyle, layerId = 'default'): RectangleEntity {
   return {
     id: globalThis.crypto.randomUUID(),
     type: 'rectangle',
@@ -19,5 +20,6 @@ export function createRectangleEntity(origin: Point, width: number, height: numb
     width,
     height,
     style: { ...style },
+    layerId,
   }
 }

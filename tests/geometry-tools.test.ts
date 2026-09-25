@@ -161,8 +161,8 @@ test('dimension color resolver is shared and export text has no halo', () => {
   assert.match(pdf, /\(100 cm\) Tj/)
 })
 
-test('version 1 project records migrate to version 2 with a default dimension color', () => {
+test('version 1 project records migrate to current version with a default dimension color', () => {
   const migrated = migrateProject({ ...project([]), version: 1, projectSettings: { backgroundColor: '#fff', gridColor: '#ddd', gridEnabled: true, gridSpacing: 10, dimensionDisplayUnit: 'cm', showDimensionUnit: false } })
-  assert.equal(migrated.version, 2)
+  assert.equal(migrated.version, CURRENT_PROJECT_VERSION)
   assert.equal(migrated.projectSettings.dimensionColor, '#315c4c')
 })

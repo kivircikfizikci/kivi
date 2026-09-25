@@ -54,6 +54,34 @@ export function SettingsPanel({ open, onClose, projectSettings, onProjectSetting
             </span>
           </label>
 
+          <div className="settings-section-label settings-row-label">{t('line')}</div>
+          <label className="setting-row color-row">
+            <span>{t('lineColor')}</span>
+            <span className="color-control">
+              <input
+                key={projectSettings.lineColor}
+                className="hex-color-input"
+                aria-label={t('lineColor')}
+                defaultValue={projectSettings.lineColor.toUpperCase()}
+                onBlur={(event) => {
+                  const value = event.target.value.trim()
+                  if (/^#[\da-f]{6}$/i.test(value)) onProjectSettingsChange({ lineColor: value.toLowerCase() })
+                  else event.target.value = projectSettings.lineColor.toUpperCase()
+                }}
+              />
+              <input type="color" value={projectSettings.lineColor} onChange={(event) => onProjectSettingsChange({ lineColor: event.target.value })} />
+            </span>
+          </label>
+
+          <label className="setting-row compact-input-row">
+            <span>{t('lineWidth')}</span>
+            <span className="number-control">
+              <input type="number" min="0.5" max="12" step="0.5" value={projectSettings.lineWidth}
+                onChange={(event) => { const value = Number(event.target.value); if (value > 0) onProjectSettingsChange({ lineWidth: value }) }} />
+              <span>px</span>
+            </span>
+          </label>
+
           <label className="setting-row color-row">
             <span>{t('gridColor')}</span>
             <span className="color-control">
@@ -122,6 +150,8 @@ export function SettingsPanel({ open, onClose, projectSettings, onProjectSetting
                 gridEnabled: projectSettings.gridEnabled,
                 gridSpacing: projectSettings.gridSpacing,
                 defaultDimensionColor: projectSettings.dimensionColor,
+                defaultLineColor: projectSettings.lineColor,
+                defaultLineWidth: projectSettings.lineWidth,
               })}
             >
               {t('useAsDefaults')}

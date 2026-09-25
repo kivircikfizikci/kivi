@@ -2,6 +2,8 @@ import type { Camera } from '../drawing/camera/Camera.ts'
 import type { Project, ProjectSettings } from '../types/project.ts'
 import { AutosaveManager, type AutosaveStatus } from './AutosaveManager.ts'
 import { DrawingStore } from './DrawingStore.ts'
+import type { Layer } from '../types/project.ts'
+import { DEFAULT_LAYER_ID, isEditableLayer } from './layers.ts'
 
 export type WorkspaceMode = 'edit' | 'view'
 
@@ -42,6 +44,56 @@ export class ProjectSession {
     this.applyChange({ projectSettings: { ...this.project.projectSettings, ...updates } })
   }
 
+  createLayer(name: string) {
+    const trimmed = name.trim()
+    if (!trimmed) return null
+    const layer: Layer = { id: globalThis.crypto.randomUUID(), name: trimmed, visible: true, locked: false }
+    this.applyChange({ layers: [...this.project.layers, layer] })
+    return layer
+  }
+
+  renameLayer(id: string, name: string) {
+    const trimmed = name.trim()
+    const target = this.project.layers.find((layer) => layer.id === id)
+    if (!trimmed || !target || target.builtIn) return false
+    this.applyChange({ layers: this.project.layers.map((layer) => layer.id === id ? { ...layer, name: trimmed } : layer) })
+    return true
+  }
+
+  updateLayer(id: string, updates: Partial<Pick<Layer, 'visible' | 'locked'>>) {
+    const target = this.project.layers.find((layer) => layer.id === id)
+    if (!target) return false
+    const layers = this.project.layers.map((layer) => layer.id === id ? { ...layer, ...updates } : layer)
+    let activeLayerId = this.project.activeLayerId
+    if (id === activeLayerId && !isEditableLayer(layers.find((layer) => layer.id === id))) {
+      const fallback = layers.find(isEditableLayer)
+      if (!fallback) return false
+      activeLayerId = fallback.id
+    }
+    this.applyChange({ layers, activeLayerId })
+    return true
+  }
+
+  setActiveLayer(id: string) {
+    if (!isEditableLayer(this.project.layers.find((layer) => layer.id === id))) return false
+    this.applyChange({ activeLayerId: id })
+    return true
+  }
+
+  deleteLayer(id: string) {
+    const target = this.project.layers.find((layer) => layer.id === id)
+    if (!target || target.builtIn) return false
+    const layers = this.project.layers.filter((layer) => layer.id !== id)
+    const activeFallback = layers.find(isEditableLayer)
+    if (this.project.activeLayerId === id && !activeFallback) return false
+    this.store.reassignDeletedLayer(id, DEFAULT_LAYER_ID)
+    this.applyChange({
+      layers,
+      activeLayerId: this.project.activeLayerId === id ? activeFallback!.id : this.project.activeLayerId,
+    })
+    return true
+  }
+
   updateCamera(camera: Camera) {
     const current = this.project.view?.camera
     if (
@@ -63,7 +115,7 @@ export class ProjectSession {
     return this.autosave.flush()
   }
 
-  private applyChange(changes: Partial<Pick<Project, 'drawing' | 'projectSettings' | 'view'>>) {
+  private applyChange(changes: Partial<Pick<Project, 'drawing' | 'projectSettings' | 'view' | 'layers' | 'activeLayerId'>>) {
     this.project = {
       ...this.project,
       ...changes,

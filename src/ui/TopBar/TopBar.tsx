@@ -10,6 +10,7 @@ import { ToolsMenu } from '../ToolsMenu/ToolsMenu.tsx'
 interface TopBarProps {
   onOpenSettings: () => void
   onOpenShare: () => void
+  onOpenLayers: () => void
   saveStatus: AutosaveStatus
   store: DrawingStore
   tools: ToolManager
@@ -18,12 +19,12 @@ interface TopBarProps {
   canRedo: boolean
 }
 
-export function TopBar({ onOpenSettings, onOpenShare, saveStatus, store, tools, activeTool, canUndo, canRedo }: TopBarProps) {
+export function TopBar({ onOpenSettings, onOpenShare, onOpenLayers, saveStatus, store, tools, activeTool, canUndo, canRedo }: TopBarProps) {
   const { t } = useI18n()
   return (
     <header className="top-bar">
       <div className="toolbar-group toolbar-left">
-        <MainMenu onOpenSettings={onOpenSettings} />
+        <MainMenu onOpenSettings={onOpenSettings} onOpenLayers={onOpenLayers} />
         <span className="brand-status">
           <span className="brand-mark" aria-label={t('appName')}>K</span>
           <span className={`save-indicator is-${saveStatus}`} role="status" aria-label={t(saveStatus === 'error' ? 'saveError' : saveStatus)} title={t(saveStatus === 'error' ? 'saveError' : saveStatus)} />

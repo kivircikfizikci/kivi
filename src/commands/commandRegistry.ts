@@ -8,6 +8,7 @@ export interface CommandContext {
   redo: () => void
   openProjects: () => void
   openSettings: () => void
+  openLayers: () => void
   enterFullscreen: () => void
   openShare: () => void
 }
@@ -28,6 +29,7 @@ export const commandRegistry: readonly AppCommand[] = [
   { id: 'delete', labelKey: 'delete', aliases: ['del'], execute: (context) => context.deleteSelection() },
   { id: 'select', labelKey: 'select', aliases: ['s'], execute: (context) => context.activateTool('select') },
   { id: 'settings', labelKey: 'settings', aliases: ['preferences'], execute: (context) => context.openSettings() },
+  { id: 'layers', labelKey: 'layers', aliases: ['layer'], execute: (context) => context.openLayers() },
   { id: 'undo', labelKey: 'undo', aliases: [], execute: (context) => context.undo() },
   { id: 'redo', labelKey: 'redo', aliases: [], execute: (context) => context.redo() },
   { id: 'projects', labelKey: 'projects', aliases: ['project'], execute: (context) => context.openProjects() },

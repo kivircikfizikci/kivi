@@ -87,11 +87,11 @@ export class RectangleTool implements Tool {
 }
 
 function rectangleFromCorners(start: Point, end: Point, style: LineStyle): RectangleEntity {
-  return { id: 'preview-rectangle', type: 'rectangle', origin: { x: Math.min(start.x, end.x), y: Math.min(start.y, end.y) }, width: Math.abs(end.x - start.x), height: Math.abs(end.y - start.y), style }
+  return { id: 'preview-rectangle', type: 'rectangle', origin: { x: Math.min(start.x, end.x), y: Math.min(start.y, end.y) }, width: Math.abs(end.x - start.x), height: Math.abs(end.y - start.y), style, layerId: 'default' }
 }
 
 function rectangleFromValues(start: Point, width: number, height: number, signX: 1 | -1, signY: 1 | -1, style: LineStyle): RectangleEntity {
-  return { id: 'preview-rectangle', type: 'rectangle', origin: { x: signX > 0 ? start.x : start.x - width, y: signY > 0 ? start.y : start.y - height }, width, height, style }
+  return { id: 'preview-rectangle', type: 'rectangle', origin: { x: signX > 0 ? start.x : start.x - width, y: signY > 0 ? start.y : start.y - height }, width, height, style, layerId: 'default' }
 }
 
 function parsePositive(value: string) { const parsed = Number(value.replace(',', '.')); return Number.isFinite(parsed) && parsed > 0 ? parsed : null }

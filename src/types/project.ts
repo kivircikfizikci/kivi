@@ -1,7 +1,15 @@
 import type { Camera } from '../drawing/camera/Camera.ts'
 import type { DrawingState } from '../project/DrawingState.ts'
 
-export const CURRENT_PROJECT_VERSION = 2 as const
+export const CURRENT_PROJECT_VERSION = 3 as const
+
+export interface Layer {
+  id: string
+  name: string
+  visible: boolean
+  locked: boolean
+  builtIn?: boolean
+}
 
 export interface ProjectSyncMetadata {
   status: 'local' | 'pending' | 'synced' | 'conflict'
@@ -18,6 +26,8 @@ export interface ProjectSettings {
   dimensionDisplayUnit: 'cm' | 'mm'
   showDimensionUnit: boolean
   dimensionColor: string
+  lineColor: string
+  lineWidth: number
 }
 
 export interface ProjectView {
@@ -31,6 +41,8 @@ export interface Project {
   createdAt: string
   updatedAt: string
   drawing: DrawingState
+  layers: Layer[]
+  activeLayerId: string
   projectSettings: ProjectSettings
   view?: ProjectView
   sync: ProjectSyncMetadata

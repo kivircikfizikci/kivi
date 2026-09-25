@@ -7,6 +7,7 @@ import {
 import { EMPTY_DRAWING_STATE } from './DrawingState.ts'
 import { DEFAULT_CAMERA } from '../drawing/camera/Camera.ts'
 import { defaultSyncMetadata } from './projectMigrations.ts'
+import { createBuiltInLayers, DEFAULT_LAYER_ID } from './layers.ts'
 import { projectRepository } from '../storage/ProjectRepository.ts'
 import { generateProjectId } from '../ids/secureId.ts'
 
@@ -37,6 +38,8 @@ export class ProjectService {
       createdAt: now,
       updatedAt: now,
       drawing: EMPTY_DRAWING_STATE,
+      layers: createBuiltInLayers(),
+      activeLayerId: DEFAULT_LAYER_ID,
       projectSettings: projectSettingsFromDefaults(defaults),
       view: { camera: structuredClone(DEFAULT_CAMERA) },
       sync: defaultSyncMetadata(),
@@ -90,6 +93,8 @@ export function projectSettingsFromDefaults(defaults: AppSettings): ProjectSetti
     dimensionDisplayUnit: 'cm',
     showDimensionUnit: false,
     dimensionColor: defaults.defaultDimensionColor,
+    lineColor: defaults.defaultLineColor,
+    lineWidth: defaults.defaultLineWidth,
   }
 }
 

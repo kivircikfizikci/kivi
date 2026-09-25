@@ -31,7 +31,7 @@ import { useSettings } from '../../settings/useSettings'
 import type { DrawingStore } from '../../project/DrawingStore.ts'
 import type { WorkspaceMode } from '../../project/ProjectSession.ts'
 import type { ToolManager } from '../../tools/ToolManager.ts'
-import type { ProjectSettings } from '../../types/project.ts'
+import type { Layer, ProjectSettings } from '../../types/project.ts'
 import { Icon } from '../../ui/Icon/Icon.tsx'
 import { positionLengthInput } from '../renderer/lengthInputPosition.ts'
 import { RectangleRenderer } from '../renderer/RectangleRenderer.tsx'
@@ -39,15 +39,23 @@ import { CircleRenderer } from '../renderer/CircleRenderer.tsx'
 import { ArcRenderer } from '../renderer/ArcRenderer.tsx'
 import { RectangleInput } from '../renderer/RectangleInput.tsx'
 import { CircleInput } from '../renderer/CircleInput.tsx'
+import { entitiesOnSelectableLayers, entitiesOnVisibleLayers, DIMENSIONS_LAYER_ID } from '../../project/layers.ts'
+import { DrawingContextMenu, type ContextMenuPosition } from '../../ui/ContextMenu/DrawingContextMenu.tsx'
+import { selectionForContextTarget } from '../selection/contextSelection.ts'
+import { geometryStyleFromProject } from '../entities/geometryStyle.ts'
 
 interface DrawingViewportProps {
   store: DrawingStore
   tools: ToolManager
   projectSettings: ProjectSettings
+  layers: readonly Layer[]
+  activeLayerId: string
   initialCamera?: Camera
   onCameraSettled: (camera: Camera) => void
   mode?: WorkspaceMode
   onEnterFullscreen?: () => void
+  onMoveSelection: (layerId: string) => void
+  onDeleteSelection: () => void
 }
 
 interface TrackedPointer extends Point {
@@ -61,7 +69,7 @@ interface GestureStart {
   camera: Camera
 }
 
-export function DrawingViewport({ store, tools, projectSettings, initialCamera, onCameraSettled, mode = 'edit', onEnterFullscreen }: DrawingViewportProps) {
+export function DrawingViewport({ store, tools, projectSettings, layers, activeLayerId, initialCamera, onCameraSettled, mode = 'edit', onEnterFullscreen, onMoveSelection, onDeleteSelection }: DrawingViewportProps) {
   const { t } = useI18n()
   const { settings } = useSettings()
   const drawing = useSyncExternalStore(store.subscribe, store.getSnapshot)
@@ -74,6 +82,7 @@ export function DrawingViewport({ store, tools, projectSettings, initialCamera, 
   const selection = useSyncExternalStore(tools.select.subscribe, tools.select.getSnapshot)
   const [camera, setCamera] = useState(initialCamera ?? DEFAULT_CAMERA)
   const [viewport, setViewport] = useState<ViewportSize>({ width: 1, height: 1 })
+  const [contextMenu, setContextMenu] = useState<ContextMenuPosition | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const svgRef = useRef<SVGSVGElement>(null)
   const pointers = useRef(new Map<number, TrackedPointer>())
@@ -82,6 +91,19 @@ export function DrawingViewport({ store, tools, projectSettings, initialCamera, 
   const gestureConsumed = useRef(false)
   const snapManager = useMemo(() => new SnapManager(), [])
   const selectionManager = useMemo(() => new SelectionManager(), [])
+  const visibleEntities = useMemo(() => entitiesOnVisibleLayers(drawing.state.entities, layers), [drawing.state.entities, layers])
+  const selectableEntities = useMemo(() => entitiesOnSelectableLayers(drawing.state.entities, layers), [drawing.state.entities, layers])
+  const lineStyle = useMemo(() => geometryStyleFromProject(projectSettings), [projectSettings])
+  const targetLayers = useMemo(() => layers.filter((layer) => layer.id !== DIMENSIONS_LAYER_ID && layer.visible && !layer.locked), [layers])
+
+  useEffect(() => {
+    const allowed = new Set(selectableEntities.map((entity) => entity.id))
+    const next = [...selection.selectedIds].filter((id) => allowed.has(id))
+    if (next.length !== selection.selectedIds.size) tools.select.setSelection(next)
+    if (dimension.target && !allowed.has(dimension.target.id)) tools.dimension.activate()
+  }, [dimension.target, selectableEntities, selection.selectedIds, tools.dimension, tools.select])
+
+  useEffect(() => { setContextMenu(null) }, [activeTool])
 
   useEffect(() => {
     const element = containerRef.current
@@ -98,7 +120,7 @@ export function DrawingViewport({ store, tools, projectSettings, initialCamera, 
     return () => clearTimeout(timer)
   }, [camera, onCameraSettled])
 
-  const toScreenPoint = useCallback((event: ReactPointerEvent<SVGSVGElement>): Point => {
+  const toScreenPoint = useCallback((event: { clientX: number; clientY: number }): Point => {
     const bounds = svgRef.current!.getBoundingClientRect()
     return { x: event.clientX - bounds.left, y: event.clientY - bounds.top }
   }, [])
@@ -108,7 +130,7 @@ export function DrawingViewport({ store, tools, projectSettings, initialCamera, 
     const tolerance = pointerType === 'touch' ? SELECTION_TOLERANCE_TOUCH_PX : 10
     return snapManager.resolve({
       pointer: worldPoint,
-      entities: drawing.state.entities,
+      entities: visibleEntities,
       zoom: camera.zoom,
       angleOrigin: line.start ?? rectangle.start ?? circle.center ?? arc.center ?? undefined,
       settings: {
@@ -120,7 +142,7 @@ export function DrawingViewport({ store, tools, projectSettings, initialCamera, 
         pixelTolerance: tolerance,
       },
     })
-  }, [arc.center, camera, circle.center, drawing.state.entities, line.start, projectSettings.gridSpacing, rectangle.start, settings, snapManager, viewport])
+  }, [arc.center, camera, circle.center, line.start, projectSettings.gridSpacing, rectangle.start, settings, snapManager, viewport, visibleEntities])
 
   const handleSinglePoint = useCallback((screenPoint: Point, pointerType: string, toggleSelection: boolean) => {
     if (mode === 'view') return
@@ -131,7 +153,7 @@ export function DrawingViewport({ store, tools, projectSettings, initialCamera, 
       return
     }
 
-    const style = { color: settings.defaultLineColor, width: settings.defaultLineWidth }
+    const style = lineStyle
     if (activeTool === 'rectangle') {
       const resolved = resolveSnap(screenPoint, pointerType)
       tools.rectangle.placePoint(resolved.point, resolved.snap, style)
@@ -145,14 +167,14 @@ export function DrawingViewport({ store, tools, projectSettings, initialCamera, 
     if (activeTool === 'arc') {
       const resolved = resolveSnap(screenPoint, pointerType)
       const placed = tools.arc.placePoint(resolved.point, resolved.snap, style)
-      if (placed) store.addArc(placed)
+      if (placed) store.addArc(placed, activeLayerId)
       return
     }
 
     if (activeTool === 'dimension') {
       if (!tools.dimension.getSnapshot().target) {
         const tolerance = pointerType === 'touch' ? SELECTION_TOLERANCE_TOUCH_PX : SELECTION_TOLERANCE_MOUSE_PX
-        const target = selectionManager.findLine(worldPoint, drawing.state.entities, camera.zoom, tolerance)
+        const target = selectionManager.findLine(worldPoint, selectableEntities, camera.zoom, tolerance)
         if (target) {
           tools.dimension.chooseTarget(target)
           tools.dimension.position(worldPoint, 20 / camera.zoom)
@@ -166,11 +188,11 @@ export function DrawingViewport({ store, tools, projectSettings, initialCamera, 
     }
 
     const tolerance = pointerType === 'touch' ? SELECTION_TOLERANCE_TOUCH_PX : SELECTION_TOLERANCE_MOUSE_PX
-    const entity = selectionManager.findEntity(worldPoint, drawing.state.entities, camera.zoom, tolerance)
+    const entity = selectionManager.findEntity(worldPoint, selectableEntities, camera.zoom, tolerance)
     const toggle = toggleSelection || (pointerType === 'touch' && selection.multiMode)
     if (entity && toggle) tools.select.toggleSelection(entity.id)
     else tools.select.select(entity?.id ?? null)
-  }, [activeTool, camera, drawing.state.entities, mode, resolveSnap, selection.multiMode, selectionManager, settings.defaultLineColor, settings.defaultLineWidth, store, tools, viewport])
+  }, [activeLayerId, activeTool, camera, lineStyle, mode, resolveSnap, selectableEntities, selection.multiMode, selectionManager, store, tools, viewport])
 
   const onPointerDown = (event: ReactPointerEvent<SVGSVGElement>) => {
     const point = toScreenPoint(event)
@@ -228,13 +250,13 @@ export function DrawingViewport({ store, tools, projectSettings, initialCamera, 
       tools.line.updatePointer(resolved.point, resolved.snap)
     } else if (mode === 'edit' && activeTool === 'rectangle' && rectangle.phase === 'placing') {
       const resolved = resolveSnap(point, event.pointerType)
-      tools.rectangle.updatePointer(resolved.point, resolved.snap, { color: settings.defaultLineColor, width: settings.defaultLineWidth })
+      tools.rectangle.updatePointer(resolved.point, resolved.snap, lineStyle)
     } else if (mode === 'edit' && activeTool === 'circle' && circle.phase === 'placing') {
       const resolved = resolveSnap(point, event.pointerType)
-      tools.circle.updatePointer(resolved.point, resolved.snap, { color: settings.defaultLineColor, width: settings.defaultLineWidth })
+      tools.circle.updatePointer(resolved.point, resolved.snap, lineStyle)
     } else if (mode === 'edit' && activeTool === 'arc' && arc.phase !== 'center') {
       const resolved = resolveSnap(point, event.pointerType)
-      tools.arc.updatePointer(resolved.point, resolved.snap, { color: settings.defaultLineColor, width: settings.defaultLineWidth })
+      tools.arc.updatePointer(resolved.point, resolved.snap, lineStyle)
     } else if (activeTool === 'dimension' && dimension.target) {
       tools.dimension.position(screenToWorld(point, camera, viewport), 20 / camera.zoom)
     }
@@ -266,17 +288,28 @@ export function DrawingViewport({ store, tools, projectSettings, initialCamera, 
     setCamera((current) => zoomCameraAt(current, focus, current.zoom * factor, viewport))
   }
 
+  const handleContextMenu = (event: React.MouseEvent<SVGSVGElement>) => {
+    if (mode !== 'edit') return
+    event.preventDefault()
+    const screenPoint = toScreenPoint(event)
+    const worldPoint = screenToWorld(screenPoint, camera, viewport)
+    const entity = selectionManager.findEntity(worldPoint, selectableEntities, camera.zoom, SELECTION_TOLERANCE_MOUSE_PX)
+    if (!entity) { setContextMenu(null); return }
+    tools.select.setSelection(selectionForContextTarget(selection.selectedIds, entity.id))
+    setContextMenu({ x: Math.min(screenPoint.x, Math.max(6, viewport.width - 176)), y: Math.min(screenPoint.y, Math.max(6, viewport.height - 110)) })
+  }
+
   const confirmLine = () => {
-    const entity = tools.line.confirm({ color: settings.defaultLineColor, width: settings.defaultLineWidth })
-    if (entity) store.addLine(entity)
+    const entity = tools.line.confirm(lineStyle)
+    if (entity) store.addLine(entity, activeLayerId)
   }
   const confirmRectangle = () => {
-    const entity = tools.rectangle.confirm({ color: settings.defaultLineColor, width: settings.defaultLineWidth })
-    if (entity) store.addRectangle(entity)
+    const entity = tools.rectangle.confirm(lineStyle)
+    if (entity) store.addRectangle(entity, activeLayerId)
   }
   const confirmCircle = () => {
-    const entity = tools.circle.confirm({ color: settings.defaultLineColor, width: settings.defaultLineWidth })
-    if (entity) store.addCircle(entity)
+    const entity = tools.circle.confirm(lineStyle)
+    if (entity) store.addCircle(entity, activeLayerId)
   }
   const lengthInputPosition = line.end
     ? positionLengthInput(worldToScreen(line.end, camera, viewport), viewport)
@@ -302,7 +335,7 @@ export function DrawingViewport({ store, tools, projectSettings, initialCamera, 
           onPointerUp={(event) => endPointer(event, false)}
           onPointerCancel={(event) => endPointer(event, true)}
           onWheel={onWheel}
-          onContextMenu={(event) => event.preventDefault()}
+          onContextMenu={handleContextMenu}
         >
           {projectSettings.gridEnabled && (
             <>
@@ -311,14 +344,14 @@ export function DrawingViewport({ store, tools, projectSettings, initialCamera, 
             </>
           )}
           <g aria-hidden="true">
-            {drawing.state.entities.map((entity) => {
+            {visibleEntities.map((entity) => {
               if (entity.type === 'line') {
                 return <LineRenderer key={entity.id} line={entity} camera={camera} viewport={viewport} selected={mode === 'edit' && selection.selectedIds.has(entity.id)} />
               }
               if (entity.type === 'rectangle') return <RectangleRenderer key={entity.id} rectangle={entity} camera={camera} viewport={viewport} selected={mode === 'edit' && selection.selectedIds.has(entity.id)} />
               if (entity.type === 'circle') return <CircleRenderer key={entity.id} circle={entity} camera={camera} viewport={viewport} selected={mode === 'edit' && selection.selectedIds.has(entity.id)} />
               if (entity.type === 'arc') return <ArcRenderer key={entity.id} arc={entity} camera={camera} viewport={viewport} selected={mode === 'edit' && selection.selectedIds.has(entity.id)} />
-              const target = drawing.state.entities.find((candidate) => candidate.type === 'line' && candidate.id === entity.targetEntityId)
+              const target = visibleEntities.find((candidate) => candidate.type === 'line' && candidate.id === entity.targetEntityId)
               return target?.type === 'line'
                 ? <DimensionRenderer key={entity.id} dimension={entity} target={target} camera={camera} viewport={viewport} settings={projectSettings} selected={mode === 'edit' && selection.selectedIds.has(entity.id)} />
                 : null
@@ -333,8 +366,8 @@ export function DrawingViewport({ store, tools, projectSettings, initialCamera, 
                   end={line.end}
                   camera={camera}
                   viewport={viewport}
-                  color={settings.defaultLineColor}
-                  width={settings.defaultLineWidth}
+                  color={projectSettings.lineColor}
+                  width={projectSettings.lineWidth}
                 />
                 <SnapIndicatorRenderer snap={line.snap} camera={camera} viewport={viewport} />
               </>
@@ -353,13 +386,13 @@ export function DrawingViewport({ store, tools, projectSettings, initialCamera, 
         )}
         {mode === 'edit' && rectangle.phase === 'size' && (
           <RectangleInput width={rectangle.widthInput} height={rectangle.heightInput} canConfirm={rectangle.canConfirm} position={rectangleInputPosition}
-            onChange={(width, height) => tools.rectangle.updateSize(width, height, { color: settings.defaultLineColor, width: settings.defaultLineWidth })}
+            onChange={(width, height) => tools.rectangle.updateSize(width, height, lineStyle)}
             onBack={() => tools.rectangle.back()} onConfirm={confirmRectangle} />
         )}
         {mode === 'edit' && circle.phase === 'value' && (
           <CircleInput value={circle.valueInput} mode={circle.inputMode} canConfirm={circle.canConfirm} position={circleInputPosition}
-            onChange={(value) => tools.circle.updateValue(value, { color: settings.defaultLineColor, width: settings.defaultLineWidth })}
-            onModeChange={(inputMode) => tools.circle.setInputMode(inputMode, { color: settings.defaultLineColor, width: settings.defaultLineWidth })}
+            onChange={(value) => tools.circle.updateValue(value, lineStyle)}
+            onModeChange={(inputMode) => tools.circle.setInputMode(inputMode, lineStyle)}
             onBack={() => tools.circle.back()} onConfirm={confirmCircle} />
         )}
         {mode === 'edit' && line.phase === 'length' && (
@@ -376,6 +409,11 @@ export function DrawingViewport({ store, tools, projectSettings, initialCamera, 
           <button className="fullscreen-control icon-button" type="button" onClick={onEnterFullscreen} aria-label={t('fullscreen')} title={t('fullscreen')}>
             <Icon name="expand" />
           </button>
+        )}
+        {contextMenu && mode === 'edit' && (
+          <DrawingContextMenu position={contextMenu} layers={targetLayers} onClose={() => setContextMenu(null)}
+            onMove={(layerId) => { onMoveSelection(layerId); setContextMenu(null) }}
+            onDelete={() => { onDeleteSelection(); setContextMenu(null) }} />
         )}
       </div>
     </main>

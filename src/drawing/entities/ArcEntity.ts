@@ -13,6 +13,7 @@ export interface ArcEntity {
   endAngle: number
   direction: ArcDirection
   style: LineStyle
+  layerId: string
 }
 
 export function createArcEntity(
@@ -22,6 +23,7 @@ export function createArcEntity(
   endAngle: number,
   direction: ArcDirection,
   style: LineStyle,
+  layerId = 'default',
 ): ArcEntity {
   return {
     id: globalThis.crypto.randomUUID(),
@@ -32,6 +34,7 @@ export function createArcEntity(
     endAngle: normalizeAngle(endAngle),
     direction,
     style: { ...style },
+    layerId,
   }
 }
 

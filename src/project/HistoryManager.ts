@@ -21,6 +21,11 @@ export class HistoryManager<T> {
     return next
   }
 
+  rewrite(mapper: (value: T) => T) {
+    this.undoStack = this.undoStack.map(mapper)
+    this.redoStack = this.redoStack.map(mapper)
+  }
+
   get canUndo() {
     return this.undoStack.length > 0
   }

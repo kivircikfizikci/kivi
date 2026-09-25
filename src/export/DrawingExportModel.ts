@@ -7,6 +7,7 @@ import { exportBoundsFromWorldBounds, worldPointToExportPoint } from './exportCo
 import { resolveDimensionColor } from '../drawing/geometry/dimensionColor.ts'
 import { rectangleCorners } from '../drawing/geometry/rectangle.ts'
 import type { ArcDirection } from '../drawing/entities/ArcEntity.ts'
+import { createBuiltInLayers, entitiesOnVisibleLayers } from '../project/layers.ts'
 
 export interface ExportStroke {
   start: Point
@@ -44,8 +45,8 @@ export interface DrawingExportModel {
   arcs: ExportArc[]
 }
 
-export function createDrawingExportModel(project: Pick<Project, 'drawing' | 'projectSettings'>): DrawingExportModel {
-  const { entities } = project.drawing
+export function createDrawingExportModel(project: Pick<Project, 'drawing' | 'projectSettings'> & Partial<Pick<Project, 'layers'>>): DrawingExportModel {
+  const entities = entitiesOnVisibleLayers(project.drawing.entities, project.layers ?? createBuiltInLayers())
   const worldBounds = calculateDrawingBounds(entities, project.projectSettings)
   const mapPoint = (point: Point) => worldPointToExportPoint(point, worldBounds)
   const lines = new Map(entities.filter((entity) => entity.type === 'line').map((line) => [line.id, line]))

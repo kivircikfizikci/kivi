@@ -35,7 +35,7 @@ export class DimensionTool implements Tool {
     if (!placement) return
     this.setSnapshot({
       target,
-      preview: { id: 'preview-dimension', type: 'dimension', targetEntityId: target.id, ...placement, style: {} },
+      preview: { id: 'preview-dimension', type: 'dimension', targetEntityId: target.id, ...placement, style: {}, layerId: 'dimensions' },
     })
   }
 

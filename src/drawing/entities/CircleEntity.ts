@@ -7,14 +7,16 @@ export interface CircleEntity {
   center: Point
   radius: number
   style: LineStyle
+  layerId: string
 }
 
-export function createCircleEntity(center: Point, radius: number, style: LineStyle): CircleEntity {
+export function createCircleEntity(center: Point, radius: number, style: LineStyle, layerId = 'default'): CircleEntity {
   return {
     id: globalThis.crypto.randomUUID(),
     type: 'circle',
     center: { ...center },
     radius,
     style: { ...style },
+    layerId,
   }
 }
