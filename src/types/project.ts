@@ -1,7 +1,7 @@
 import type { Camera } from '../drawing/camera/Camera.ts'
 import type { DrawingState } from '../project/DrawingState.ts'
 
-export const CURRENT_PROJECT_VERSION = 1 as const
+export const CURRENT_PROJECT_VERSION = 2 as const
 
 export interface ProjectSyncMetadata {
   status: 'local' | 'pending' | 'synced' | 'conflict'
@@ -17,6 +17,7 @@ export interface ProjectSettings {
   gridSpacing: number
   dimensionDisplayUnit: 'cm' | 'mm'
   showDimensionUnit: boolean
+  dimensionColor: string
 }
 
 export interface ProjectView {

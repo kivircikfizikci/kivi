@@ -5,6 +5,7 @@ import type { DrawingStore } from '../../project/DrawingStore.ts'
 import type { ToolManager } from '../../tools/ToolManager.ts'
 import type { ToolId } from '../../tools/Tool.ts'
 import { toggleDrawer } from './drawerActions.ts'
+import type { SelectToolSnapshot } from '../../tools/SelectTool.ts'
 
 interface BottomDrawerProps {
   open: boolean
@@ -13,12 +14,12 @@ interface BottomDrawerProps {
   store: DrawingStore
   tools: ToolManager
   activeTool: ToolId
-  selectedId: string | null
+  selection: SelectToolSnapshot
   canUndo: boolean
   canRedo: boolean
 }
 
-export function BottomDrawer({ open, onOpen, onClose, store, tools, activeTool, selectedId, canUndo, canRedo }: BottomDrawerProps) {
+export function BottomDrawer({ open, onOpen, onClose, store, tools, activeTool, selection, canUndo, canRedo }: BottomDrawerProps) {
   const { t } = useI18n()
   useEscapeKey(onClose, open)
 
@@ -28,9 +29,14 @@ export function BottomDrawer({ open, onOpen, onClose, store, tools, activeTool, 
   }
 
   const removeSelected = () => {
-    if (!selectedId || !store.deleteEntity(selectedId)) return
-    tools.select.select(null)
+    if (!store.deleteEntities(selection.selectedIds)) return
+    tools.select.clearSelection()
     onClose()
+  }
+
+  const toggleMultiSelection = () => {
+    if (activeTool !== 'select') tools.activate('select')
+    tools.select.toggleMultiMode()
   }
 
   return (
@@ -48,17 +54,22 @@ export function BottomDrawer({ open, onOpen, onClose, store, tools, activeTool, 
           </button>
         </div>
         <div className="sheet-actions">
-          <button className={`tool-tile${activeTool === 'select' ? ' is-active' : ''}`} type="button" onClick={() => activate('select')}>
-            <Icon name="cursor" />
-            <span>{t('select')}</span>
-          </button>
           <button className={`tool-tile${activeTool === 'line' ? ' is-active' : ''}`} type="button" onClick={() => activate('line')}>
             <Icon name="line" />
             <span>{t('line')}</span>
           </button>
+          {(['rectangle', 'circle', 'arc'] as const).map((tool) => (
+            <button key={tool} className={`tool-tile${activeTool === tool ? ' is-active' : ''}`} type="button" onClick={() => activate(tool)}>
+              <Icon name={tool} /><span>{t(tool)}</span>
+            </button>
+          ))}
           <button className={`tool-tile${activeTool === 'dimension' ? ' is-active' : ''}`} type="button" onClick={() => activate('dimension')}>
             <Icon name="dimension" />
             <span>{t('dimension')}</span>
+          </button>
+          <button className={`tool-tile${activeTool === 'select' ? ' is-active' : ''}`} type="button" onClick={() => activate('select')}>
+            <Icon name="cursor" />
+            <span>{t('select')}</span>
           </button>
           <button className="tool-tile" type="button" disabled={!canUndo} onClick={() => store.undo()}>
             <Icon name="undo" />
@@ -68,7 +79,10 @@ export function BottomDrawer({ open, onOpen, onClose, store, tools, activeTool, 
             <Icon name="redo" />
             <span>{t('redo')}</span>
           </button>
-          <button className="tool-tile" type="button" disabled={!selectedId} onClick={removeSelected}>
+          <button className={`tool-tile${selection.multiMode ? ' is-active' : ''}`} type="button" onClick={toggleMultiSelection}>
+            <Icon name="multi" /><span>{t('multi')}</span>
+          </button>
+          <button className="tool-tile" type="button" disabled={selection.selectedIds.size === 0} onClick={removeSelected}>
             <Icon name="trash" />
             <span>{t('delete')}</span>
           </button>

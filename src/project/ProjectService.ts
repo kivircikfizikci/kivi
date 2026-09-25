@@ -89,6 +89,7 @@ export function projectSettingsFromDefaults(defaults: AppSettings): ProjectSetti
     gridSpacing: defaults.gridSpacing,
     dimensionDisplayUnit: 'cm',
     showDimensionUnit: false,
+    dimensionColor: defaults.defaultDimensionColor,
   }
 }
 

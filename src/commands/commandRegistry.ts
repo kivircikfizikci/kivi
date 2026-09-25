@@ -21,6 +21,9 @@ export interface AppCommand {
 
 export const commandRegistry: readonly AppCommand[] = [
   { id: 'line', labelKey: 'line', aliases: ['l'], execute: (context) => context.activateTool('line') },
+  { id: 'rectangle', labelKey: 'rectangle', aliases: ['rect'], execute: (context) => context.activateTool('rectangle') },
+  { id: 'circle', labelKey: 'circle', aliases: ['c'], execute: (context) => context.activateTool('circle') },
+  { id: 'arc', labelKey: 'arc', aliases: ['a'], execute: (context) => context.activateTool('arc') },
   { id: 'dim', labelKey: 'dimension', aliases: ['dimension', 'd'], execute: (context) => context.activateTool('dimension') },
   { id: 'delete', labelKey: 'delete', aliases: ['del'], execute: (context) => context.deleteSelection() },
   { id: 'select', labelKey: 'select', aliases: ['s'], execute: (context) => context.activateTool('select') },

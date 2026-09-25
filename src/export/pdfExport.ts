@@ -27,6 +27,19 @@ export function createDrawingPdf(model: DrawingExportModel) {
     polygon.points.slice(1).forEach((point) => commands.push(`${n(x(point.x))} ${n(y(point.y))} l`))
     commands.push('h f')
   }
+  for (const rectangle of model.rectangles) {
+    commands.push(`${rgb(rectangle.color)} RG`, `${n(Math.max(0.5, rectangle.strokeWidth * scale))} w`, `${n(x(rectangle.origin.x))} ${n(y(rectangle.origin.y + rectangle.height))} ${n(rectangle.width * scale)} ${n(rectangle.height * scale)} re S`)
+  }
+  for (const circle of model.circles) {
+    appendCircle(commands, x(circle.center.x), y(circle.center.y), circle.radius * scale, circle.color, circle.strokeWidth * scale)
+  }
+  for (const arc of model.arcs) {
+    const points = sampleArc(arc)
+    if (points.length < 2) continue
+    commands.push(`${rgb(arc.color)} RG`, `${n(Math.max(0.5, arc.strokeWidth * scale))} w`, `${n(x(points[0]!.x))} ${n(y(points[0]!.y))} m`)
+    points.slice(1).forEach((point) => commands.push(`${n(x(point.x))} ${n(y(point.y))} l`))
+    commands.push('S')
+  }
   for (const label of model.labels) {
     const radians = -label.rotation * Math.PI / 180
     const cosine = Math.cos(radians)
@@ -39,9 +52,7 @@ export function createDrawingPdf(model: DrawingExportModel) {
       'BT',
       `/F1 ${n(fontSize)} Tf`,
       `${rgb(label.color)} rg`,
-      `${rgb(label.outlineColor)} RG`,
-      '2 Tr',
-      `${n(Math.max(1, scale * 1.5))} w`,
+      '0 Tr',
       `${n(cosine)} ${n(sine)} ${n(-sine)} ${n(cosine)} ${n(anchorX)} ${n(anchorY)} Tm`,
       `(${escapePdf(label.text)}) Tj`,
       'ET',
@@ -49,6 +60,26 @@ export function createDrawingPdf(model: DrawingExportModel) {
   }
 
   return assemblePdf(page.width, page.height, commands.join('\n'))
+}
+
+function appendCircle(commands: string[], centerX: number, centerY: number, radius: number, color: string, width: number) {
+  const control = radius * 0.5522847498
+  commands.push(`${rgb(color)} RG`, `${n(Math.max(0.5, width))} w`, `${n(centerX + radius)} ${n(centerY)} m`)
+  commands.push(`${n(centerX + radius)} ${n(centerY + control)} ${n(centerX + control)} ${n(centerY + radius)} ${n(centerX)} ${n(centerY + radius)} c`)
+  commands.push(`${n(centerX - control)} ${n(centerY + radius)} ${n(centerX - radius)} ${n(centerY + control)} ${n(centerX - radius)} ${n(centerY)} c`)
+  commands.push(`${n(centerX - radius)} ${n(centerY - control)} ${n(centerX - control)} ${n(centerY - radius)} ${n(centerX)} ${n(centerY - radius)} c`)
+  commands.push(`${n(centerX + control)} ${n(centerY - radius)} ${n(centerX + radius)} ${n(centerY - control)} ${n(centerX + radius)} ${n(centerY)} c S`)
+}
+
+function sampleArc(arc: DrawingExportModel['arcs'][number]) {
+  const counterClockwise = ((arc.endAngle - arc.startAngle) % 360 + 360) % 360
+  const sweep = arc.direction === 'ccw' ? counterClockwise : ((arc.startAngle - arc.endAngle) % 360 + 360) % 360
+  const steps = Math.max(4, Math.ceil(sweep / 8))
+  return Array.from({ length: steps + 1 }, (_, index) => {
+    const angle = arc.startAngle + (arc.direction === 'ccw' ? 1 : -1) * sweep * index / steps
+    const radians = angle * Math.PI / 180
+    return { x: arc.center.x + arc.radius * Math.cos(radians), y: arc.center.y - arc.radius * Math.sin(radians) }
+  })
 }
 
 function estimateHelveticaWidth(value: string, fontSize: number) {

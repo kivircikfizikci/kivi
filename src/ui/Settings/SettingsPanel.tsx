@@ -62,6 +62,14 @@ export function SettingsPanel({ open, onClose, projectSettings, onProjectSetting
             </span>
           </label>
 
+          <label className="setting-row color-row">
+            <span>{t('dimensionColor')}</span>
+            <span className="color-control">
+              <code>{projectSettings.dimensionColor}</code>
+              <input type="color" value={projectSettings.dimensionColor} onChange={(event) => onProjectSettingsChange({ dimensionColor: event.target.value })} />
+            </span>
+          </label>
+
           <label className="setting-row">
             <span>{t('grid')}</span>
             <span className="switch-control">
@@ -113,6 +121,7 @@ export function SettingsPanel({ open, onClose, projectSettings, onProjectSetting
                 defaultGridColor: projectSettings.gridColor,
                 gridEnabled: projectSettings.gridEnabled,
                 gridSpacing: projectSettings.gridSpacing,
+                defaultDimensionColor: projectSettings.dimensionColor,
               })}
             >
               {t('useAsDefaults')}

@@ -1,5 +1,9 @@
 import type { LineEntity } from '../drawing/entities/LineEntity.ts'
 import type { DimensionEntity } from '../drawing/entities/DimensionEntity.ts'
+import type { RectangleEntity } from '../drawing/entities/RectangleEntity.ts'
+import type { CircleEntity } from '../drawing/entities/CircleEntity.ts'
+import type { ArcEntity } from '../drawing/entities/ArcEntity.ts'
+import type { Entity } from '../drawing/entities/Entity.ts'
 import { EMPTY_DRAWING_STATE, type DrawingState } from './DrawingState.ts'
 import { HistoryManager } from './HistoryManager.ts'
 
@@ -30,9 +34,7 @@ export class DrawingStore {
   getSnapshot = () => this.snapshot
 
   addLine(line: LineEntity) {
-    if (this.readOnly) return false
-    this.commit({ ...this.state, entities: [...this.state.entities, line] })
-    return true
+    return this.addEntity(line)
   }
 
   addDimension(dimension: DimensionEntity) {
@@ -42,12 +44,31 @@ export class DrawingStore {
     return true
   }
 
-  deleteEntity(id: string) {
+  addRectangle(rectangle: RectangleEntity) { return this.addEntity(rectangle) }
+
+  addCircle(circle: CircleEntity) { return this.addEntity(circle) }
+
+  addArc(arc: ArcEntity) { return this.addEntity(arc) }
+
+  addEntity(entity: Entity) {
     if (this.readOnly) return false
-    const target = this.state.entities.find((entity) => entity.id === id)
-    if (!target) return false
+    this.commit({ ...this.state, entities: [...this.state.entities, entity] })
+    return true
+  }
+
+  deleteEntity(id: string) {
+    return this.deleteEntities([id])
+  }
+
+  deleteEntities(ids: Iterable<string>) {
+    if (this.readOnly) return false
+    const requested = new Set(ids)
+    if (requested.size === 0) return false
+    const lineIds = new Set(this.state.entities
+      .filter((entity) => entity.type === 'line' && requested.has(entity.id))
+      .map((entity) => entity.id))
     const entities = this.state.entities.filter((entity) =>
-      entity.id !== id && !(target.type === 'line' && entity.type === 'dimension' && entity.targetEntityId === id),
+      !requested.has(entity.id) && !(entity.type === 'dimension' && lineIds.has(entity.targetEntityId)),
     )
     if (entities.length === this.state.entities.length) return false
     this.commit({ ...this.state, entities })

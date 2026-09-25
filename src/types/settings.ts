@@ -12,6 +12,7 @@ export interface AppSettings {
   gridSpacing: number
   defaultLineColor: string
   defaultLineWidth: number
+  defaultDimensionColor: string
   angleSnapEnabled: boolean
   endpointSnapEnabled: boolean
   midpointSnapEnabled: boolean
@@ -30,6 +31,7 @@ export const defaultSettings: AppSettings = {
   gridSpacing: 10,
   defaultLineColor: '#2f4940',
   defaultLineWidth: 2,
+  defaultDimensionColor: '#315c4c',
   angleSnapEnabled: true,
   endpointSnapEnabled: true,
   midpointSnapEnabled: true,

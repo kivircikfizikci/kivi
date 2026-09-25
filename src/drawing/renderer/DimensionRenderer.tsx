@@ -5,6 +5,7 @@ import type { DimensionEntity } from '../entities/DimensionEntity.ts'
 import { dimensionGeometry } from '../geometry/dimension.ts'
 import { formatDimension } from '../geometry/formatDimension.ts'
 import type { ProjectSettings } from '../../types/project.ts'
+import { resolveDimensionColor } from '../geometry/dimensionColor.ts'
 
 interface DimensionRendererProps {
   dimension: DimensionEntity
@@ -29,7 +30,7 @@ export function DimensionRenderer({ dimension, target, camera, viewport, setting
   const screenLength = Math.hypot(dx, dy)
   if (screenLength < 1) return null
   const direction = { x: dx / screenLength, y: dy / screenLength }
-  const color = dimension.style.color ?? contrastColor(settings.backgroundColor)
+  const color = resolveDimensionColor(dimension, settings)
   const textSize = dimension.style.textSize ?? 13
   const label = formatDimension(geometry.length, settings)
   const marker = (tipX: number, tipY: number, sign: number) => {
@@ -57,23 +58,10 @@ export function DimensionRenderer({ dimension, target, camera, viewport, setting
         fontSize={textSize}
         fontWeight="600"
         fill={color}
-        stroke={settings.backgroundColor}
-        strokeWidth="4"
-        strokeLinejoin="round"
-        paintOrder="stroke"
         transform={`rotate(${geometry.rotation} ${center.x} ${center.y})`}
       >
         {label}
       </text>
     </g>
   )
-}
-
-function contrastColor(background: string) {
-  const hex = background.replace('#', '')
-  if (!/^[\da-f]{6}$/i.test(hex)) return '#315c4c'
-  const r = parseInt(hex.slice(0, 2), 16)
-  const g = parseInt(hex.slice(2, 4), 16)
-  const b = parseInt(hex.slice(4, 6), 16)
-  return (r * 299 + g * 587 + b * 114) / 1000 < 128 ? '#d9f0e4' : '#315c4c'
 }

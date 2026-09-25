@@ -34,6 +34,11 @@ import type { ToolManager } from '../../tools/ToolManager.ts'
 import type { ProjectSettings } from '../../types/project.ts'
 import { Icon } from '../../ui/Icon/Icon.tsx'
 import { positionLengthInput } from '../renderer/lengthInputPosition.ts'
+import { RectangleRenderer } from '../renderer/RectangleRenderer.tsx'
+import { CircleRenderer } from '../renderer/CircleRenderer.tsx'
+import { ArcRenderer } from '../renderer/ArcRenderer.tsx'
+import { RectangleInput } from '../renderer/RectangleInput.tsx'
+import { CircleInput } from '../renderer/CircleInput.tsx'
 
 interface DrawingViewportProps {
   store: DrawingStore
@@ -63,7 +68,10 @@ export function DrawingViewport({ store, tools, projectSettings, initialCamera, 
   const activeTool = useSyncExternalStore(tools.subscribe, tools.getSnapshot)
   const line = useSyncExternalStore(tools.line.subscribe, tools.line.getSnapshot)
   const dimension = useSyncExternalStore(tools.dimension.subscribe, tools.dimension.getSnapshot)
-  const selectedId = useSyncExternalStore(tools.select.subscribe, tools.select.getSnapshot)
+  const rectangle = useSyncExternalStore(tools.rectangle.subscribe, tools.rectangle.getSnapshot)
+  const circle = useSyncExternalStore(tools.circle.subscribe, tools.circle.getSnapshot)
+  const arc = useSyncExternalStore(tools.arc.subscribe, tools.arc.getSnapshot)
+  const selection = useSyncExternalStore(tools.select.subscribe, tools.select.getSnapshot)
   const [camera, setCamera] = useState(initialCamera ?? DEFAULT_CAMERA)
   const [viewport, setViewport] = useState<ViewportSize>({ width: 1, height: 1 })
   const containerRef = useRef<HTMLDivElement>(null)
@@ -102,7 +110,7 @@ export function DrawingViewport({ store, tools, projectSettings, initialCamera, 
       pointer: worldPoint,
       entities: drawing.state.entities,
       zoom: camera.zoom,
-      angleOrigin: line.start ?? undefined,
+      angleOrigin: line.start ?? rectangle.start ?? circle.center ?? arc.center ?? undefined,
       settings: {
         endpoint: settings.endpointSnapEnabled,
         midpoint: settings.midpointSnapEnabled,
@@ -112,14 +120,32 @@ export function DrawingViewport({ store, tools, projectSettings, initialCamera, 
         pixelTolerance: tolerance,
       },
     })
-  }, [camera, drawing.state.entities, line.start, projectSettings.gridSpacing, settings, snapManager, viewport])
+  }, [arc.center, camera, circle.center, drawing.state.entities, line.start, projectSettings.gridSpacing, rectangle.start, settings, snapManager, viewport])
 
-  const handleSinglePoint = useCallback((screenPoint: Point, pointerType: string) => {
+  const handleSinglePoint = useCallback((screenPoint: Point, pointerType: string, toggleSelection: boolean) => {
     if (mode === 'view') return
     const worldPoint = screenToWorld(screenPoint, camera, viewport)
     if (activeTool === 'line') {
       const resolved = resolveSnap(screenPoint, pointerType)
       tools.line.placePoint(resolved.point, resolved.snap)
+      return
+    }
+
+    const style = { color: settings.defaultLineColor, width: settings.defaultLineWidth }
+    if (activeTool === 'rectangle') {
+      const resolved = resolveSnap(screenPoint, pointerType)
+      tools.rectangle.placePoint(resolved.point, resolved.snap, style)
+      return
+    }
+    if (activeTool === 'circle') {
+      const resolved = resolveSnap(screenPoint, pointerType)
+      tools.circle.placePoint(resolved.point, resolved.snap, style)
+      return
+    }
+    if (activeTool === 'arc') {
+      const resolved = resolveSnap(screenPoint, pointerType)
+      const placed = tools.arc.placePoint(resolved.point, resolved.snap, style)
+      if (placed) store.addArc(placed)
       return
     }
 
@@ -141,8 +167,10 @@ export function DrawingViewport({ store, tools, projectSettings, initialCamera, 
 
     const tolerance = pointerType === 'touch' ? SELECTION_TOLERANCE_TOUCH_PX : SELECTION_TOLERANCE_MOUSE_PX
     const entity = selectionManager.findEntity(worldPoint, drawing.state.entities, camera.zoom, tolerance)
-    tools.select.select(entity?.id ?? null)
-  }, [activeTool, camera, drawing.state.entities, mode, resolveSnap, selectionManager, store, tools, viewport])
+    const toggle = toggleSelection || (pointerType === 'touch' && selection.multiMode)
+    if (entity && toggle) tools.select.toggleSelection(entity.id)
+    else tools.select.select(entity?.id ?? null)
+  }, [activeTool, camera, drawing.state.entities, mode, resolveSnap, selection.multiMode, selectionManager, settings.defaultLineColor, settings.defaultLineWidth, store, tools, viewport])
 
   const onPointerDown = (event: ReactPointerEvent<SVGSVGElement>) => {
     const point = toScreenPoint(event)
@@ -198,6 +226,15 @@ export function DrawingViewport({ store, tools, projectSettings, initialCamera, 
     if (mode === 'edit' && activeTool === 'line' && line.phase === 'placing') {
       const resolved = resolveSnap(point, event.pointerType)
       tools.line.updatePointer(resolved.point, resolved.snap)
+    } else if (mode === 'edit' && activeTool === 'rectangle' && rectangle.phase === 'placing') {
+      const resolved = resolveSnap(point, event.pointerType)
+      tools.rectangle.updatePointer(resolved.point, resolved.snap, { color: settings.defaultLineColor, width: settings.defaultLineWidth })
+    } else if (mode === 'edit' && activeTool === 'circle' && circle.phase === 'placing') {
+      const resolved = resolveSnap(point, event.pointerType)
+      tools.circle.updatePointer(resolved.point, resolved.snap, { color: settings.defaultLineColor, width: settings.defaultLineWidth })
+    } else if (mode === 'edit' && activeTool === 'arc' && arc.phase !== 'center') {
+      const resolved = resolveSnap(point, event.pointerType)
+      tools.arc.updatePointer(resolved.point, resolved.snap, { color: settings.defaultLineColor, width: settings.defaultLineWidth })
     } else if (activeTool === 'dimension' && dimension.target) {
       tools.dimension.position(screenToWorld(point, camera, viewport), 20 / camera.zoom)
     }
@@ -218,7 +255,7 @@ export function DrawingViewport({ store, tools, projectSettings, initialCamera, 
       return
     }
 
-    if (!cancelled && !wasMiddle && event.button === 0) handleSinglePoint(point, event.pointerType)
+    if (!cancelled && !wasMiddle && event.button === 0) handleSinglePoint(point, event.pointerType, event.ctrlKey || event.metaKey || event.shiftKey)
   }
 
   const onWheel = (event: ReactWheelEvent<SVGSVGElement>) => {
@@ -233,8 +270,22 @@ export function DrawingViewport({ store, tools, projectSettings, initialCamera, 
     const entity = tools.line.confirm({ color: settings.defaultLineColor, width: settings.defaultLineWidth })
     if (entity) store.addLine(entity)
   }
+  const confirmRectangle = () => {
+    const entity = tools.rectangle.confirm({ color: settings.defaultLineColor, width: settings.defaultLineWidth })
+    if (entity) store.addRectangle(entity)
+  }
+  const confirmCircle = () => {
+    const entity = tools.circle.confirm({ color: settings.defaultLineColor, width: settings.defaultLineWidth })
+    if (entity) store.addCircle(entity)
+  }
   const lengthInputPosition = line.end
     ? positionLengthInput(worldToScreen(line.end, camera, viewport), viewport)
+    : undefined
+  const rectangleInputPosition = rectangle.pointer
+    ? positionLengthInput(worldToScreen(rectangle.pointer, camera, viewport), viewport, { width: 280, height: 148 })
+    : undefined
+  const circleInputPosition = circle.edge
+    ? positionLengthInput(worldToScreen(circle.edge, camera, viewport), viewport, { width: 252, height: 118 })
     : undefined
 
   return (
@@ -262,11 +313,14 @@ export function DrawingViewport({ store, tools, projectSettings, initialCamera, 
           <g aria-hidden="true">
             {drawing.state.entities.map((entity) => {
               if (entity.type === 'line') {
-                return <LineRenderer key={entity.id} line={entity} camera={camera} viewport={viewport} selected={mode === 'edit' && entity.id === selectedId} />
+                return <LineRenderer key={entity.id} line={entity} camera={camera} viewport={viewport} selected={mode === 'edit' && selection.selectedIds.has(entity.id)} />
               }
+              if (entity.type === 'rectangle') return <RectangleRenderer key={entity.id} rectangle={entity} camera={camera} viewport={viewport} selected={mode === 'edit' && selection.selectedIds.has(entity.id)} />
+              if (entity.type === 'circle') return <CircleRenderer key={entity.id} circle={entity} camera={camera} viewport={viewport} selected={mode === 'edit' && selection.selectedIds.has(entity.id)} />
+              if (entity.type === 'arc') return <ArcRenderer key={entity.id} arc={entity} camera={camera} viewport={viewport} selected={mode === 'edit' && selection.selectedIds.has(entity.id)} />
               const target = drawing.state.entities.find((candidate) => candidate.type === 'line' && candidate.id === entity.targetEntityId)
               return target?.type === 'line'
-                ? <DimensionRenderer key={entity.id} dimension={entity} target={target} camera={camera} viewport={viewport} settings={projectSettings} selected={mode === 'edit' && entity.id === selectedId} />
+                ? <DimensionRenderer key={entity.id} dimension={entity} target={target} camera={camera} viewport={viewport} settings={projectSettings} selected={mode === 'edit' && selection.selectedIds.has(entity.id)} />
                 : null
             })}
             {mode === 'edit' && activeTool === 'dimension' && dimension.target && dimension.preview && (
@@ -285,11 +339,28 @@ export function DrawingViewport({ store, tools, projectSettings, initialCamera, 
                 <SnapIndicatorRenderer snap={line.snap} camera={camera} viewport={viewport} />
               </>
             )}
+            {mode === 'edit' && activeTool === 'rectangle' && rectangle.preview && <RectangleRenderer rectangle={rectangle.preview} camera={camera} viewport={viewport} preview />}
+            {mode === 'edit' && activeTool === 'circle' && circle.preview && <CircleRenderer circle={circle.preview} camera={camera} viewport={viewport} preview />}
+            {mode === 'edit' && activeTool === 'arc' && arc.preview && <ArcRenderer arc={arc.preview} camera={camera} viewport={viewport} preview />}
+            {mode === 'edit' && activeTool === 'rectangle' && <SnapIndicatorRenderer snap={rectangle.snap} camera={camera} viewport={viewport} />}
+            {mode === 'edit' && activeTool === 'circle' && <SnapIndicatorRenderer snap={circle.snap} camera={camera} viewport={viewport} />}
+            {mode === 'edit' && activeTool === 'arc' && <SnapIndicatorRenderer snap={arc.snap} camera={camera} viewport={viewport} />}
           </g>
         </svg>
 
-        {mode === 'edit' && (activeTool === 'dimension' || (activeTool === 'line' && line.phase === 'placing')) && (
+        {mode === 'edit' && (activeTool === 'dimension' || activeTool === 'arc' || (activeTool === 'line' && line.phase === 'placing') || (activeTool === 'rectangle' && rectangle.phase === 'placing') || (activeTool === 'circle' && circle.phase === 'placing')) && (
           <button className="finish-tool-button" type="button" onClick={() => tools.finishActiveTool()}>{t('done')}</button>
+        )}
+        {mode === 'edit' && rectangle.phase === 'size' && (
+          <RectangleInput width={rectangle.widthInput} height={rectangle.heightInput} canConfirm={rectangle.canConfirm} position={rectangleInputPosition}
+            onChange={(width, height) => tools.rectangle.updateSize(width, height, { color: settings.defaultLineColor, width: settings.defaultLineWidth })}
+            onBack={() => tools.rectangle.back()} onConfirm={confirmRectangle} />
+        )}
+        {mode === 'edit' && circle.phase === 'value' && (
+          <CircleInput value={circle.valueInput} mode={circle.inputMode} canConfirm={circle.canConfirm} position={circleInputPosition}
+            onChange={(value) => tools.circle.updateValue(value, { color: settings.defaultLineColor, width: settings.defaultLineWidth })}
+            onModeChange={(inputMode) => tools.circle.setInputMode(inputMode, { color: settings.defaultLineColor, width: settings.defaultLineWidth })}
+            onBack={() => tools.circle.back()} onConfirm={confirmCircle} />
         )}
         {mode === 'edit' && line.phase === 'length' && (
           <LengthInput

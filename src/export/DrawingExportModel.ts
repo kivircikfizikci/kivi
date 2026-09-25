@@ -4,6 +4,9 @@ import { formatDimension } from '../drawing/geometry/formatDimension.ts'
 import type { Project } from '../types/project.ts'
 import { calculateDrawingBounds, type DrawingBounds } from './drawingBounds.ts'
 import { exportBoundsFromWorldBounds, worldPointToExportPoint } from './exportCoordinates.ts'
+import { resolveDimensionColor } from '../drawing/geometry/dimensionColor.ts'
+import { rectangleCorners } from '../drawing/geometry/rectangle.ts'
+import type { ArcDirection } from '../drawing/entities/ArcEntity.ts'
 
 export interface ExportStroke {
   start: Point
@@ -21,10 +24,13 @@ export interface ExportLabel {
   position: Point
   text: string
   color: string
-  outlineColor: string
   size: number
   rotation: number
 }
+
+export interface ExportRectangle { origin: Point; width: number; height: number; color: string; strokeWidth: number }
+export interface ExportCircle { center: Point; radius: number; color: string; strokeWidth: number }
+export interface ExportArc { center: Point; radius: number; startAngle: number; endAngle: number; direction: ArcDirection; color: string; strokeWidth: number }
 
 export interface DrawingExportModel {
   bounds: DrawingBounds
@@ -33,6 +39,9 @@ export interface DrawingExportModel {
   strokes: ExportStroke[]
   polygons: ExportPolygon[]
   labels: ExportLabel[]
+  rectangles: ExportRectangle[]
+  circles: ExportCircle[]
+  arcs: ExportArc[]
 }
 
 export function createDrawingExportModel(project: Pick<Project, 'drawing' | 'projectSettings'>): DrawingExportModel {
@@ -43,18 +52,33 @@ export function createDrawingExportModel(project: Pick<Project, 'drawing' | 'pro
   const strokes: ExportStroke[] = []
   const polygons: ExportPolygon[] = []
   const labels: ExportLabel[] = []
+  const rectangles: ExportRectangle[] = []
+  const circles: ExportCircle[] = []
+  const arcs: ExportArc[] = []
 
   for (const entity of entities) {
     if (entity.type === 'line') {
       strokes.push({ start: mapPoint(entity.start), end: mapPoint(entity.end), color: entity.style.color, width: entity.style.width })
       continue
     }
+    if (entity.type === 'rectangle') {
+      const corners = rectangleCorners(entity).map(mapPoint)
+      rectangles.push({ origin: corners[3]!, width: entity.width, height: entity.height, color: entity.style.color, strokeWidth: entity.style.width })
+      continue
+    }
+    if (entity.type === 'circle') {
+      circles.push({ center: mapPoint(entity.center), radius: entity.radius, color: entity.style.color, strokeWidth: entity.style.width })
+      continue
+    }
+    if (entity.type === 'arc') {
+      arcs.push({ center: mapPoint(entity.center), radius: entity.radius, startAngle: entity.startAngle, endAngle: entity.endAngle, direction: entity.direction, color: entity.style.color, strokeWidth: entity.style.width })
+      continue
+    }
     const target = lines.get(entity.targetEntityId)
     if (!target) continue
     const geometry = dimensionGeometry(target, entity)
     if (!geometry) continue
-    // Transparent exports cannot borrow contrast from the project canvas.
-    const color = entity.style.color ?? '#315c4c'
+    const color = resolveDimensionColor(entity, project.projectSettings)
     const targetStart = mapPoint(target.start)
     const targetEnd = mapPoint(target.end)
     const start = mapPoint(geometry.start)
@@ -74,7 +98,6 @@ export function createDrawingExportModel(project: Pick<Project, 'drawing' | 'pro
       position: { x: text.x, y: text.y - 7 },
       text: formatDimension(geometry.length, project.projectSettings),
       color,
-      outlineColor: contrastingOutline(color),
       size: entity.style.textSize ?? 13,
       rotation: geometry.rotation,
     })
@@ -87,6 +110,9 @@ export function createDrawingExportModel(project: Pick<Project, 'drawing' | 'pro
     strokes,
     polygons,
     labels,
+    rectangles,
+    circles,
+    arcs,
   }
 }
 
@@ -102,11 +128,4 @@ function arrow(tip: Point, direction: Point, sign: number): Point[] {
     { x: base.x - direction.y * 2.7, y: base.y + direction.x * 2.7 },
     { x: base.x + direction.y * 2.7, y: base.y - direction.x * 2.7 },
   ]
-}
-
-function contrastingOutline(color: string) {
-  const hex = color.replace('#', '')
-  if (!/^[\da-f]{6}$/i.test(hex)) return '#ffffff'
-  const [r, g, b] = [hex.slice(0, 2), hex.slice(2, 4), hex.slice(4, 6)].map((value) => parseInt(value, 16))
-  return ((r ?? 0) * 299 + (g ?? 0) * 587 + (b ?? 0) * 114) / 1000 > 150 ? '#17201c' : '#ffffff'
 }

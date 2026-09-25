@@ -22,22 +22,23 @@ export function TopBar({ onOpenSettings, onOpenShare, saveStatus, store, tools, 
   const { t } = useI18n()
   return (
     <header className="top-bar">
-      <div className="top-bar-left">
+      <div className="toolbar-group toolbar-left">
         <MainMenu onOpenSettings={onOpenSettings} />
         <span className="brand-status">
           <span className="brand-mark" aria-label={t('appName')}>K</span>
           <span className={`save-indicator is-${saveStatus}`} role="status" aria-label={t(saveStatus === 'error' ? 'saveError' : saveStatus)} title={t(saveStatus === 'error' ? 'saveError' : saveStatus)} />
         </span>
       </div>
-      <div className="desktop-top-actions">
+      <div className="toolbar-group toolbar-center">
         <ToolsMenu tools={tools} activeTool={activeTool} />
         <button className="icon-button compact" type="button" disabled={!canUndo} onClick={() => store.undo()} aria-label={t('undo')}><Icon name="undo" /></button>
         <button className="icon-button compact" type="button" disabled={!canRedo} onClick={() => store.redo()} aria-label={t('redo')}><Icon name="redo" /></button>
       </div>
-      <button className="share-button" type="button" onClick={onOpenShare} aria-label={t('share')} title={t('share')}>
-        <Icon name="share" />
-        <span>{t('share')}</span>
-      </button>
+      <div className="toolbar-group toolbar-right">
+        <button className="share-button" type="button" onClick={onOpenShare} aria-label={t('share')} title={t('share')}>
+          <Icon name="share" /><span>{t('share')}</span>
+        </button>
+      </div>
     </header>
   )
 }

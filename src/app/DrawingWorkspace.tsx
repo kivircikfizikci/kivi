@@ -27,7 +27,7 @@ export function DrawingWorkspace({ project, mode = 'edit' }: { project: Project;
   const store = session.store
   const drawing = useSyncExternalStore(store.subscribe, store.getSnapshot)
   const activeTool = useSyncExternalStore(tools.subscribe, tools.getSnapshot)
-  const selectedId = useSyncExternalStore(tools.select.subscribe, tools.select.getSnapshot)
+  const selection = useSyncExternalStore(tools.select.subscribe, tools.select.getSnapshot)
   const fullscreen = useFullscreenMode()
   const persistCamera = useCallback((camera: Parameters<ProjectSession['updateCamera']>[0]) => {
     if (mode === 'edit') session.updateCamera(camera)
@@ -73,20 +73,20 @@ export function DrawingWorkspace({ project, mode = 'edit' }: { project: Project;
       } else if (modifier && event.key.toLowerCase() === 'y') {
         event.preventDefault()
         store.redo()
-      } else if ((event.key === 'Delete' || event.key === 'Backspace') && selectedId) {
+      } else if ((event.key === 'Delete' || event.key === 'Backspace') && selection.selectedIds.size > 0) {
         event.preventDefault()
-        if (store.deleteEntity(selectedId)) tools.select.select(null)
+        if (store.deleteEntities(selection.selectedIds)) tools.select.clearSelection()
       }
     }
 
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [activeTool, drawerOpen, mode, selectedId, settingsOpen, shareOpen, store, tools])
+  }, [activeTool, drawerOpen, mode, selection.selectedIds, settingsOpen, shareOpen, store, tools])
 
   const commandContext = useMemo<CommandContext>(() => ({
     activateTool: (tool) => tools.activate(tool),
     deleteSelection: () => {
-      if (selectedId && store.deleteEntity(selectedId)) tools.select.select(null)
+      if (store.deleteEntities(selection.selectedIds)) tools.select.clearSelection()
     },
     undo: () => { store.undo() },
     redo: () => { store.redo() },
@@ -94,7 +94,7 @@ export function DrawingWorkspace({ project, mode = 'edit' }: { project: Project;
     openSettings: () => setSettingsOpen(true),
     enterFullscreen: () => { void fullscreen.enter() },
     openShare: () => setShareOpen(true),
-  }), [fullscreen, navigate, selectedId, store, tools])
+  }), [fullscreen, navigate, selection.selectedIds, store, tools])
 
   return (
     <div ref={fullscreen.containerRef} className={`app-shell${fullscreen.active ? ' is-fullscreen' : ''}`}>
@@ -134,7 +134,7 @@ export function DrawingWorkspace({ project, mode = 'edit' }: { project: Project;
             store={store}
             tools={tools}
             activeTool={activeTool}
-            selectedId={selectedId}
+            selection={selection}
             canUndo={drawing.canUndo}
             canRedo={drawing.canRedo}
           />

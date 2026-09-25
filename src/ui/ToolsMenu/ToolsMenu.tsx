@@ -11,16 +11,19 @@ export function ToolsMenu({ tools, activeTool }: { tools: ToolManager; activeToo
   const [open, setOpen] = useState(false)
   useEscapeKey(() => setOpen(false), open)
   const items = [
-    ['select', 'cursor', 'select'],
     ['line', 'line', 'line'],
+    ['rectangle', 'rectangle', 'rectangle'],
+    ['circle', 'circle', 'circle'],
+    ['arc', 'arc', 'arc'],
     ['dimension', 'dimension', 'dimension'],
+    ['select', 'cursor', 'select'],
   ] as const
 
   return (
     <div className="menu-anchor tools-menu-anchor">
       <button className="tools-menu-button" type="button" onClick={() => setOpen((value) => !value)} aria-expanded={open}>
         <Icon name="tools" />
-        <span>{t('tools')}: {t(activeTool === 'dimension' ? 'dimension' : activeTool)}</span>
+        <span>{t('tools')}: {t(activeTool)}</span>
         <Icon name="chevronDown" />
       </button>
       {open && <button className="popover-dismiss" type="button" onClick={() => setOpen(false)} aria-label={t('close')} />}

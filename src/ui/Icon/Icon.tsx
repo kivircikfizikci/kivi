@@ -1,6 +1,6 @@
 import type { SVGProps } from 'react'
 
-export type IconName = 'settings' | 'expand' | 'collapse' | 'close' | 'folder' | 'chevronLeft' | 'chevronUp' | 'chevronDown' | 'line' | 'cursor' | 'undo' | 'redo' | 'trash' | 'plus' | 'edit' | 'dimension' | 'menu' | 'tools' | 'share' | 'image' | 'file' | 'link'
+export type IconName = 'settings' | 'expand' | 'collapse' | 'close' | 'folder' | 'chevronLeft' | 'chevronUp' | 'chevronDown' | 'line' | 'rectangle' | 'circle' | 'arc' | 'multi' | 'cursor' | 'undo' | 'redo' | 'trash' | 'plus' | 'edit' | 'dimension' | 'menu' | 'tools' | 'share' | 'image' | 'file' | 'link'
 
 const paths: Record<IconName, React.ReactNode> = {
   settings: (
@@ -17,6 +17,10 @@ const paths: Record<IconName, React.ReactNode> = {
   chevronUp: <path d="m6 15 6-6 6 6" />,
   chevronDown: <path d="m6 9 6 6 6-6" />,
   line: <path d="M5 19 19 5M4 17v3h3m10-16h3v3" />,
+  rectangle: <rect x="4" y="6" width="16" height="12" />,
+  circle: <circle cx="12" cy="12" r="8" />,
+  arc: <path d="M5 17A10 10 0 0 1 19 7" />,
+  multi: <><rect x="4" y="4" width="10" height="10" /><rect x="10" y="10" width="10" height="10" /></>,
   cursor: <path d="m5 3 14 9-7 1-3 7L5 3Z" />,
   undo: <path d="M9 7 4 12l5 5M5 12h8a6 6 0 0 1 6 6" />,
   redo: <path d="m15 7 5 5-5 5m4-5h-8a6 6 0 0 0-6 6" />,

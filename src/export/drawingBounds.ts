@@ -2,6 +2,8 @@ import type { Entity } from '../drawing/entities/Entity.ts'
 import { dimensionGeometry } from '../drawing/geometry/dimension.ts'
 import { formatDimension } from '../drawing/geometry/formatDimension.ts'
 import type { ProjectSettings } from '../types/project.ts'
+import { rectangleCorners } from '../drawing/geometry/rectangle.ts'
+import { angleIsOnArc, pointOnCircle } from '../drawing/geometry/arc.ts'
 
 export interface DrawingBounds {
   minX: number
@@ -19,6 +21,24 @@ export function calculateDrawingBounds(entities: readonly Entity[], settings: Pr
   for (const entity of entities) {
     if (entity.type === 'line') {
       points.push(entity.start, entity.end)
+      continue
+    }
+    if (entity.type === 'rectangle') {
+      points.push(...rectangleCorners(entity))
+      continue
+    }
+    if (entity.type === 'circle') {
+      points.push(
+        { x: entity.center.x - entity.radius, y: entity.center.y - entity.radius },
+        { x: entity.center.x + entity.radius, y: entity.center.y + entity.radius },
+      )
+      continue
+    }
+    if (entity.type === 'arc') {
+      points.push(pointOnCircle(entity.center, entity.radius, entity.startAngle), pointOnCircle(entity.center, entity.radius, entity.endAngle))
+      for (const angle of [0, 90, 180, 270]) {
+        if (angleIsOnArc(angle, entity)) points.push(pointOnCircle(entity.center, entity.radius, angle))
+      }
       continue
     }
     const target = lines.get(entity.targetEntityId)

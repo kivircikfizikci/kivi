@@ -210,6 +210,65 @@
   opacity: 1;
 }
 
+.geometry-input {
+  max-width: 430px;
+}
+
+.geometry-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.geometry-fields label {
+  display: grid;
+  gap: 4px;
+  color: var(--ink-muted);
+  font-size: 11px;
+}
+
+.geometry-fields input {
+  width: 100%;
+  min-width: 0;
+  height: 40px;
+  padding: 0 8px;
+  background: var(--surface-soft);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.geometry-input-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.segmented-control {
+  display: flex;
+  padding: 2px;
+  background: var(--surface-soft);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.segmented-control button {
+  width: 30px;
+  min-height: 28px;
+  padding: 0;
+  color: var(--ink-muted);
+  background: transparent;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.segmented-control button.is-active {
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
 .share-backdrop {
   position: fixed;
   z-index: 13;
@@ -568,6 +627,18 @@ button.tool-tile {
   .tools-menu-button {
     min-height: 34px;
     padding: 0 8px;
+  }
+
+  .geometry-input {
+    grid-template-columns: 58px minmax(0, 1fr);
+  }
+
+  .rectangle-input {
+    width: 280px;
+  }
+
+  .geometry-fields input {
+    height: 34px;
   }
 
   .sheet-backdrop {

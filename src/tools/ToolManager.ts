@@ -2,11 +2,18 @@ import { LineTool } from './LineTool.ts'
 import { SelectTool } from './SelectTool.ts'
 import { DimensionTool } from './DimensionTool.ts'
 import type { ToolId } from './Tool.ts'
+import type { Tool } from './Tool.ts'
+import { RectangleTool } from './RectangleTool.ts'
+import { CircleTool } from './CircleTool.ts'
+import { ArcTool } from './ArcTool.ts'
 
 export class ToolManager {
   readonly line = new LineTool()
   readonly select = new SelectTool()
   readonly dimension = new DimensionTool()
+  readonly rectangle = new RectangleTool()
+  readonly circle = new CircleTool()
+  readonly arc = new ArcTool()
   private activeId: ToolId = 'select'
   private readonly listeners = new Set<() => void>()
 
@@ -35,7 +42,14 @@ export class ToolManager {
 
   finishLine() { this.finishActiveTool() }
 
-  private getTool(id: ToolId) {
-    return id === 'line' ? this.line : id === 'dimension' ? this.dimension : this.select
+  private getTool(id: ToolId): Tool {
+    switch (id) {
+      case 'line': return this.line
+      case 'rectangle': return this.rectangle
+      case 'circle': return this.circle
+      case 'arc': return this.arc
+      case 'dimension': return this.dimension
+      case 'select': return this.select
+    }
   }
 }

@@ -3,6 +3,8 @@ import type { LineEntity } from '../entities/LineEntity.ts'
 import type { Point } from '../geometry/Point.ts'
 import { projectPointToSegment } from '../geometry/projection.ts'
 import { dimensionGeometry } from '../geometry/dimension.ts'
+import { rectangleEdges } from '../geometry/rectangle.ts'
+import { angleFromCenter, angleIsOnArc } from '../geometry/arc.ts'
 
 export const SELECTION_TOLERANCE_MOUSE_PX = 8
 export const SELECTION_TOLERANCE_TOUCH_PX = 16
@@ -37,7 +39,7 @@ export class SelectionManager {
       let distancePixels: number
       if (entity.type === 'line') {
         distancePixels = Math.sqrt(projectPointToSegment(pointer, entity.start, entity.end).distanceSquared) * zoom
-      } else {
+      } else if (entity.type === 'dimension') {
         const target = entities.find((candidate): candidate is LineEntity => candidate.type === 'line' && candidate.id === entity.targetEntityId)
         if (!target) continue
         const geometry = dimensionGeometry(target, entity)
@@ -45,6 +47,16 @@ export class SelectionManager {
         const lineDistance = Math.sqrt(projectPointToSegment(pointer, geometry.start, geometry.end).distanceSquared) * zoom
         const textDistancePixels = Math.hypot(pointer.x - geometry.text.x, pointer.y - geometry.text.y) * zoom
         distancePixels = Math.min(lineDistance, Math.max(0, textDistancePixels - 22))
+      } else if (entity.type === 'rectangle') {
+        distancePixels = Math.min(...rectangleEdges(entity).map((edge) => Math.sqrt(projectPointToSegment(pointer, edge.start, edge.end).distanceSquared) * zoom))
+      } else if (entity.type === 'circle') {
+        distancePixels = Math.abs(Math.hypot(pointer.x - entity.center.x, pointer.y - entity.center.y) - entity.radius) * zoom
+      } else {
+        const radialDistance = Math.abs(Math.hypot(pointer.x - entity.center.x, pointer.y - entity.center.y) - entity.radius) * zoom
+        const angularTolerance = entity.radius > 0 ? tolerancePixels / (entity.radius * zoom) * 180 / Math.PI : 0
+        distancePixels = angleIsOnArc(angleFromCenter(entity.center, pointer), entity, angularTolerance)
+          ? radialDistance
+          : Number.POSITIVE_INFINITY
       }
       if (distancePixels <= tolerancePixels && distancePixels <= bestDistance) {
         selected = entity

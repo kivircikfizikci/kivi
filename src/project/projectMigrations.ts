@@ -21,6 +21,19 @@ export function migrateProject(value: unknown): Project {
     }
   }
 
+  // Projects created before semantic geometry tools and project-level dimension color.
+  if (value.version === 1 && isDrawingState(value.drawing) && isRecord(value.projectSettings)) {
+    const project = value as unknown as Omit<Project, 'version' | 'projectSettings'> & { projectSettings: Partial<ProjectSettings> }
+    return {
+      ...project,
+      version: CURRENT_PROJECT_VERSION,
+      drawing: { version: 1, entities: project.drawing.entities },
+      projectSettings: { ...defaultProjectSettings(), ...project.projectSettings },
+      view: isProjectView(project.view) ? project.view : { camera: structuredClone(DEFAULT_CAMERA) },
+      sync: { ...defaultSyncMetadata(), ...(isRecord(project.sync) ? project.sync : {}) },
+    }
+  }
+
   // Boundary for the original foundation model, which stored drawing data under `data`.
   if (value.version === 1 && isDrawingState(value.data)) {
     const now = new Date().toISOString()
@@ -48,6 +61,7 @@ export function defaultProjectSettings(): ProjectSettings {
     gridSpacing: 10,
     dimensionDisplayUnit: 'cm',
     showDimensionUnit: false,
+    dimensionColor: '#315c4c',
   }
 }
 
@@ -65,6 +79,7 @@ function isProjectSettings(value: unknown): value is ProjectSettings {
     && typeof value.gridColor === 'string'
     && typeof value.gridEnabled === 'boolean'
     && typeof value.gridSpacing === 'number'
+    && typeof value.dimensionColor === 'string'
 }
 
 function isProjectView(value: unknown): value is Project['view'] {
