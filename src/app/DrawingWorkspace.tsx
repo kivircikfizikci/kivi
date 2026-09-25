@@ -15,6 +15,7 @@ import { useI18n } from '../i18n/I18nContext.ts'
 import { CommandBar } from '../ui/CommandBar/CommandBar.tsx'
 import type { CommandContext } from '../commands/commandRegistry.ts'
 import { LayerPanel } from '../ui/Layers/LayerPanel.tsx'
+import { parseCoordinate } from '../commands/coordinateParser.ts'
 
 export function DrawingWorkspace({ project, mode = 'edit' }: { project: Project; mode?: WorkspaceMode }) {
   const { t } = useI18n()
@@ -29,6 +30,7 @@ export function DrawingWorkspace({ project, mode = 'edit' }: { project: Project;
   const store = session.store
   const drawing = useSyncExternalStore(store.subscribe, store.getSnapshot)
   const activeTool = useSyncExternalStore(tools.subscribe, tools.getSnapshot)
+  const line = useSyncExternalStore(tools.line.subscribe, tools.line.getSnapshot)
   const selection = useSyncExternalStore(tools.select.subscribe, tools.select.getSnapshot)
   const fullscreen = useFullscreenMode()
   const persistCamera = useCallback((camera: Parameters<ProjectSession['updateCamera']>[0]) => {
@@ -105,6 +107,16 @@ export function DrawingWorkspace({ project, mode = 'edit' }: { project: Project;
     enterFullscreen: () => { void fullscreen.enter() },
     openShare: () => setShareOpen(true),
   }), [deleteSelection, fullscreen, navigate, store, tools])
+  const commandPrompt = useMemo(() => activeTool === 'line' && line.phase === 'placing' && !line.start ? {
+    placeholder: t('startCoordinate'),
+    submit: (value: string) => {
+      const point = parseCoordinate(value)
+      if (!point) return false
+      tools.line.placePoint(point, null)
+      return true
+    },
+    cancel: () => tools.finishActiveTool(),
+  } : null, [activeTool, line.phase, line.start, t, tools])
 
   return (
     <div ref={fullscreen.containerRef} className={`app-shell${fullscreen.active ? ' is-fullscreen' : ''}`}>
@@ -136,7 +148,7 @@ export function DrawingWorkspace({ project, mode = 'edit' }: { project: Project;
         onDeleteSelection={deleteSelection}
       />
       {!fullscreen.active && mode === 'edit' && (
-        <CommandBar context={commandContext} saveStatus={projectSnapshot.saveStatus} dirty={projectSnapshot.dirty} />
+        <CommandBar context={commandContext} saveStatus={projectSnapshot.saveStatus} dirty={projectSnapshot.dirty} prompt={commandPrompt} />
       )}
       {fullscreen.active ? (
         <FullscreenExit onExit={() => void fullscreen.exit()} />

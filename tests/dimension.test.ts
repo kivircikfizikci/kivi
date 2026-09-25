@@ -17,7 +17,7 @@ import { SelectionManager } from '../src/drawing/selection/SelectionManager.ts'
 const horizontal: LineEntity = { id: 'h', type: 'line', start: { x: 0, y: 0 }, end: { x: 275, y: 0 }, style: { color: '#333333', width: 2 } }
 const vertical: LineEntity = { ...horizontal, id: 'v', end: { x: 0, y: 275 } }
 const diagonal: LineEntity = { ...horizontal, id: 'd', end: { x: 3, y: 4 } }
-const dimension: DimensionEntity = { id: 'dim-1', type: 'dimension', targetEntityId: 'h', side: 1, offset: 20, style: {} }
+const dimension: DimensionEntity = { id: 'dim-1', type: 'dimension', source: { type: 'entity', targetEntityId: 'h' }, side: 1, offset: 20, style: {} }
 
 test('horizontal dimension is parallel and offset above its line', () => {
   const result = dimensionGeometry(horizontal, dimension)!
@@ -72,9 +72,9 @@ test('dimension tool keeps preview transient and returns to target selection aft
   tool.position({ x: 80, y: 30 }, 5)
   assert.equal(tool.getSnapshot().preview?.offset, 30)
   const placed = tool.place()!
-  assert.equal(placed.targetEntityId, horizontal.id)
+  assert.deepEqual(placed.source, { type: 'entity', targetEntityId: horizontal.id })
   assert.equal(placed.offset, 30)
-  assert.equal(tool.getSnapshot().target, null)
+  assert.equal(tool.getSnapshot().segment, null)
   assert.equal(tool.getSnapshot().preview, null)
 })
 

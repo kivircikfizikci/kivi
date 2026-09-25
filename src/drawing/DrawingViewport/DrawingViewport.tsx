@@ -43,6 +43,8 @@ import { entitiesOnSelectableLayers, entitiesOnVisibleLayers, DIMENSIONS_LAYER_I
 import { DrawingContextMenu, type ContextMenuPosition } from '../../ui/ContextMenu/DrawingContextMenu.tsx'
 import { selectionForContextTarget } from '../selection/contextSelection.ts'
 import { geometryStyleFromProject } from '../entities/geometryStyle.ts'
+import { resolveDimensionSegment } from '../geometry/dimension.ts'
+import { SnapQuickControls } from '../../ui/SnapQuickControls/SnapQuickControls.tsx'
 
 interface DrawingViewportProps {
   store: DrawingStore
@@ -100,8 +102,8 @@ export function DrawingViewport({ store, tools, projectSettings, layers, activeL
     const allowed = new Set(selectableEntities.map((entity) => entity.id))
     const next = [...selection.selectedIds].filter((id) => allowed.has(id))
     if (next.length !== selection.selectedIds.size) tools.select.setSelection(next)
-    if (dimension.target && !allowed.has(dimension.target.id)) tools.dimension.activate()
-  }, [dimension.target, selectableEntities, selection.selectedIds, tools.dimension, tools.select])
+    if (dimension.source?.type === 'entity' && !allowed.has(dimension.source.targetEntityId)) tools.dimension.activate()
+  }, [dimension.source, selectableEntities, selection.selectedIds, tools.dimension, tools.select])
 
   useEffect(() => { setContextMenu(null) }, [activeTool])
 
@@ -132,7 +134,7 @@ export function DrawingViewport({ store, tools, projectSettings, layers, activeL
       pointer: worldPoint,
       entities: visibleEntities,
       zoom: camera.zoom,
-      angleOrigin: line.start ?? rectangle.start ?? circle.center ?? arc.center ?? undefined,
+      angleOrigin: dimension.firstPoint ?? line.start ?? rectangle.start ?? circle.center ?? arc.center ?? undefined,
       settings: {
         endpoint: settings.endpointSnapEnabled,
         midpoint: settings.midpointSnapEnabled,
@@ -142,7 +144,7 @@ export function DrawingViewport({ store, tools, projectSettings, layers, activeL
         pixelTolerance: tolerance,
       },
     })
-  }, [arc.center, camera, circle.center, line.start, projectSettings.gridSpacing, rectangle.start, settings, snapManager, viewport, visibleEntities])
+  }, [arc.center, camera, circle.center, dimension.firstPoint, line.start, projectSettings.gridSpacing, rectangle.start, settings, snapManager, viewport, visibleEntities])
 
   const handleSinglePoint = useCallback((screenPoint: Point, pointerType: string, toggleSelection: boolean) => {
     if (mode === 'view') return
@@ -172,11 +174,18 @@ export function DrawingViewport({ store, tools, projectSettings, layers, activeL
     }
 
     if (activeTool === 'dimension') {
-      if (!tools.dimension.getSnapshot().target) {
+      const snapshot = tools.dimension.getSnapshot()
+      if (snapshot.phase === 'waitingFirst') {
+        const resolved = resolveSnap(screenPoint, pointerType)
         const tolerance = pointerType === 'touch' ? SELECTION_TOLERANCE_TOUCH_PX : SELECTION_TOLERANCE_MOUSE_PX
         const target = selectionManager.findLine(worldPoint, selectableEntities, camera.zoom, tolerance)
+        tools.dimension.begin(target, target ? worldPoint : resolved.point, target ? null : resolved.snap)
         if (target) {
-          tools.dimension.chooseTarget(target)
+          tools.dimension.position(worldPoint, 20 / camera.zoom)
+        }
+      } else if (snapshot.phase === 'waitingSecond') {
+        const resolved = resolveSnap(screenPoint, pointerType)
+        if (tools.dimension.chooseSecondPoint(resolved.point, resolved.snap)) {
           tools.dimension.position(worldPoint, 20 / camera.zoom)
         }
       } else {
@@ -257,7 +266,10 @@ export function DrawingViewport({ store, tools, projectSettings, layers, activeL
     } else if (mode === 'edit' && activeTool === 'arc' && arc.phase !== 'center') {
       const resolved = resolveSnap(point, event.pointerType)
       tools.arc.updatePointer(resolved.point, resolved.snap, lineStyle)
-    } else if (activeTool === 'dimension' && dimension.target) {
+    } else if (mode === 'edit' && activeTool === 'dimension' && dimension.phase === 'waitingSecond') {
+      const resolved = resolveSnap(point, event.pointerType)
+      tools.dimension.updateSecondPoint(resolved.point, resolved.snap)
+    } else if (mode === 'edit' && activeTool === 'dimension' && dimension.phase === 'positioning') {
       tools.dimension.position(screenToWorld(point, camera, viewport), 20 / camera.zoom)
     }
   }
@@ -351,14 +363,18 @@ export function DrawingViewport({ store, tools, projectSettings, layers, activeL
               if (entity.type === 'rectangle') return <RectangleRenderer key={entity.id} rectangle={entity} camera={camera} viewport={viewport} selected={mode === 'edit' && selection.selectedIds.has(entity.id)} />
               if (entity.type === 'circle') return <CircleRenderer key={entity.id} circle={entity} camera={camera} viewport={viewport} selected={mode === 'edit' && selection.selectedIds.has(entity.id)} />
               if (entity.type === 'arc') return <ArcRenderer key={entity.id} arc={entity} camera={camera} viewport={viewport} selected={mode === 'edit' && selection.selectedIds.has(entity.id)} />
-              const target = visibleEntities.find((candidate) => candidate.type === 'line' && candidate.id === entity.targetEntityId)
-              return target?.type === 'line'
-                ? <DimensionRenderer key={entity.id} dimension={entity} target={target} camera={camera} viewport={viewport} settings={projectSettings} selected={mode === 'edit' && selection.selectedIds.has(entity.id)} />
+              const segment = resolveDimensionSegment(entity, visibleEntities)
+              return segment
+                ? <DimensionRenderer key={entity.id} dimension={entity} segment={segment} camera={camera} viewport={viewport} settings={projectSettings} selected={mode === 'edit' && selection.selectedIds.has(entity.id)} />
                 : null
             })}
-            {mode === 'edit' && activeTool === 'dimension' && dimension.target && dimension.preview && (
-              <DimensionRenderer dimension={dimension.preview} target={dimension.target} camera={camera} viewport={viewport} settings={projectSettings} preview />
+            {mode === 'edit' && activeTool === 'dimension' && dimension.segment && dimension.preview && (
+              <DimensionRenderer dimension={dimension.preview} segment={dimension.segment} camera={camera} viewport={viewport} settings={projectSettings} preview />
             )}
+            {mode === 'edit' && activeTool === 'dimension' && dimension.firstPoint && (
+              <DimensionPointPreview start={dimension.firstPoint} end={dimension.secondPoint} camera={camera} viewport={viewport} />
+            )}
+            {mode === 'edit' && activeTool === 'dimension' && <SnapIndicatorRenderer snap={dimension.snap} camera={camera} viewport={viewport} />}
             {mode === 'edit' && activeTool === 'line' && (
               <>
                 <PreviewRenderer
@@ -410,6 +426,7 @@ export function DrawingViewport({ store, tools, projectSettings, layers, activeL
             <Icon name="expand" />
           </button>
         )}
+        {mode === 'edit' && <SnapQuickControls />}
         {contextMenu && mode === 'edit' && (
           <DrawingContextMenu position={contextMenu} layers={targetLayers} onClose={() => setContextMenu(null)}
             onMove={(layerId) => { onMoveSelection(layerId); setContextMenu(null) }}
@@ -422,4 +439,16 @@ export function DrawingViewport({ store, tools, projectSettings, layers, activeL
 
 function midpoint(a: Point, b: Point): Point {
   return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }
+}
+
+function DimensionPointPreview({ start, end, camera, viewport }: { start: Point; end: Point | null; camera: Camera; viewport: ViewportSize }) {
+  const a = worldToScreen(start, camera, viewport)
+  const b = end ? worldToScreen(end, camera, viewport) : null
+  return (
+    <g className="dimension-point-preview">
+      {b && <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} />}
+      <circle cx={a.x} cy={a.y} r="4" />
+      {b && <circle cx={b.x} cy={b.y} r="4" />}
+    </g>
+  )
 }

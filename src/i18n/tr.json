@@ -37,6 +37,7 @@
   "exportError": "Dışa aktarma başarısız",
   "viewOnly": "Salt okunur",
   "command": "Komut",
+  "startCoordinate": "Başlangıç noktası (X,Y)",
   "commandSuggestions": "Komut önerileri",
   "fullscreen": "Tam ekran",
   "exitFullscreen": "Tam ekrandan çık",

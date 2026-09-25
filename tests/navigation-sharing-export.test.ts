@@ -32,7 +32,7 @@ function line(id = 'line-1'): LineEntity {
 }
 
 function dimension(): DimensionEntity {
-  return { id: 'dim-1', type: 'dimension', targetEntityId: 'line-1', offset: 25, side: 1, style: {} }
+  return { id: 'dim-1', type: 'dimension', source: { type: 'entity', targetEntityId: 'line-1' }, offset: 25, side: 1, style: {} }
 }
 
 function project(id = '7Kf3mQab'): Project {

@@ -17,7 +17,7 @@ function line(id: string, start: { x: number; y: number }, end: { x: number; y: 
 }
 
 function dimension(id: string, targetEntityId: string, offset = 20): DimensionEntity {
-  return { id, type: 'dimension', targetEntityId, offset, side: 1, style: {} }
+  return { id, type: 'dimension', source: { type: 'entity', targetEntityId }, offset, side: 1, style: {} }
 }
 
 function exportProject(entities: Project['drawing']['entities'], settings: Partial<Project['projectSettings']> = {}): Project {

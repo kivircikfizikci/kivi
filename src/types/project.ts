@@ -1,7 +1,7 @@
 import type { Camera } from '../drawing/camera/Camera.ts'
 import type { DrawingState } from '../project/DrawingState.ts'
 
-export const CURRENT_PROJECT_VERSION = 3 as const
+export const CURRENT_PROJECT_VERSION = 4 as const
 
 export interface Layer {
   id: string

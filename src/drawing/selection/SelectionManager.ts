@@ -2,7 +2,7 @@ import type { Entity } from '../entities/Entity.ts'
 import type { LineEntity } from '../entities/LineEntity.ts'
 import type { Point } from '../geometry/Point.ts'
 import { projectPointToSegment } from '../geometry/projection.ts'
-import { dimensionGeometry } from '../geometry/dimension.ts'
+import { buildDimensionGeometry, resolveDimensionSegment } from '../geometry/dimension.ts'
 import { rectangleEdges } from '../geometry/rectangle.ts'
 import { angleFromCenter, angleIsOnArc } from '../geometry/arc.ts'
 
@@ -40,9 +40,9 @@ export class SelectionManager {
       if (entity.type === 'line') {
         distancePixels = Math.sqrt(projectPointToSegment(pointer, entity.start, entity.end).distanceSquared) * zoom
       } else if (entity.type === 'dimension') {
-        const target = entities.find((candidate): candidate is LineEntity => candidate.type === 'line' && candidate.id === entity.targetEntityId)
-        if (!target) continue
-        const geometry = dimensionGeometry(target, entity)
+        const segment = resolveDimensionSegment(entity, entities)
+        if (!segment) continue
+        const geometry = buildDimensionGeometry(segment, entity)
         if (!geometry) continue
         const lineDistance = Math.sqrt(projectPointToSegment(pointer, geometry.start, geometry.end).distanceSquared) * zoom
         const textDistancePixels = Math.hypot(pointer.x - geometry.text.x, pointer.y - geometry.text.y) * zoom

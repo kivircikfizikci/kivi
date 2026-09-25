@@ -196,6 +196,18 @@
   fill: none;
 }
 
+.dimension-point-preview line {
+  stroke: var(--accent);
+  stroke-width: 1.2;
+  stroke-dasharray: 5 4;
+}
+
+.dimension-point-preview circle {
+  fill: var(--surface);
+  stroke: var(--accent);
+  stroke-width: 1.8;
+}
+
 .finish-tool-button {
   position: absolute;
   z-index: 3;
@@ -334,6 +346,37 @@
 .fullscreen-control:hover,
 .fullscreen-control:focus-visible {
   opacity: 1;
+}
+
+.snap-quick-controls {
+  display: none;
+}
+
+@media (min-width: 700px) {
+  .snap-quick-controls {
+    position: absolute;
+    z-index: 5;
+    right: max(58px, calc(48px + env(safe-area-inset-right)));
+    bottom: max(10px, env(safe-area-inset-bottom));
+    display: flex;
+    gap: 4px;
+    padding: 3px;
+    background: var(--floating-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-soft);
+  }
+
+  .snap-quick-controls .icon-button {
+    width: 32px;
+    height: 32px;
+    color: var(--ink-muted);
+  }
+
+  .snap-quick-controls .icon-button.is-active {
+    color: var(--accent);
+    background: var(--accent-soft);
+  }
 }
 
 .fullscreen-exit {

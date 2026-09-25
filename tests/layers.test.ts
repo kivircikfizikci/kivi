@@ -49,9 +49,11 @@ test('version 2 projects migrate entities to built-in layers without changing ge
   const rawLine = { ...line } as Record<string, unknown>
   delete rawLine.layerId
   const rawDimension = { ...dimension } as Record<string, unknown>
+  rawDimension.targetEntityId = line.id
+  delete rawDimension.source
   delete rawDimension.layerId
   const migrated = migrateProject({ ...project(), version: 2, layers: undefined, activeLayerId: undefined, drawing: { version: 1, entities: [rawLine, rawDimension] } })
-  assert.equal(migrated.version, 3)
+  assert.equal(migrated.version, CURRENT_PROJECT_VERSION)
   assert.deepEqual(migrated.layers.map((layer) => layer.id), [DEFAULT_LAYER_ID, DIMENSIONS_LAYER_ID])
   assert.deepEqual(migrated.drawing.entities.map((entity) => entity.layerId), [DEFAULT_LAYER_ID, DIMENSIONS_LAYER_ID])
   assert.deepEqual(migrated.drawing.entities[0]?.style, oldStyle)

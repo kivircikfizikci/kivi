@@ -25,6 +25,18 @@ export function migrateProject(value: unknown): Project {
     }
   }
 
+  if (value.version === 3 && isDrawingState(value.drawing) && isProjectSettings(value.projectSettings) && isLayers(value.layers)) {
+    const project = value as unknown as Omit<Project, 'version' | 'drawing'> & { drawing: DrawingState }
+    return {
+      ...project,
+      version: CURRENT_PROJECT_VERSION,
+      drawing: { version: 1, entities: migrateDimensionSources(project.drawing.entities) },
+      activeLayerId: resolveActiveLayer(project.layers, project.activeLayerId),
+      view: isProjectView(project.view) ? project.view : { camera: structuredClone(DEFAULT_CAMERA) },
+      sync: { ...defaultSyncMetadata(), ...(isRecord(project.sync) ? project.sync : {}) },
+    }
+  }
+
   if (value.version === 2 && isDrawingState(value.drawing) && isRecord(value.projectSettings)) {
     const project = value as unknown as Omit<Project, 'version' | 'drawing' | 'layers' | 'activeLayerId' | 'projectSettings'> & { drawing: DrawingState; projectSettings: Partial<ProjectSettings> }
     return {
@@ -117,10 +129,20 @@ function isLayers(value: unknown): value is Layer[] {
 }
 
 function assignBuiltInLayers(entities: readonly Entity[]): Entity[] {
-  return entities.map((entity) => ({
+  return migrateDimensionSources(entities).map((entity) => ({
     ...entity,
     layerId: entity.type === 'dimension' ? DIMENSIONS_LAYER_ID : DEFAULT_LAYER_ID,
   }))
+}
+
+function migrateDimensionSources(entities: readonly Entity[]): Entity[] {
+  return entities.map((entity) => {
+    if (entity.type !== 'dimension' || 'source' in entity) return entity
+    const legacy = entity as unknown as Entity & { targetEntityId?: unknown }
+    if (typeof legacy.targetEntityId !== 'string') return entity
+    const { targetEntityId, ...rest } = legacy
+    return { ...rest, source: { type: 'entity', targetEntityId } } as Entity
+  })
 }
 
 function resolveActiveLayer(layers: readonly Layer[], requested: unknown) {

@@ -1,6 +1,6 @@
 import type { SVGProps } from 'react'
 
-export type IconName = 'settings' | 'expand' | 'collapse' | 'close' | 'folder' | 'chevronLeft' | 'chevronUp' | 'chevronDown' | 'line' | 'rectangle' | 'circle' | 'arc' | 'multi' | 'cursor' | 'undo' | 'redo' | 'trash' | 'plus' | 'edit' | 'dimension' | 'menu' | 'tools' | 'share' | 'image' | 'file' | 'link' | 'eye' | 'eyeOff' | 'lock' | 'unlock'
+export type IconName = 'settings' | 'expand' | 'collapse' | 'close' | 'folder' | 'chevronLeft' | 'chevronUp' | 'chevronDown' | 'line' | 'rectangle' | 'circle' | 'arc' | 'multi' | 'cursor' | 'undo' | 'redo' | 'trash' | 'plus' | 'edit' | 'dimension' | 'menu' | 'tools' | 'share' | 'image' | 'file' | 'link' | 'eye' | 'eyeOff' | 'lock' | 'unlock' | 'endpoint' | 'midpoint' | 'gridSnap' | 'angleSnap'
 
 const paths: Record<IconName, React.ReactNode> = {
   settings: (
@@ -38,6 +38,10 @@ const paths: Record<IconName, React.ReactNode> = {
   eyeOff: <><path d="M3 3l18 18M10.6 6.1A10 10 0 0 1 12 6c6 0 9.5 6 9.5 6a17 17 0 0 1-2.1 2.8M6.2 6.2C3.8 8 2.5 12 2.5 12s3.5 6 9.5 6a9.8 9.8 0 0 0 3-.5" /></>,
   lock: <><rect x="5" y="10" width="14" height="11" rx="2" /><path d="M8 10V7a4 4 0 0 1 8 0v3" /></>,
   unlock: <><rect x="5" y="10" width="14" height="11" rx="2" /><path d="M8 10V7a4 4 0 0 1 7-2.6" /></>,
+  endpoint: <><path d="M5 18 19 6" /><circle cx="5" cy="18" r="2.5" /></>,
+  midpoint: <><path d="M4 18 20 6" /><path d="m12 9 3 3-3 3-3-3 3-3Z" /></>,
+  gridSnap: <><path d="M5 3v18M12 3v18M19 3v18M3 5h18M3 12h18M3 19h18" /><circle cx="12" cy="12" r="2.3" fill="currentColor" /></>,
+  angleSnap: <><path d="M4 19h16M4 19 17 6" /><path d="M10 19a6 6 0 0 0-1.8-4.3" /></>,
 }
 
 interface IconProps extends SVGProps<SVGSVGElement> {

@@ -1,5 +1,5 @@
 import type { Point } from '../drawing/geometry/Point.ts'
-import { dimensionGeometry } from '../drawing/geometry/dimension.ts'
+import { buildDimensionGeometry, resolveDimensionSegment } from '../drawing/geometry/dimension.ts'
 import { formatDimension } from '../drawing/geometry/formatDimension.ts'
 import type { Project } from '../types/project.ts'
 import { calculateDrawingBounds, type DrawingBounds } from './drawingBounds.ts'
@@ -49,7 +49,6 @@ export function createDrawingExportModel(project: Pick<Project, 'drawing' | 'pro
   const entities = entitiesOnVisibleLayers(project.drawing.entities, project.layers ?? createBuiltInLayers())
   const worldBounds = calculateDrawingBounds(entities, project.projectSettings)
   const mapPoint = (point: Point) => worldPointToExportPoint(point, worldBounds)
-  const lines = new Map(entities.filter((entity) => entity.type === 'line').map((line) => [line.id, line]))
   const strokes: ExportStroke[] = []
   const polygons: ExportPolygon[] = []
   const labels: ExportLabel[] = []
@@ -75,13 +74,13 @@ export function createDrawingExportModel(project: Pick<Project, 'drawing' | 'pro
       arcs.push({ center: mapPoint(entity.center), radius: entity.radius, startAngle: entity.startAngle, endAngle: entity.endAngle, direction: entity.direction, color: entity.style.color, strokeWidth: entity.style.width })
       continue
     }
-    const target = lines.get(entity.targetEntityId)
-    if (!target) continue
-    const geometry = dimensionGeometry(target, entity)
+    const segment = resolveDimensionSegment(entity, entities)
+    if (!segment) continue
+    const geometry = buildDimensionGeometry(segment, entity)
     if (!geometry) continue
     const color = resolveDimensionColor(entity, project.projectSettings)
-    const targetStart = mapPoint(target.start)
-    const targetEnd = mapPoint(target.end)
+    const targetStart = mapPoint(segment.start)
+    const targetEnd = mapPoint(segment.end)
     const start = mapPoint(geometry.start)
     const end = mapPoint(geometry.end)
     const direction = unitDirection(start, end)

@@ -39,7 +39,8 @@ export class DrawingStore {
 
   addDimension(dimension: DimensionEntity) {
     if (this.readOnly) return false
-    if (!this.state.entities.some((entity) => entity.type === 'line' && entity.id === dimension.targetEntityId)) return false
+    const targetEntityId = dimension.source.type === 'entity' ? dimension.source.targetEntityId : null
+    if (targetEntityId && !this.state.entities.some((entity) => entity.type === 'line' && entity.id === targetEntityId)) return false
     this.commit({ ...this.state, entities: [...this.state.entities, dimension] })
     return true
   }
@@ -68,7 +69,7 @@ export class DrawingStore {
       .filter((entity) => entity.type === 'line' && requested.has(entity.id))
       .map((entity) => entity.id))
     const entities = this.state.entities.filter((entity) =>
-      !requested.has(entity.id) && !(entity.type === 'dimension' && lineIds.has(entity.targetEntityId)),
+      !requested.has(entity.id) && !(entity.type === 'dimension' && entity.source.type === 'entity' && lineIds.has(entity.source.targetEntityId)),
     )
     if (entities.length === this.state.entities.length) return false
     this.commit({ ...this.state, entities })

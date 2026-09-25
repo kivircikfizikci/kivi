@@ -1,4 +1,4 @@
-import { useId, useMemo, useState, type KeyboardEvent } from 'react'
+import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from 'react'
 import { executeCommand, getCommandSuggestions, type AppCommand, type CommandContext } from '../../commands/commandRegistry.ts'
 import { useI18n } from '../../i18n/I18nContext'
 import type { AutosaveStatus } from '../../project/AutosaveManager.ts'
@@ -8,17 +8,26 @@ interface CommandBarProps {
   context: CommandContext
   saveStatus: AutosaveStatus
   dirty: boolean
+  prompt?: CommandPrompt | null
 }
 
-export function CommandBar({ context, saveStatus, dirty }: CommandBarProps) {
+export interface CommandPrompt {
+  placeholder: string
+  submit: (value: string) => boolean
+  cancel: () => void
+}
+
+export function CommandBar({ context, saveStatus, dirty, prompt }: CommandBarProps) {
   const { t } = useI18n()
   const [value, setValue] = useState('')
   const [focused, setFocused] = useState(false)
   const [open, setOpen] = useState(false)
   const [activeIndex, setActiveIndex] = useState(0)
+  const [invalid, setInvalid] = useState(false)
+  const inputRef = useRef<HTMLInputElement>(null)
   const listId = useId()
   const suggestions = useMemo(() => getCommandSuggestions(value, t), [t, value])
-  const suggestionsVisible = focused && open && suggestions.length > 0
+  const suggestionsVisible = !prompt && focused && open && suggestions.length > 0
   const displayedSaveStatus = saveStatus === 'saved' && dirty ? 'saving' : saveStatus
   const selectedIndex = Math.min(activeIndex, Math.max(0, suggestions.length - 1))
 
@@ -28,6 +37,14 @@ export function CommandBar({ context, saveStatus, dirty }: CommandBarProps) {
     setOpen(false)
     setActiveIndex(0)
   }
+
+  useEffect(() => {
+    if (!prompt) return
+    setValue('')
+    setInvalid(false)
+    setOpen(false)
+    inputRef.current?.focus()
+  }, [prompt])
 
   const onKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
@@ -45,6 +62,8 @@ export function CommandBar({ context, saveStatus, dirty }: CommandBarProps) {
       setValue('')
       setOpen(false)
       setActiveIndex(0)
+      setInvalid(false)
+      prompt?.cancel()
     }
   }
 
@@ -71,6 +90,12 @@ export function CommandBar({ context, saveStatus, dirty }: CommandBarProps) {
       )}
       <form className="command-bar" onSubmit={(event) => {
         event.preventDefault()
+        if (prompt) {
+          const accepted = prompt.submit(value)
+          setInvalid(!accepted)
+          if (accepted) setValue('')
+          return
+        }
         const selected = suggestionsVisible ? suggestions[selectedIndex] : undefined
         if (selected) choose(selected)
         else if (executeCommand(value, context)) {
@@ -80,8 +105,9 @@ export function CommandBar({ context, saveStatus, dirty }: CommandBarProps) {
       }}>
         <span aria-hidden="true">›</span>
         <input
+          ref={inputRef}
           value={value}
-          onChange={(event) => { setValue(event.target.value); setOpen(true); setActiveIndex(0) }}
+          onChange={(event) => { setValue(event.target.value); setInvalid(false); setOpen(true); setActiveIndex(0) }}
           onFocus={() => { setFocused(true); setOpen(true) }}
           onBlur={() => setFocused(false)}
           onKeyDown={onKeyDown}
@@ -91,7 +117,8 @@ export function CommandBar({ context, saveStatus, dirty }: CommandBarProps) {
           aria-controls={listId}
           aria-activedescendant={suggestionsVisible ? `${listId}-${suggestions[selectedIndex]?.id}` : undefined}
           aria-label={t('command')}
-          placeholder={t('command')}
+          aria-invalid={invalid || undefined}
+          placeholder={prompt?.placeholder ?? t('command')}
           autoComplete="off"
           spellCheck="false"
         />

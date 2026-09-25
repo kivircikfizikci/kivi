@@ -1,15 +1,14 @@
 import type { Camera } from '../camera/Camera.ts'
 import { worldToScreen, type ViewportSize } from '../camera/coordinateTransforms.ts'
-import type { LineEntity } from '../entities/LineEntity.ts'
 import type { DimensionEntity } from '../entities/DimensionEntity.ts'
-import { dimensionGeometry } from '../geometry/dimension.ts'
+import { buildDimensionGeometry, type MeasuredSegment } from '../geometry/dimension.ts'
 import { formatDimension } from '../geometry/formatDimension.ts'
 import type { ProjectSettings } from '../../types/project.ts'
 import { resolveDimensionColor } from '../geometry/dimensionColor.ts'
 
 interface DimensionRendererProps {
   dimension: DimensionEntity
-  target: LineEntity
+  segment: MeasuredSegment
   camera: Camera
   viewport: ViewportSize
   settings: ProjectSettings
@@ -17,11 +16,11 @@ interface DimensionRendererProps {
   preview?: boolean
 }
 
-export function DimensionRenderer({ dimension, target, camera, viewport, settings, selected = false, preview = false }: DimensionRendererProps) {
-  const geometry = dimensionGeometry(target, dimension)
+export function DimensionRenderer({ dimension, segment, camera, viewport, settings, selected = false, preview = false }: DimensionRendererProps) {
+  const geometry = buildDimensionGeometry(segment, dimension)
   if (!geometry) return null
-  const a = worldToScreen(target.start, camera, viewport)
-  const b = worldToScreen(target.end, camera, viewport)
+  const a = worldToScreen(segment.start, camera, viewport)
+  const b = worldToScreen(segment.end, camera, viewport)
   const start = worldToScreen(geometry.start, camera, viewport)
   const end = worldToScreen(geometry.end, camera, viewport)
   const center = worldToScreen(geometry.text, camera, viewport)

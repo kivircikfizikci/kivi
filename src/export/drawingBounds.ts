@@ -1,5 +1,5 @@
 import type { Entity } from '../drawing/entities/Entity.ts'
-import { dimensionGeometry } from '../drawing/geometry/dimension.ts'
+import { buildDimensionGeometry, resolveDimensionSegment } from '../drawing/geometry/dimension.ts'
 import { formatDimension } from '../drawing/geometry/formatDimension.ts'
 import type { ProjectSettings } from '../types/project.ts'
 import { rectangleCorners } from '../drawing/geometry/rectangle.ts'
@@ -16,7 +16,6 @@ export interface DrawingBounds {
 
 export function calculateDrawingBounds(entities: readonly Entity[], settings: ProjectSettings): DrawingBounds {
   const points: Array<{ x: number; y: number }> = []
-  const lines = new Map(entities.filter((entity) => entity.type === 'line').map((line) => [line.id, line]))
 
   for (const entity of entities) {
     if (entity.type === 'line') {
@@ -41,11 +40,11 @@ export function calculateDrawingBounds(entities: readonly Entity[], settings: Pr
       }
       continue
     }
-    const target = lines.get(entity.targetEntityId)
-    if (!target) continue
-    const geometry = dimensionGeometry(target, entity)
+    const segment = resolveDimensionSegment(entity, entities)
+    if (!segment) continue
+    const geometry = buildDimensionGeometry(segment, entity)
     if (!geometry) continue
-    points.push(target.start, target.end, geometry.start, geometry.end)
+    points.push(segment.start, segment.end, geometry.start, geometry.end)
     const textSize = entity.style.textSize ?? 13
     const labelWidth = formatDimension(geometry.length, settings).length * textSize * 0.62
     const radius = Math.hypot(labelWidth / 2, textSize) + 4

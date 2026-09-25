@@ -23,7 +23,7 @@ import { ProjectSession } from '../src/project/ProjectSession.ts'
 
 const style = { color: '#234f41', width: 2 }
 const line: LineEntity = { id: 'line', type: 'line', start: { x: 0, y: 0 }, end: { x: 100, y: 0 }, style }
-const dimension: DimensionEntity = { id: 'dim', type: 'dimension', targetEntityId: 'line', offset: 20, side: 1, style: {} }
+const dimension: DimensionEntity = { id: 'dim', type: 'dimension', source: { type: 'entity', targetEntityId: 'line' }, offset: 20, side: 1, style: {} }
 const rectangle: RectangleEntity = { id: 'rect', type: 'rectangle', origin: { x: 10, y: 10 }, width: 80, height: 40, style }
 const circle: CircleEntity = { id: 'circle', type: 'circle', center: { x: 160, y: 40 }, radius: 30, style }
 const arc: ArcEntity = { id: 'arc', type: 'arc', center: { x: 250, y: 40 }, radius: 30, startAngle: 0, endAngle: 90, direction: 'ccw', style }

@@ -37,6 +37,7 @@
   "exportError": "Export failed",
   "viewOnly": "View only",
   "command": "Command",
+  "startCoordinate": "Start point (X,Y)",
   "commandSuggestions": "Command suggestions",
   "fullscreen": "Fullscreen",
   "exitFullscreen": "Exit fullscreen",
