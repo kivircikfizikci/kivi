@@ -2,7 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { distance } from '../src/drawing/geometry/distance.ts'
 import { projectPointToSegment } from '../src/drawing/geometry/projection.ts'
-import { snapPointToAngles } from '../src/drawing/geometry/angle.ts'
+import { snapAnglesForIncrement, snapPointToAngles } from '../src/drawing/geometry/angle.ts'
 import { DEFAULT_CAMERA } from '../src/drawing/camera/Camera.ts'
 import { cameraForGesture, screenToWorld, worldToScreen, zoomCameraAt } from '../src/drawing/camera/coordinateTransforms.ts'
 import { SnapManager } from '../src/drawing/snap/SnapManager.ts'
@@ -56,6 +56,13 @@ test('45 degree angle snap preserves pointer distance', () => {
   assert.ok(snapped)
   assert.ok(Math.abs(distance(origin, snapped.point) - distance(origin, pointer)) < 1e-10)
   assert.ok(Math.abs(snapped.point.x - snapped.point.y) < 1e-10)
+})
+
+test('angle snap defaults to 15 degree increments and supports a custom interval', () => {
+  const origin = { x: 0, y: 0 }
+  assert.equal(snapPointToAngles(origin, { x: 10, y: 2.6 })?.angle, 15)
+  assert.deepEqual(snapAnglesForIncrement(30), [0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330])
+  assert.equal(snapPointToAngles(origin, { x: 9, y: 5 }, snapAnglesForIncrement(30))?.angle, 30)
 })
 
 test('snap priority is endpoint, midpoint, grid, then angle', () => {

@@ -11,7 +11,7 @@ export function SnapQuickControls() {
     <div className="snap-quick-controls" role="group" aria-label={t('snap')}>
       {snapQuickControlItems.map((item) => {
         const active = settings[item.key]
-        const label = t(item.labelKey)
+        const label = item.key === 'angleSnapEnabled' ? `${t(item.labelKey)} · ${settings.angleSnapIncrement}°` : t(item.labelKey)
         return (
           <button key={item.key} className={`icon-button${active ? ' is-active' : ''}`} type="button"
             aria-label={label} title={label} aria-pressed={active}

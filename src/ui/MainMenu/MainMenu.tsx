@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
 import { useEscapeKey } from '../../hooks/useEscapeKey'
 import { useI18n } from '../../i18n/I18nContext'
 import { Icon } from '../Icon/Icon'
@@ -16,7 +15,6 @@ export function MainMenu({ onOpenSettings, onOpenLayers }: { onOpenSettings: () 
       </button>
       {open && <button className="popover-dismiss" type="button" onClick={() => setOpen(false)} aria-label={t('close')} />}
       <div className={`compact-popover main-menu${open ? ' is-open' : ''}`} aria-hidden={!open}>
-        <Link to="/projects" onClick={() => setOpen(false)}><Icon name="folder" /><span>{t('projects')}</span></Link>
         <button type="button" onClick={() => { setOpen(false); onOpenLayers() }}><Icon name="multi" /><span>{t('layers')}</span></button>
         <button type="button" onClick={() => { setOpen(false); onOpenSettings() }}><Icon name="settings" /><span>{t('settings')}</span></button>
       </div>

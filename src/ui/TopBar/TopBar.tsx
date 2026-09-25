@@ -6,6 +6,7 @@ import type { ToolManager } from '../../tools/ToolManager.ts'
 import type { ToolId } from '../../tools/Tool.ts'
 import { MainMenu } from '../MainMenu/MainMenu.tsx'
 import { ToolsMenu } from '../ToolsMenu/ToolsMenu.tsx'
+import { Link } from 'react-router-dom'
 
 interface TopBarProps {
   onOpenSettings: () => void
@@ -36,6 +37,9 @@ export function TopBar({ onOpenSettings, onOpenShare, onOpenLayers, saveStatus, 
         <button className="icon-button compact" type="button" disabled={!canRedo} onClick={() => store.redo()} aria-label={t('redo')}><Icon name="redo" /></button>
       </div>
       <div className="toolbar-group toolbar-right">
+        <Link className="share-button projects-button" to="/projects" aria-label={t('projects')} title={t('projects')}>
+          <Icon name="folder" /><span>{t('projects')}</span>
+        </Link>
         <button className="share-button" type="button" onClick={onOpenShare} aria-label={t('share')} title={t('share')}>
           <Icon name="share" /><span>{t('share')}</span>
         </button>

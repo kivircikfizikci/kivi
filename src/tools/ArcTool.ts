@@ -27,7 +27,11 @@ export class ArcTool implements Tool {
   deactivate() { this.setSnapshot(initial('inactive')) }
 
   updatePointer(point: Point, snap: SnapCandidate | null, style: LineStyle) {
-    if (!this.snapshot.center || this.snapshot.phase === 'center') return
+    if (this.snapshot.phase === 'center') {
+      this.setSnapshot({ ...this.snapshot, snap })
+      return
+    }
+    if (!this.snapshot.center) return
     if (this.snapshot.phase === 'start') {
       this.setSnapshot({ ...this.snapshot, start: { ...point }, end: { ...point }, snap })
       return

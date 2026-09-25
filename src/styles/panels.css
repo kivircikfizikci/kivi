@@ -673,17 +673,12 @@ button.tool-tile {
   border-radius: var(--radius-sm);
 }
 
-.snap-settings {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 7px;
+.settings-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
   padding: 12px;
   background: var(--surface);
-}
-
-.defaults-action-row {
-  justify-content: flex-end;
-  min-height: 48px;
 }
 
 .text-button {
@@ -706,40 +701,6 @@ button.tool-tile {
   margin-bottom: 2px;
   font-size: 13px;
   font-weight: 650;
-}
-
-.snap-chip {
-  position: relative;
-}
-
-.snap-chip input {
-  position: absolute;
-  opacity: 0;
-  pointer-events: none;
-}
-
-.snap-chip span {
-  display: grid;
-  min-height: 36px;
-  padding: 0 11px;
-  place-items: center;
-  color: var(--ink-muted);
-  background: var(--surface-soft);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  font-size: 12px;
-  cursor: pointer;
-}
-
-.snap-chip input:checked + span {
-  color: var(--accent);
-  background: var(--accent-soft);
-  border-color: var(--accent-border);
-}
-
-.snap-chip input:focus-visible + span {
-  outline: 3px solid var(--focus-ring);
-  outline-offset: 2px;
 }
 
 @media (min-width: 700px) {
@@ -849,8 +810,4 @@ button.tool-tile {
     margin-top: 5px;
   }
 
-  .snap-settings {
-    gap: 5px;
-    padding: 8px;
-  }
 }

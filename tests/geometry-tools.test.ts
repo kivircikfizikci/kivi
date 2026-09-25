@@ -110,6 +110,15 @@ test('arc tool uses center-start-end and chooses the shortest direction', () => 
   assert.match(arcToSvgPath(large, (point) => ({ x: point.x, y: -point.y }), 1, true), /A 10 10 0 1 0/)
 })
 
+test('arc tool exposes snapping before its center point is placed', () => {
+  const tool = new ArcTool()
+  tool.activate()
+  const snap = { kind: 'endpoint' as const, point: { x: 10, y: 20 }, distancePixels: 2, entityId: 'line' }
+  tool.updatePointer(snap.point, snap, style)
+  assert.deepEqual(tool.getSnapshot().snap, snap)
+  assert.equal(tool.getSnapshot().phase, 'center')
+})
+
 test('selection finds only the visible arc sweep', () => {
   const selection = new SelectionManager()
   assert.equal(selection.findEntity({ x: 250 + Math.SQRT1_2 * 30, y: 40 + Math.SQRT1_2 * 30 }, [arc], 4, 8)?.id, 'arc')

@@ -14,6 +14,7 @@ export interface AppSettings {
   defaultLineWidth: number
   defaultDimensionColor: string
   angleSnapEnabled: boolean
+  angleSnapIncrement: number
   endpointSnapEnabled: boolean
   midpointSnapEnabled: boolean
   gridSnapEnabled: boolean
@@ -33,6 +34,7 @@ export const defaultSettings: AppSettings = {
   defaultLineWidth: 2,
   defaultDimensionColor: '#315c4c',
   angleSnapEnabled: true,
+  angleSnapIncrement: 15,
   endpointSnapEnabled: true,
   midpointSnapEnabled: true,
   gridSnapEnabled: true,

@@ -1,7 +1,14 @@
 import type { Point } from './Point.ts'
 import { distance } from './distance.ts'
 
-export const DEFAULT_SNAP_ANGLES = [0, 45, 90, 135, 180, 225, 270, 315] as const
+export const DEFAULT_SNAP_ANGLES = [0, 15, 30, 45, 60, 75, 90, 105, 120, 135, 150, 165, 180, 195, 210, 225, 240, 255, 270, 285, 300, 315, 330, 345] as const
+
+export function snapAnglesForIncrement(increment: number): number[] {
+  const safeIncrement = Number.isFinite(increment) && increment >= 1 && increment <= 90 ? increment : 15
+  const angles: number[] = []
+  for (let angle = 0; angle < 360; angle += safeIncrement) angles.push(angle)
+  return angles
+}
 
 export function angleDegrees(origin: Point, target: Point) {
   const degrees = Math.atan2(target.y - origin.y, target.x - origin.x) * 180 / Math.PI

@@ -45,6 +45,7 @@ import { selectionForContextTarget } from '../selection/contextSelection.ts'
 import { geometryStyleFromProject } from '../entities/geometryStyle.ts'
 import { resolveDimensionSegment } from '../geometry/dimension.ts'
 import { SnapQuickControls } from '../../ui/SnapQuickControls/SnapQuickControls.tsx'
+import { snapAnglesForIncrement } from '../geometry/angle.ts'
 
 interface DrawingViewportProps {
   store: DrawingStore
@@ -142,6 +143,7 @@ export function DrawingViewport({ store, tools, projectSettings, layers, activeL
         angle: settings.angleSnapEnabled,
         gridSpacing: projectSettings.gridSpacing,
         pixelTolerance: tolerance,
+        angles: snapAnglesForIncrement(settings.angleSnapIncrement),
       },
     })
   }, [arc.center, camera, circle.center, dimension.firstPoint, line.start, projectSettings.gridSpacing, rectangle.start, settings, snapManager, viewport, visibleEntities])
@@ -263,7 +265,7 @@ export function DrawingViewport({ store, tools, projectSettings, layers, activeL
     } else if (mode === 'edit' && activeTool === 'circle' && circle.phase === 'placing') {
       const resolved = resolveSnap(point, event.pointerType)
       tools.circle.updatePointer(resolved.point, resolved.snap, lineStyle)
-    } else if (mode === 'edit' && activeTool === 'arc' && arc.phase !== 'center') {
+    } else if (mode === 'edit' && activeTool === 'arc' && arc.phase !== 'inactive') {
       const resolved = resolveSnap(point, event.pointerType)
       tools.arc.updatePointer(resolved.point, resolved.snap, lineStyle)
     } else if (mode === 'edit' && activeTool === 'dimension' && dimension.phase === 'waitingSecond') {

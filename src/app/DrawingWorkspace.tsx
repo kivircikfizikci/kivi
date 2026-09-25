@@ -170,6 +170,7 @@ export function DrawingWorkspace({ project, mode = 'edit' }: { project: Project;
             onClose={() => setSettingsOpen(false)}
             projectSettings={projectSnapshot.project.projectSettings}
             onProjectSettingsChange={(updates) => session.updateProjectSettings(updates)}
+            onSave={() => { void session.flush(); setSettingsOpen(false) }}
           />
           <LayerPanel open={layersOpen} layers={projectSnapshot.project.layers} activeLayerId={projectSnapshot.project.activeLayerId}
             onClose={() => setLayersOpen(false)} onCreate={(name) => { session.createLayer(name) }}

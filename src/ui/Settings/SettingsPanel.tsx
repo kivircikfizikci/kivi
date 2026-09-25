@@ -3,17 +3,19 @@ import { useI18n } from '../../i18n/I18nContext'
 import { useSettings } from '../../settings/useSettings'
 import { useEscapeKey } from '../../hooks/useEscapeKey'
 import type { Locale } from '../../i18n/types'
-import type { AppTheme } from '../../types/settings'
+import { defaultSettings, type AppTheme } from '../../types/settings'
 import type { ProjectSettings } from '../../types/project.ts'
+import { defaultProjectSettings } from '../../project/projectMigrations.ts'
 
 interface SettingsPanelProps {
   open: boolean
   onClose: () => void
   projectSettings: ProjectSettings
   onProjectSettingsChange: (updates: Partial<ProjectSettings>) => void
+  onSave: () => void
 }
 
-export function SettingsPanel({ open, onClose, projectSettings, onProjectSettingsChange }: SettingsPanelProps) {
+export function SettingsPanel({ open, onClose, projectSettings, onProjectSettingsChange, onSave }: SettingsPanelProps) {
   const { t } = useI18n()
   const { settings, updateSettings } = useSettings()
   useEscapeKey(onClose, open)
@@ -46,11 +48,37 @@ export function SettingsPanel({ open, onClose, projectSettings, onProjectSetting
             </select>
           </label>
 
+          <div className="settings-section-label settings-row-label">{t('canvas')}</div>
           <label className="setting-row color-row">
             <span>{t('background')}</span>
             <span className="color-control">
               <code>{projectSettings.backgroundColor}</code>
               <input type="color" value={projectSettings.backgroundColor} onChange={(event) => onProjectSettingsChange({ backgroundColor: event.target.value })} />
+            </span>
+          </label>
+
+          <label className="setting-row">
+            <span>{t('grid')}</span>
+            <span className="switch-control">
+              <span>{t(projectSettings.gridEnabled ? 'on' : 'off')}</span>
+              <input type="checkbox" checked={projectSettings.gridEnabled} onChange={(event) => onProjectSettingsChange({ gridEnabled: event.target.checked })} />
+            </span>
+          </label>
+
+          <label className="setting-row color-row">
+            <span>{t('gridColor')}</span>
+            <span className="color-control">
+              <code>{projectSettings.gridColor}</code>
+              <input type="color" value={projectSettings.gridColor} onChange={(event) => onProjectSettingsChange({ gridColor: event.target.value })} />
+            </span>
+          </label>
+
+          <label className="setting-row compact-input-row">
+            <span>{t('gridSpacing')}</span>
+            <span className="number-control">
+              <input type="number" min="0.1" step="0.1" inputMode="decimal" value={projectSettings.gridSpacing}
+                onChange={(event) => { const value = Number(event.target.value); if (value > 0) onProjectSettingsChange({ gridSpacing: value }) }} />
+              <span>{t('centimeters')}</span>
             </span>
           </label>
 
@@ -82,45 +110,12 @@ export function SettingsPanel({ open, onClose, projectSettings, onProjectSetting
             </span>
           </label>
 
-          <label className="setting-row color-row">
-            <span>{t('gridColor')}</span>
-            <span className="color-control">
-              <code>{projectSettings.gridColor}</code>
-              <input type="color" value={projectSettings.gridColor} onChange={(event) => onProjectSettingsChange({ gridColor: event.target.value })} />
-            </span>
-          </label>
-
+          <div className="settings-section-label settings-row-label">{t('dimension')}</div>
           <label className="setting-row color-row">
             <span>{t('dimensionColor')}</span>
             <span className="color-control">
               <code>{projectSettings.dimensionColor}</code>
               <input type="color" value={projectSettings.dimensionColor} onChange={(event) => onProjectSettingsChange({ dimensionColor: event.target.value })} />
-            </span>
-          </label>
-
-          <label className="setting-row">
-            <span>{t('grid')}</span>
-            <span className="switch-control">
-              <span>{t(projectSettings.gridEnabled ? 'on' : 'off')}</span>
-              <input type="checkbox" checked={projectSettings.gridEnabled} onChange={(event) => onProjectSettingsChange({ gridEnabled: event.target.checked })} />
-            </span>
-          </label>
-
-          <label className="setting-row compact-input-row">
-            <span>{t('gridSpacing')}</span>
-            <span className="number-control">
-              <input
-                type="number"
-                min="0.1"
-                step="0.1"
-                inputMode="decimal"
-                value={projectSettings.gridSpacing}
-                onChange={(event) => {
-                  const value = Number(event.target.value)
-                  if (value > 0) onProjectSettingsChange({ gridSpacing: value })
-                }}
-              />
-              <span>{t('centimeters')}</span>
             </span>
           </label>
 
@@ -140,37 +135,35 @@ export function SettingsPanel({ open, onClose, projectSettings, onProjectSetting
             </span>
           </label>
 
-          <div className="setting-row defaults-action-row">
-            <button
-              className="text-button"
-              type="button"
-              onClick={() => updateSettings({
-                defaultBackground: projectSettings.backgroundColor,
-                defaultGridColor: projectSettings.gridColor,
-                gridEnabled: projectSettings.gridEnabled,
-                gridSpacing: projectSettings.gridSpacing,
-                defaultDimensionColor: projectSettings.dimensionColor,
-                defaultLineColor: projectSettings.lineColor,
-                defaultLineWidth: projectSettings.lineWidth,
-              })}
-            >
-              {t('useAsDefaults')}
-            </button>
-          </div>
+          <label className="setting-row compact-input-row">
+            <span>{t('angleInterval')}</span>
+            <span className="number-control">
+              <input type="number" min="1" max="90" step="1" value={settings.angleSnapIncrement}
+                onChange={(event) => { const value = Number(event.target.value); if (value >= 1 && value <= 90) updateSettings({ angleSnapIncrement: value }) }} />
+              <span>°</span>
+            </span>
+          </label>
 
-          <div className="snap-settings" role="group" aria-label={t('snap')}>
-            <span className="settings-section-label">{t('snap')}</span>
-            {([
-              ['angleSnapEnabled', 'angle'],
-              ['endpointSnapEnabled', 'endpoint'],
-              ['midpointSnapEnabled', 'midpoint'],
-              ['gridSnapEnabled', 'gridSnap'],
-            ] as const).map(([key, label]) => (
-              <label key={key} className="snap-chip">
-                <input type="checkbox" checked={settings[key]} onChange={(event) => updateSettings({ [key]: event.target.checked })} />
-                <span>{t(label)}</span>
-              </label>
-            ))}
+          <div className="settings-actions">
+            <button className="secondary-button" type="button" onClick={() => {
+              onProjectSettingsChange(defaultProjectSettings())
+              updateSettings({
+                theme: defaultSettings.theme,
+                defaultBackground: defaultSettings.defaultBackground,
+                defaultGridColor: defaultSettings.defaultGridColor,
+                gridEnabled: defaultSettings.gridEnabled,
+                gridSpacing: defaultSettings.gridSpacing,
+                defaultLineColor: defaultSettings.defaultLineColor,
+                defaultLineWidth: defaultSettings.defaultLineWidth,
+                defaultDimensionColor: defaultSettings.defaultDimensionColor,
+                endpointSnapEnabled: defaultSettings.endpointSnapEnabled,
+                midpointSnapEnabled: defaultSettings.midpointSnapEnabled,
+                gridSnapEnabled: defaultSettings.gridSnapEnabled,
+                angleSnapEnabled: defaultSettings.angleSnapEnabled,
+                angleSnapIncrement: defaultSettings.angleSnapIncrement,
+              })
+            }}>{t('resetSettings')}</button>
+            <button className="primary-button" type="button" onClick={onSave}>{t('saveSettings')}</button>
           </div>
         </div>
       </aside>

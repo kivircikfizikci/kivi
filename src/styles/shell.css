@@ -51,6 +51,7 @@
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   cursor: pointer;
+  text-decoration: none;
 }
 
 .share-button svg {
@@ -359,23 +360,29 @@
     right: max(58px, calc(48px + env(safe-area-inset-right)));
     bottom: max(10px, env(safe-area-inset-bottom));
     display: flex;
-    gap: 4px;
-    padding: 3px;
-    background: var(--floating-surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    box-shadow: var(--shadow-soft);
+    gap: 6px;
+  }
+
+  .app-shell.is-fullscreen .snap-quick-controls {
+    z-index: 106;
   }
 
   .snap-quick-controls .icon-button {
-    width: 32px;
-    height: 32px;
+    width: 38px;
+    height: 38px;
     color: var(--ink-muted);
+    opacity: .72;
   }
 
   .snap-quick-controls .icon-button.is-active {
     color: var(--accent);
     background: var(--accent-soft);
+    opacity: 1;
+  }
+
+  .snap-quick-controls .icon-button:hover,
+  .snap-quick-controls .icon-button:focus-visible {
+    opacity: 1;
   }
 }
 
