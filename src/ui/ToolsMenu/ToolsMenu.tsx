@@ -20,6 +20,8 @@ export function ToolsMenu({ tools, activeTool, canTransform }: { tools: ToolMana
     ['move', 'move', 'move'],
     ['copy', 'copy', 'copy'],
     ['repeat', 'repeat', 'repeat'],
+    ['offset', 'offset', 'offset'],
+    ['trim', 'trim', 'trim'],
   ] as const
 
   return (

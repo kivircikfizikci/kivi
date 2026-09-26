@@ -6,12 +6,12 @@ import type { ToolManager } from '../../tools/ToolManager.ts'
 import type { ToolId } from '../../tools/Tool.ts'
 import { MainMenu } from '../MainMenu/MainMenu.tsx'
 import { ToolsMenu } from '../ToolsMenu/ToolsMenu.tsx'
-import { Link } from 'react-router-dom'
 
 interface TopBarProps {
   onOpenSettings: () => void
   onOpenShare: () => void
   onOpenLayers: () => void
+  onOpenProjects: () => void
   saveStatus: AutosaveStatus
   store: DrawingStore
   tools: ToolManager
@@ -21,7 +21,7 @@ interface TopBarProps {
   canTransform: boolean
 }
 
-export function TopBar({ onOpenSettings, onOpenShare, onOpenLayers, saveStatus, store, tools, activeTool, canUndo, canRedo, canTransform }: TopBarProps) {
+export function TopBar({ onOpenSettings, onOpenShare, onOpenLayers, onOpenProjects, saveStatus, store, tools, activeTool, canUndo, canRedo, canTransform }: TopBarProps) {
   const { t } = useI18n()
   return (
     <header className="top-bar">
@@ -38,9 +38,9 @@ export function TopBar({ onOpenSettings, onOpenShare, onOpenLayers, saveStatus, 
         <button className="icon-button compact" type="button" disabled={!canRedo} onClick={() => store.redo()} aria-label={t('redo')}><Icon name="redo" /></button>
       </div>
       <div className="toolbar-group toolbar-right">
-        <Link className="share-button projects-button" to="/projects" aria-label={t('projects')} title={t('projects')}>
+        <button className="share-button projects-button" type="button" onClick={onOpenProjects} aria-label={t('projects')} title={t('projects')}>
           <Icon name="folder" /><span>{t('projects')}</span>
-        </Link>
+        </button>
         <button className="share-button" type="button" onClick={onOpenShare} aria-label={t('share')} title={t('share')}>
           <Icon name="share" /><span>{t('share')}</span>
         </button>

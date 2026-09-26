@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { DrawingViewport } from '../drawing/DrawingViewport/DrawingViewport'
 import { useFullscreenMode } from '../hooks/useFullscreenMode'
 import { BottomDrawer } from '../ui/BottomDrawer/BottomDrawer'
@@ -17,6 +16,8 @@ import type { CommandContext } from '../commands/commandRegistry.ts'
 import { LayerPanel } from '../ui/Layers/LayerPanel.tsx'
 import { parseCoordinate } from '../commands/coordinateParser.ts'
 import { canTransformSelection } from '../tools/transformEligibility.ts'
+import { ProjectsPanel } from '../project/ProjectsPage.tsx'
+import { SnapQuickControls } from '../ui/SnapQuickControls/SnapQuickControls.tsx'
 
 export function DrawingWorkspace({ project, mode = 'edit' }: { project: Project; mode?: WorkspaceMode }) {
   const { t } = useI18n()
@@ -24,9 +25,9 @@ export function DrawingWorkspace({ project, mode = 'edit' }: { project: Project;
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [shareOpen, setShareOpen] = useState(false)
   const [layersOpen, setLayersOpen] = useState(false)
+  const [projectsOpen, setProjectsOpen] = useState(false)
   const [session] = useState(() => new ProjectSession(project, (updated) => projectService.updateProject(updated), 400, mode))
   const [tools] = useState(() => new ToolManager())
-  const navigate = useNavigate()
   const projectSnapshot = useSyncExternalStore(session.subscribe, session.getSnapshot)
   const store = session.store
   const drawing = useSyncExternalStore(store.subscribe, store.getSnapshot)
@@ -66,6 +67,7 @@ export function DrawingWorkspace({ project, mode = 'edit' }: { project: Project;
         if (settingsOpen) setSettingsOpen(false)
         else if (layersOpen) setLayersOpen(false)
         else if (shareOpen) setShareOpen(false)
+        else if (projectsOpen) setProjectsOpen(false)
         else if (drawerOpen) setDrawerOpen(false)
         else if (mode === 'edit' && activeTool !== 'select') tools.finishActiveTool()
         return
@@ -88,7 +90,7 @@ export function DrawingWorkspace({ project, mode = 'edit' }: { project: Project;
 
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [activeTool, drawerOpen, layersOpen, mode, selection.selectedIds, settingsOpen, shareOpen, store, tools])
+  }, [activeTool, drawerOpen, layersOpen, mode, projectsOpen, selection.selectedIds, settingsOpen, shareOpen, store, tools])
 
   const deleteSelection = useCallback(() => {
     if (store.deleteEntities(selection.selectedIds)) tools.select.clearSelection()
@@ -106,12 +108,12 @@ export function DrawingWorkspace({ project, mode = 'edit' }: { project: Project;
     deleteSelection,
     undo: () => { store.undo() },
     redo: () => { store.redo() },
-    openProjects: () => navigate('/projects'),
+    openProjects: () => setProjectsOpen(true),
     openSettings: () => setSettingsOpen(true),
     openLayers: () => setLayersOpen(true),
     enterFullscreen: () => { void fullscreen.enter() },
     openShare: () => setShareOpen(true),
-  }), [canTransform, deleteSelection, fullscreen, navigate, store, tools])
+  }), [canTransform, deleteSelection, fullscreen, store, tools])
   const commandPrompt = useMemo(() => activeTool === 'line' && line.phase === 'placing' && !line.start ? {
     placeholder: t('startCoordinate'),
     submit: (value: string) => {
@@ -124,12 +126,13 @@ export function DrawingWorkspace({ project, mode = 'edit' }: { project: Project;
   } : null, [activeTool, line.phase, line.start, t, tools])
 
   return (
-    <div ref={fullscreen.containerRef} className={`app-shell${fullscreen.active ? ' is-fullscreen' : ''}`}>
+    <div ref={fullscreen.containerRef} className={`app-shell${fullscreen.active ? ' is-fullscreen' : ''}${!fullscreen.active && mode === 'edit' ? ' has-workspace-footer' : ''}`}>
       {!fullscreen.active && mode === 'edit' && (
         <TopBar
           onOpenSettings={() => setSettingsOpen(true)}
           onOpenShare={() => setShareOpen(true)}
           onOpenLayers={() => setLayersOpen(true)}
+          onOpenProjects={() => setProjectsOpen(true)}
           saveStatus={projectSnapshot.saveStatus}
           store={store}
           tools={tools}
@@ -154,7 +157,10 @@ export function DrawingWorkspace({ project, mode = 'edit' }: { project: Project;
         onDeleteSelection={deleteSelection}
       />
       {!fullscreen.active && mode === 'edit' && (
-        <CommandBar context={commandContext} saveStatus={projectSnapshot.saveStatus} dirty={projectSnapshot.dirty} prompt={commandPrompt} />
+        <footer className="workspace-footer">
+          <CommandBar context={commandContext} saveStatus={projectSnapshot.saveStatus} dirty={projectSnapshot.dirty} prompt={commandPrompt} />
+          <SnapQuickControls />
+        </footer>
       )}
       {fullscreen.active ? (
         <FullscreenExit onExit={() => void fullscreen.exit()} />
@@ -184,6 +190,7 @@ export function DrawingWorkspace({ project, mode = 'edit' }: { project: Project;
             onRename={(id, name) => { session.renameLayer(id, name) }} onUpdate={(id, updates) => { session.updateLayer(id, updates) }}
             onSetActive={(id) => { session.setActiveLayer(id) }} onDelete={(id) => { session.deleteLayer(id) }} />
           <SharePanel open={shareOpen} onClose={() => setShareOpen(false)} project={projectSnapshot.project} />
+          <ProjectsPanel open={projectsOpen} onClose={() => setProjectsOpen(false)} />
         </>
       ) : null}
     </div>

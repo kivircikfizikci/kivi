@@ -1,11 +1,12 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, type CSSProperties } from 'react'
 import { useI18n } from '../../i18n/I18nContext.ts'
 import { MAX_REPEAT_COPIES } from '../geometry/entityTransforms.ts'
+import type { Point } from '../geometry/Point.ts'
 
-export function DistanceInput({ value, valid, onChange, onBack, onConfirm }: { value: string; valid: boolean; onChange: (value: string) => void; onBack: () => void; onConfirm: () => void }) {
+export function DistanceInput({ value, valid, onChange, onBack, onConfirm, position }: { value: string; valid: boolean; onChange: (value: string) => void; onBack: () => void; onConfirm: () => void; position?: Point }) {
   const { t } = useI18n(); const ref = useRef<HTMLInputElement>(null)
   useEffect(() => { ref.current?.focus(); ref.current?.select() }, [])
-  return <form className="length-input transform-input" onSubmit={(event) => { event.preventDefault(); if (valid) onConfirm() }}>
+  return <form className="length-input transform-input" style={position ? { '--length-input-x': `${position.x}px`, '--length-input-y': `${position.y}px` } as CSSProperties : undefined} onSubmit={(event) => { event.preventDefault(); if (valid) onConfirm() }}>
     <label htmlFor="transform-distance">{t('distance')}</label>
     <div className="length-field"><input ref={ref} id="transform-distance" inputMode="decimal" value={value} onChange={(event) => onChange(event.target.value)} /><span>{t('centimeters')}</span></div>
     <div className="length-actions"><button type="button" className="secondary-button" onClick={onBack}>{t('back')}</button><button type="submit" className="primary-button" disabled={!valid}>{t('confirm')}</button></div>

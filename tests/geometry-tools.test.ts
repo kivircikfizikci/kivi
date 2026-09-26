@@ -20,6 +20,7 @@ import { createDrawingPdf } from '../src/export/pdfExport.ts'
 import { CURRENT_PROJECT_VERSION, type Project } from '../src/types/project.ts'
 import { resolveDimensionColor } from '../src/drawing/geometry/dimensionColor.ts'
 import { ProjectSession } from '../src/project/ProjectSession.ts'
+import { entitiesInSelectionBox, selectionBox } from '../src/drawing/selection/boxSelection.ts'
 
 const style = { color: '#234f41', width: 2 }
 const line: LineEntity = { id: 'line', type: 'line', start: { x: 0, y: 0 }, end: { x: 100, y: 0 }, style }
@@ -45,6 +46,22 @@ test('single selection clears previous items while toggle supports Ctrl, Shift, 
   assert.equal(select.getSelectedIds().size, 0)
   select.toggleMultiMode()
   assert.equal(select.getSnapshot().multiMode, true)
+})
+
+test('desktop marquee selection finds geometry crossing or contained by the dragged box', () => {
+  assert.deepEqual(
+    entitiesInSelectionBox(selectionBox({ x: 40, y: -2 }, { x: 60, y: 2 }), [line, rectangle, circle, arc]).map((entity) => entity.id),
+    ['line'],
+  )
+  assert.deepEqual(
+    entitiesInSelectionBox(selectionBox({ x: 5, y: 5 }, { x: 95, y: 55 }), [line, rectangle, circle, arc]).map((entity) => entity.id),
+    ['rect'],
+  )
+  assert.deepEqual(
+    entitiesInSelectionBox(selectionBox({ x: 128, y: 35 }, { x: 134, y: 45 }), [circle]).map((entity) => entity.id),
+    ['circle'],
+  )
+  assert.deepEqual(entitiesInSelectionBox(selectionBox({ x: 150, y: 35 }, { x: 170, y: 45 }), [circle]), [])
 })
 
 test('multi-delete is one history action and dependent dimensions are removed once', () => {

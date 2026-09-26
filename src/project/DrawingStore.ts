@@ -78,6 +78,19 @@ export class DrawingStore {
     return true
   }
 
+  applyTrim(targetId: string, replacements: readonly (LineEntity | ArcEntity)[]) {
+    if (this.readOnly) return false
+    const targetIndex = this.state.entities.findIndex((entity) => entity.id === targetId && (entity.type === 'line' || entity.type === 'arc'))
+    if (targetIndex < 0) return false
+    const entities = this.state.entities.filter((entity) =>
+      entity.id !== targetId && !(entity.type === 'dimension' && entity.source.type === 'entity' && entity.source.targetEntityId === targetId),
+    )
+    const insertionIndex = Math.min(targetIndex, entities.length)
+    entities.splice(insertionIndex, 0, ...replacements)
+    this.commit({ ...this.state, entities })
+    return true
+  }
+
   deleteEntity(id: string) {
     return this.deleteEntities([id])
   }

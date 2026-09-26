@@ -9,6 +9,8 @@ import { ArcTool } from './ArcTool.ts'
 import { RepeatTool } from './RepeatTool.ts'
 import { MoveTool } from './MoveTool.ts'
 import { CopyTool } from './CopyTool.ts'
+import { OffsetTool } from './OffsetTool.ts'
+import { TrimTool } from './TrimTool.ts'
 
 export class ToolManager {
   readonly line = new LineTool()
@@ -20,6 +22,8 @@ export class ToolManager {
   readonly move = new MoveTool()
   readonly copy = new CopyTool()
   readonly repeat = new RepeatTool()
+  readonly offset = new OffsetTool()
+  readonly trim = new TrimTool()
   private activeId: ToolId = 'select'
   private readonly listeners = new Set<() => void>()
 
@@ -58,6 +62,8 @@ export class ToolManager {
       case 'move': return this.move
       case 'copy': return this.copy
       case 'repeat': return this.repeat
+      case 'offset': return this.offset
+      case 'trim': return this.trim
       case 'select': return this.select
     }
   }

@@ -77,6 +77,11 @@ export function BottomDrawer({ open, onOpen, onClose, store, tools, activeTool, 
               <Icon name={tool} /><span>{t(tool)}</span>
             </button>
           ))}
+          {(['offset', 'trim'] as const).map((tool) => (
+            <button key={tool} className={`tool-tile${activeTool === tool ? ' is-active' : ''}`} type="button" onClick={() => activate(tool)}>
+              <Icon name={tool} /><span>{t(tool)}</span>
+            </button>
+          ))}
           <button className="tool-tile" type="button" disabled={!canUndo} onClick={() => store.undo()}>
             <Icon name="undo" />
             <span>{t('undo')}</span>

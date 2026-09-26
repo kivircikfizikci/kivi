@@ -21,6 +21,10 @@ export class TranslationTool implements Tool {
     this.set({ ...this.snapshot, phase: 'choosingDestination', base: { ...point }, pointer: { ...point }, snap })
   }
   updatePointer(point: Point, snap: SnapCandidate | null) {
+    if (this.snapshot.phase === 'waitingBase') {
+      this.set({ ...this.snapshot, pointer: { ...point }, snap })
+      return
+    }
     if (this.snapshot.phase !== 'choosingDestination' || !this.snapshot.base) return
     this.set({ ...this.snapshot, pointer: { ...point }, delta: vector(this.snapshot.base, point), snap })
   }

@@ -1,6 +1,6 @@
 import type { SVGProps } from 'react'
 
-export type IconName = 'settings' | 'expand' | 'collapse' | 'close' | 'folder' | 'chevronLeft' | 'chevronUp' | 'chevronDown' | 'line' | 'rectangle' | 'circle' | 'arc' | 'multi' | 'cursor' | 'undo' | 'redo' | 'trash' | 'plus' | 'edit' | 'dimension' | 'menu' | 'tools' | 'share' | 'image' | 'file' | 'link' | 'eye' | 'eyeOff' | 'lock' | 'unlock' | 'endpoint' | 'midpoint' | 'gridSnap' | 'angleSnap' | 'move' | 'copy' | 'repeat'
+export type IconName = 'settings' | 'expand' | 'collapse' | 'close' | 'folder' | 'chevronLeft' | 'chevronUp' | 'chevronDown' | 'line' | 'rectangle' | 'circle' | 'arc' | 'multi' | 'cursor' | 'undo' | 'redo' | 'trash' | 'plus' | 'edit' | 'dimension' | 'menu' | 'tools' | 'share' | 'image' | 'file' | 'link' | 'eye' | 'eyeOff' | 'lock' | 'unlock' | 'endpoint' | 'midpoint' | 'gridSnap' | 'angleSnap' | 'move' | 'copy' | 'repeat' | 'offset' | 'trim'
 
 const paths: Record<IconName, React.ReactNode> = {
   settings: (
@@ -45,6 +45,8 @@ const paths: Record<IconName, React.ReactNode> = {
   move: <><path d="M12 3v18M3 12h18M12 3l-3 3m3-3 3 3M12 21l-3-3m3 3 3-3M3 12l3-3m-3 3 3 3m15-3-3-3m3 3-3 3" /></>,
   copy: <><rect x="8" y="8" width="12" height="12" rx="1" /><path d="M16 8V4H4v12h4" /></>,
   repeat: <><path d="M17 3l4 4-4 4M21 7H9a5 5 0 0 0-5 5M7 21l-4-4 4-4M3 17h12a5 5 0 0 0 5-5" /></>,
+  offset: <><path d="M4 17 17 4M8 21 21 8" /><path d="m4 12 8-8m0 16 8-8" strokeDasharray="2 3" /></>,
+  trim: <><path d="M4 18 18 4M10 12l8 8" /><circle cx="8" cy="14" r="2" /><circle cx="14" cy="8" r="2" /></>,
 }
 
 interface IconProps extends SVGProps<SVGSVGElement> {

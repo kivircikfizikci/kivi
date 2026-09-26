@@ -5,8 +5,27 @@ import { useI18n } from '../i18n/I18nContext'
 import { useSettings } from '../settings/useSettings.ts'
 import type { Project } from '../types/project.ts'
 import { projectService } from './ProjectService.ts'
+import { useEscapeKey } from '../hooks/useEscapeKey.ts'
 
 export function ProjectsPage() {
+  return <ProjectsBrowser variant="page" open />
+}
+
+export function ProjectsPanel({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const { t } = useI18n()
+  useEscapeKey(onClose, open)
+
+  return (
+    <>
+      <div className={`projects-backdrop${open ? ' is-visible' : ''}`} onClick={onClose} aria-hidden="true" />
+      <aside className={`projects-panel${open ? ' is-open' : ''}`} aria-hidden={!open} aria-label={t('projects')}>
+        <ProjectsBrowser variant="panel" open={open} onClose={onClose} />
+      </aside>
+    </>
+  )
+}
+
+function ProjectsBrowser({ variant, open, onClose }: { variant: 'page' | 'panel'; open: boolean; onClose?: () => void }) {
   const { t } = useI18n()
   const { settings, updateSettings } = useSettings()
   const navigate = useNavigate()
@@ -20,7 +39,9 @@ export function ProjectsPage() {
   )
 
   useEffect(() => {
+    if (!open) return
     let active = true
+    setLoading(true)
     void projectService.listProjects()
       .then((items) => {
         if (active) setProjects(items)
@@ -31,11 +52,12 @@ export function ProjectsPage() {
     return () => {
       active = false
     }
-  }, [])
+  }, [open])
 
   const createProject = async () => {
     const project = await projectService.createProject(settings, t('untitled'))
     updateSettings({ lastOpenProjectId: project.id })
+    onClose?.()
     navigate(`/p/${project.id}`)
   }
 
@@ -58,17 +80,22 @@ export function ProjectsPage() {
     if (settings.lastOpenProjectId === project.id) updateSettings({ lastOpenProjectId: null })
   }
 
-  return (
-    <main className="projects-page">
+  const content = (
+    <>
       <header className="projects-header">
-        <Link className="icon-button" to="/" aria-label={t('backToDrawing')}>
-          <Icon name="chevronLeft" />
-        </Link>
-        <h1>{t('projects')}</h1>
+        {variant === 'page' && (
+          <Link className="icon-button" to="/" aria-label={t('backToDrawing')}>
+            <Icon name="chevronLeft" />
+          </Link>
+        )}
+        {variant === 'page' ? <h1>{t('projects')}</h1> : <h2>{t('projects')}</h2>}
         <button className="new-project-button" type="button" onClick={() => void createProject()}>
           <Icon name="plus" />
           <span>{t('newProject')}</span>
         </button>
+        {variant === 'panel' && (
+          <button className="icon-button small" type="button" onClick={onClose} aria-label={t('close')}><Icon name="close" /></button>
+        )}
       </header>
 
       {!loading && projects.length === 0 ? (
@@ -92,7 +119,7 @@ export function ProjectsPage() {
                     />
                   </form>
                 ) : (
-                  <Link to={`/p/${project.id}`} onClick={() => updateSettings({ lastOpenProjectId: project.id })}>
+                  <Link to={`/p/${project.id}`} onClick={() => { updateSettings({ lastOpenProjectId: project.id }); onClose?.() }}>
                     <strong>{project.name}</strong>
                     <span>{dateFormatter.format(new Date(project.updatedAt))}</span>
                   </Link>
@@ -109,6 +136,10 @@ export function ProjectsPage() {
           ))}
         </div>
       )}
-    </main>
+    </>
   )
+
+  return variant === 'page'
+    ? <main className="projects-page">{content}</main>
+    : <div className="projects-panel-content">{content}</div>
 }

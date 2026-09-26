@@ -56,8 +56,11 @@ test('multi-entity move is one history action and linked dimension follows its t
 
 test('MoveTool uses snapped destination and exact distance along one shared direction', () => {
   const tool = new MoveTool(); tool.activate()
-  tool.placeBase({ x: 0, y: 0 }, null)
   const snap = { kind: 'grid' as const, point: { x: 30, y: 40 }, distancePixels: 1 }
+  tool.updatePointer(snap.point, snap)
+  assert.deepEqual(tool.getSnapshot().snap, snap)
+  assert.deepEqual(tool.getSnapshot().pointer, snap.point)
+  tool.placeBase({ x: 0, y: 0 }, null)
   tool.updatePointer(snap.point, snap)
   assert.equal(tool.chooseDestination(snap.point, snap), true)
   tool.updateDistance('100')
@@ -66,6 +69,9 @@ test('MoveTool uses snapped destination and exact distance along one shared dire
 
 test('CopyTool shares the precise base, direction, and distance interaction without mutating sources', () => {
   const tool = new CopyTool(); tool.activate()
+  const snap = { kind: 'endpoint' as const, point: { x: 10, y: 10 }, distancePixels: 1, entityId: 'line' }
+  tool.updatePointer(snap.point, snap)
+  assert.deepEqual(tool.getSnapshot().snap, snap)
   tool.placeBase({ x: 10, y: 10 }, null)
   tool.chooseDestination({ x: 10, y: 30 }, null)
   tool.updateDistance('40')

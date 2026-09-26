@@ -279,6 +279,66 @@
   transition: opacity 180ms ease, visibility 180ms ease;
 }
 
+.projects-backdrop {
+  position: fixed;
+  z-index: 13;
+  inset: 0;
+  visibility: hidden;
+  opacity: 0;
+  background: var(--backdrop);
+  transition: opacity 180ms ease, visibility 180ms ease;
+}
+
+.projects-backdrop.is-visible {
+  visibility: visible;
+  opacity: 1;
+}
+
+.projects-panel {
+  position: fixed;
+  z-index: 14;
+  right: 8px;
+  bottom: 8px;
+  left: 8px;
+  visibility: hidden;
+  max-height: calc(100dvh - 16px);
+  overflow: hidden;
+  transform: translateY(calc(100% + 16px));
+  background: var(--panel-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-panel);
+  transition: transform 210ms cubic-bezier(.2, .8, .2, 1), visibility 210ms ease;
+}
+
+.projects-panel.is-open {
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.projects-panel-content {
+  max-height: calc(100dvh - 18px);
+  padding: 10px;
+  overflow-y: auto;
+}
+
+.projects-panel-content .projects-header h2 {
+  font-size: 16px;
+}
+
+.projects-panel-content .project-list {
+  margin-top: 10px;
+}
+
+.projects-panel-content .project-row {
+  min-height: 54px;
+  padding: 5px 4px 5px 9px;
+}
+
+.projects-panel-content .empty-state {
+  min-height: 180px;
+}
+
 .share-backdrop.is-visible {
   visibility: visible;
   opacity: 1;
@@ -470,7 +530,7 @@ button.tool-tile {
 .layer-panel {
   position: fixed;
   z-index: 11;
-  top: calc(var(--top-bar-height) + 6px);
+  top: calc(var(--top-bar-height) + env(safe-area-inset-top));
   left: 10px;
   visibility: hidden;
   width: min(360px, calc(100vw - 20px));
@@ -715,10 +775,8 @@ button.tool-tile {
 
 @media (min-width: 700px) {
   .desktop-command-area {
-    position: absolute;
+    position: relative;
     z-index: 8;
-    bottom: 20px;
-    left: 20px;
     display: grid;
     grid-template-columns: 236px auto;
     gap: 8px;
@@ -781,6 +839,10 @@ button.tool-tile {
     background: transparent;
   }
 
+  .projects-backdrop {
+    background: transparent;
+  }
+
   .share-panel {
     top: calc(var(--top-bar-height) + env(safe-area-inset-top) - 2px);
     right: 10px;
@@ -797,6 +859,28 @@ button.tool-tile {
   .share-panel.is-open {
     transform: translateY(0) scale(1);
     opacity: 1;
+  }
+
+  .projects-panel {
+    top: calc(var(--top-bar-height) + env(safe-area-inset-top) - 2px);
+    right: 10px;
+    bottom: auto;
+    left: auto;
+    width: min(380px, calc(100vw - 20px));
+    max-height: calc(100dvh - var(--top-bar-height) - 58px);
+    transform: translateY(-8px) scale(.98);
+    transform-origin: top right;
+    border-radius: var(--radius-md);
+    opacity: 0;
+  }
+
+  .projects-panel.is-open {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+
+  .projects-panel-content {
+    max-height: calc(100dvh - var(--top-bar-height) - 60px);
   }
 
   .share-actions button {

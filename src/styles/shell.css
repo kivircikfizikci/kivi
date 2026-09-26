@@ -161,12 +161,21 @@
 
 .drawing-svg.tool-rectangle,
 .drawing-svg.tool-circle,
-.drawing-svg.tool-arc {
+.drawing-svg.tool-arc,
+.drawing-svg.tool-offset,
+.drawing-svg.tool-trim {
   cursor: crosshair;
 }
 
 .drawing-svg.tool-view {
   cursor: grab;
+}
+
+.marquee-selection {
+  fill: color-mix(in srgb, var(--accent) 12%, transparent);
+  stroke: var(--accent);
+  stroke-width: 1;
+  stroke-dasharray: 5 4;
 }
 
 .dimension-entity.is-preview {
@@ -184,6 +193,17 @@
 
 .transform-preview > * {
   stroke-dasharray: 6 4;
+}
+
+.trim-preview .transform-preview {
+  opacity: .82;
+}
+
+.trim-preview path,
+.trim-preview line {
+  stroke: var(--danger) !important;
+  stroke-width: 4;
+  stroke-dasharray: 7 4;
 }
 
 .selection-highlight {
@@ -378,18 +398,28 @@
   display: none;
 }
 
+.workspace-footer {
+  display: none;
+}
+
 @media (min-width: 700px) {
   .snap-quick-controls {
-    position: absolute;
-    z-index: 5;
-    right: max(58px, calc(48px + env(safe-area-inset-right)));
-    bottom: max(10px, env(safe-area-inset-bottom));
     display: flex;
     gap: 6px;
   }
 
-  .app-shell.is-fullscreen .snap-quick-controls {
-    z-index: 106;
+  .app-shell.has-workspace-footer {
+    grid-template-rows: calc(var(--top-bar-height) + env(safe-area-inset-top)) minmax(0, 1fr) 48px;
+  }
+
+  .workspace-footer {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 4px 10px 10px;
+    background: var(--surface-soft);
   }
 
   .snap-quick-controls .icon-button {

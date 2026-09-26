@@ -6,12 +6,14 @@ import { transformContextActions } from './contextActions.ts'
 
 export interface ContextMenuPosition { x: number; y: number }
 
-export function DrawingContextMenu({ position, layers, onMove, onCopy, onRepeat, onMoveToLayer, onDelete, disabled = false, onClose }: {
+export function DrawingContextMenu({ position, layers, onOffset, canOffset, onMove, onCopy, onRepeat, onMoveToLayer, onDelete, disabled = false, onClose }: {
   position: ContextMenuPosition
   layers: readonly Layer[]
   onMove: () => void
   onCopy: () => void
   onRepeat: () => void
+  onOffset: () => void
+  canOffset: boolean
   onMoveToLayer: (layerId: string) => void
   onDelete: () => void
   onClose: () => void
@@ -35,6 +37,7 @@ export function DrawingContextMenu({ position, layers, onMove, onCopy, onRepeat,
 
   return (
     <div ref={ref} className="drawing-context-menu" style={{ left: position.x, top: position.y }} role="menu" onKeyDown={(event) => { if (event.key === 'Escape') onClose() }}>
+      {canOffset && <button type="button" role="menuitem" onClick={onOffset}>{t('offset')}</button>}
       {transformContextActions.map((action) => <button key={action} type="button" role="menuitem" disabled={disabled} title={disabled ? t('locked') : undefined} onClick={transformCallbacks[action]}>{t(action)}</button>)}
       <button type="button" role="menuitem" disabled={disabled} title={disabled ? t('locked') : undefined} onClick={() => setSubmenu((value) => !value)} aria-expanded={submenu}>{t('moveToLayer')} <span>›</span></button>
       {submenu && <div className="context-submenu" role="menu">
