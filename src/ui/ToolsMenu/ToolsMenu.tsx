@@ -6,7 +6,7 @@ import type { ToolId } from '../../tools/Tool.ts'
 import { Icon } from '../Icon/Icon'
 import { activateToolFromMenu } from './toolMenuActions.ts'
 
-export function ToolsMenu({ tools, activeTool }: { tools: ToolManager; activeTool: ToolId }) {
+export function ToolsMenu({ tools, activeTool, canTransform }: { tools: ToolManager; activeTool: ToolId; canTransform: boolean }) {
   const { t } = useI18n()
   const [open, setOpen] = useState(false)
   useEscapeKey(() => setOpen(false), open)
@@ -17,6 +17,9 @@ export function ToolsMenu({ tools, activeTool }: { tools: ToolManager; activeToo
     ['arc', 'arc', 'arc'],
     ['dimension', 'dimension', 'dimension'],
     ['select', 'cursor', 'select'],
+    ['move', 'move', 'move'],
+    ['copy', 'copy', 'copy'],
+    ['repeat', 'repeat', 'repeat'],
   ] as const
 
   return (
@@ -29,7 +32,7 @@ export function ToolsMenu({ tools, activeTool }: { tools: ToolManager; activeToo
       {open && <button className="popover-dismiss" type="button" onClick={() => setOpen(false)} aria-label={t('close')} />}
       <div className={`compact-popover tools-popover${open ? ' is-open' : ''}`} aria-hidden={!open}>
         {items.map(([tool, icon, label]) => (
-          <button className={activeTool === tool ? 'is-active' : ''} type="button" key={tool} onClick={() => activateToolFromMenu(tools, tool, () => setOpen(false))}>
+          <button className={activeTool === tool ? 'is-active' : ''} type="button" key={tool} disabled={['move', 'copy', 'repeat'].includes(tool) && !canTransform} onClick={() => activateToolFromMenu(tools, tool, () => setOpen(false))}>
             <Icon name={icon} /><span>{t(label)}</span>
           </button>
         ))}

@@ -46,6 +46,10 @@ import { geometryStyleFromProject } from '../entities/geometryStyle.ts'
 import { resolveDimensionSegment } from '../geometry/dimension.ts'
 import { SnapQuickControls } from '../../ui/SnapQuickControls/SnapQuickControls.tsx'
 import { snapAnglesForIncrement } from '../geometry/angle.ts'
+import { cloneEntitiesWithNewIds, REPEAT_PREVIEW_LIMIT, repeatEntities, selectionAnchor, translateEntity } from '../geometry/entityTransforms.ts'
+import { TransformPreviewRenderer } from '../renderer/TransformPreviewRenderer.tsx'
+import { DistanceInput, RepeatInput } from '../renderer/TransformInputs.tsx'
+import { canTransformSelection } from '../../tools/transformEligibility.ts'
 
 interface DrawingViewportProps {
   store: DrawingStore
@@ -82,6 +86,9 @@ export function DrawingViewport({ store, tools, projectSettings, layers, activeL
   const rectangle = useSyncExternalStore(tools.rectangle.subscribe, tools.rectangle.getSnapshot)
   const circle = useSyncExternalStore(tools.circle.subscribe, tools.circle.getSnapshot)
   const arc = useSyncExternalStore(tools.arc.subscribe, tools.arc.getSnapshot)
+  const move = useSyncExternalStore(tools.move.subscribe, tools.move.getSnapshot)
+  const copy = useSyncExternalStore(tools.copy.subscribe, tools.copy.getSnapshot)
+  const repeat = useSyncExternalStore(tools.repeat.subscribe, tools.repeat.getSnapshot)
   const selection = useSyncExternalStore(tools.select.subscribe, tools.select.getSnapshot)
   const [camera, setCamera] = useState(initialCamera ?? DEFAULT_CAMERA)
   const [viewport, setViewport] = useState<ViewportSize>({ width: 1, height: 1 })
@@ -98,6 +105,14 @@ export function DrawingViewport({ store, tools, projectSettings, layers, activeL
   const selectableEntities = useMemo(() => entitiesOnSelectableLayers(drawing.state.entities, layers), [drawing.state.entities, layers])
   const lineStyle = useMemo(() => geometryStyleFromProject(projectSettings), [projectSettings])
   const targetLayers = useMemo(() => layers.filter((layer) => layer.id !== DIMENSIONS_LAYER_ID && layer.visible && !layer.locked), [layers])
+  const selectedEntities = useMemo(() => selectableEntities.filter((entity) => selection.selectedIds.has(entity.id)), [selectableEntities, selection.selectedIds])
+  const transformSelectionValid = useMemo(() => canTransformSelection(selection.selectedIds, drawing.state.entities, layers), [drawing.state.entities, layers, selection.selectedIds])
+
+  useEffect(() => {
+    if (activeTool !== 'repeat' || repeat.origin) return
+    const origin = selectionAnchor(selectedEntities)
+    if (origin) tools.repeat.setOrigin(origin)
+  }, [activeTool, repeat.origin, selectedEntities, tools.repeat])
 
   useEffect(() => {
     const allowed = new Set(selectableEntities.map((entity) => entity.id))
@@ -135,7 +150,7 @@ export function DrawingViewport({ store, tools, projectSettings, layers, activeL
       pointer: worldPoint,
       entities: visibleEntities,
       zoom: camera.zoom,
-      angleOrigin: dimension.firstPoint ?? line.start ?? rectangle.start ?? circle.center ?? arc.center ?? undefined,
+      angleOrigin: move.base ?? copy.base ?? repeat.origin ?? dimension.firstPoint ?? line.start ?? rectangle.start ?? circle.center ?? arc.center ?? undefined,
       settings: {
         endpoint: settings.endpointSnapEnabled,
         midpoint: settings.midpointSnapEnabled,
@@ -146,7 +161,7 @@ export function DrawingViewport({ store, tools, projectSettings, layers, activeL
         angles: snapAnglesForIncrement(settings.angleSnapIncrement),
       },
     })
-  }, [arc.center, camera, circle.center, dimension.firstPoint, line.start, projectSettings.gridSpacing, rectangle.start, settings, snapManager, viewport, visibleEntities])
+  }, [arc.center, camera, circle.center, copy.base, dimension.firstPoint, line.start, move.base, projectSettings.gridSpacing, rectangle.start, repeat.origin, settings, snapManager, viewport, visibleEntities])
 
   const handleSinglePoint = useCallback((screenPoint: Point, pointerType: string, toggleSelection: boolean) => {
     if (mode === 'view') return
@@ -172,6 +187,21 @@ export function DrawingViewport({ store, tools, projectSettings, layers, activeL
       const resolved = resolveSnap(screenPoint, pointerType)
       const placed = tools.arc.placePoint(resolved.point, resolved.snap, style)
       if (placed) store.addArc(placed, activeLayerId)
+      return
+    }
+
+    if (activeTool === 'move' || activeTool === 'copy') {
+      const tool = activeTool === 'move' ? tools.move : tools.copy
+      const snapshot = tool.getSnapshot()
+      const resolved = resolveSnap(screenPoint, pointerType)
+      if (snapshot.phase === 'waitingBase') tool.placeBase(resolved.point, resolved.snap)
+      else if (snapshot.phase === 'choosingDestination') tool.chooseDestination(resolved.point, resolved.snap)
+      return
+    }
+
+    if (activeTool === 'repeat') {
+      const resolved = resolveSnap(screenPoint, pointerType)
+      tools.repeat.chooseDirection(resolved.point, resolved.snap)
       return
     }
 
@@ -268,6 +298,15 @@ export function DrawingViewport({ store, tools, projectSettings, layers, activeL
     } else if (mode === 'edit' && activeTool === 'arc' && arc.phase !== 'inactive') {
       const resolved = resolveSnap(point, event.pointerType)
       tools.arc.updatePointer(resolved.point, resolved.snap, lineStyle)
+    } else if (mode === 'edit' && activeTool === 'move' && move.phase === 'choosingDestination') {
+      const resolved = resolveSnap(point, event.pointerType)
+      tools.move.updatePointer(resolved.point, resolved.snap)
+    } else if (mode === 'edit' && activeTool === 'copy' && copy.phase === 'choosingDestination') {
+      const resolved = resolveSnap(point, event.pointerType)
+      tools.copy.updatePointer(resolved.point, resolved.snap)
+    } else if (mode === 'edit' && activeTool === 'repeat' && repeat.phase === 'direction') {
+      const resolved = resolveSnap(point, event.pointerType)
+      tools.repeat.updatePointer(resolved.point, resolved.snap)
     } else if (mode === 'edit' && activeTool === 'dimension' && dimension.phase === 'waitingSecond') {
       const resolved = resolveSnap(point, event.pointerType)
       tools.dimension.updateSecondPoint(resolved.point, resolved.snap)
@@ -310,7 +349,7 @@ export function DrawingViewport({ store, tools, projectSettings, layers, activeL
     const entity = selectionManager.findEntity(worldPoint, selectableEntities, camera.zoom, SELECTION_TOLERANCE_MOUSE_PX)
     if (!entity) { setContextMenu(null); return }
     tools.select.setSelection(selectionForContextTarget(selection.selectedIds, entity.id))
-    setContextMenu({ x: Math.min(screenPoint.x, Math.max(6, viewport.width - 176)), y: Math.min(screenPoint.y, Math.max(6, viewport.height - 110)) })
+    setContextMenu({ x: Math.min(screenPoint.x, Math.max(6, viewport.width - 176)), y: Math.min(screenPoint.y, Math.max(6, viewport.height - 190)) })
   }
 
   const confirmLine = () => {
@@ -325,6 +364,48 @@ export function DrawingViewport({ store, tools, projectSettings, layers, activeL
     const entity = tools.circle.confirm(lineStyle)
     if (entity) store.addCircle(entity, activeLayerId)
   }
+  const confirmMove = () => {
+    const delta = tools.move.confirm()
+    if (delta && store.translateEntities(selection.selectedIds, delta)) tools.finishActiveTool()
+  }
+  const confirmCopy = () => {
+    const delta = tools.copy.confirm()
+    if (!delta) return
+    const clones = cloneEntitiesWithNewIds(selectedEntities, delta)
+    if (store.addEntities(clones)) {
+      tools.select.setSelection(clones.map((entity) => entity.id))
+      tools.finishActiveTool()
+    }
+  }
+  const confirmRepeat = () => {
+    const parameters = tools.repeat.confirm()
+    if (!parameters) return
+    const clones = repeatEntities(selectedEntities, parameters.direction, parameters.spacing, parameters.copies)
+    if (store.addEntities(clones)) {
+      tools.select.setSelection(clones.map((entity) => entity.id))
+      tools.finishActiveTool()
+    }
+  }
+  const transformPreview = useMemo(() => {
+    if (activeTool === 'move' && (move.phase === 'choosingDestination' || move.phase === 'distance')) {
+      const ids = new Set(selectedEntities.map((entity) => entity.id))
+      const sources = visibleEntities.filter((entity) => ids.has(entity.id) || (entity.type === 'dimension' && entity.source.type === 'entity' && ids.has(entity.source.targetEntityId)))
+      return sources.map((entity) => translateEntity(entity, move.delta))
+    }
+    if (activeTool === 'copy' && (copy.phase === 'choosingDestination' || copy.phase === 'distance')) {
+      let index = 0
+      return cloneEntitiesWithNewIds(selectedEntities, copy.delta, () => `preview-copy-${index++}`)
+    }
+    if (activeTool === 'repeat' && repeat.phase === 'parameters' && repeat.direction) {
+      const spacing = Number(repeat.spacingInput.replace(',', '.'))
+      const requestedCopies = Number(repeat.copiesInput)
+      if (!Number.isFinite(spacing) || spacing <= 0 || !Number.isInteger(requestedCopies) || requestedCopies < 1) return []
+      const copies = Math.min(requestedCopies, Math.max(1, Math.floor(REPEAT_PREVIEW_LIMIT / Math.max(1, selectedEntities.length))))
+      let index = 0
+      return repeatEntities(selectedEntities, repeat.direction, spacing, copies, () => `preview-repeat-${index++}`)
+    }
+    return []
+  }, [activeTool, copy.delta, copy.phase, move.delta, move.phase, repeat.copiesInput, repeat.direction, repeat.phase, repeat.spacingInput, selectedEntities, visibleEntities])
   const lengthInputPosition = line.end
     ? positionLengthInput(worldToScreen(line.end, camera, viewport), viewport)
     : undefined
@@ -396,12 +477,20 @@ export function DrawingViewport({ store, tools, projectSettings, layers, activeL
             {mode === 'edit' && activeTool === 'rectangle' && <SnapIndicatorRenderer snap={rectangle.snap} camera={camera} viewport={viewport} />}
             {mode === 'edit' && activeTool === 'circle' && <SnapIndicatorRenderer snap={circle.snap} camera={camera} viewport={viewport} />}
             {mode === 'edit' && activeTool === 'arc' && <SnapIndicatorRenderer snap={arc.snap} camera={camera} viewport={viewport} />}
+            {mode === 'edit' && transformPreview.length > 0 && <TransformPreviewRenderer entities={transformPreview} camera={camera} viewport={viewport} settings={projectSettings} />}
+            {mode === 'edit' && activeTool === 'move' && <SnapIndicatorRenderer snap={move.snap} camera={camera} viewport={viewport} />}
+            {mode === 'edit' && activeTool === 'copy' && <SnapIndicatorRenderer snap={copy.snap} camera={camera} viewport={viewport} />}
+            {mode === 'edit' && activeTool === 'repeat' && <SnapIndicatorRenderer snap={repeat.snap} camera={camera} viewport={viewport} />}
           </g>
         </svg>
 
-        {mode === 'edit' && (activeTool === 'dimension' || activeTool === 'arc' || (activeTool === 'line' && line.phase === 'placing') || (activeTool === 'rectangle' && rectangle.phase === 'placing') || (activeTool === 'circle' && circle.phase === 'placing')) && (
+        {mode === 'edit' && (activeTool === 'dimension' || activeTool === 'arc' || activeTool === 'move' || activeTool === 'copy' || activeTool === 'repeat' || (activeTool === 'line' && line.phase === 'placing') || (activeTool === 'rectangle' && rectangle.phase === 'placing') || (activeTool === 'circle' && circle.phase === 'placing')) && (
           <button className="finish-tool-button" type="button" onClick={() => tools.finishActiveTool()}>{t('done')}</button>
         )}
+        {mode === 'edit' && (activeTool === 'move' || activeTool === 'copy') && (activeTool === 'move' ? move.phase : copy.phase) !== 'distance' && (
+          <div className="tool-prompt" role="status">{t((activeTool === 'move' ? move.phase : copy.phase) === 'waitingBase' ? 'basePoint' : 'destinationPoint')}</div>
+        )}
+        {mode === 'edit' && activeTool === 'repeat' && repeat.phase === 'direction' && <div className="tool-prompt" role="status">{t('direction')}</div>}
         {mode === 'edit' && rectangle.phase === 'size' && (
           <RectangleInput width={rectangle.widthInput} height={rectangle.heightInput} canConfirm={rectangle.canConfirm} position={rectangleInputPosition}
             onChange={(width, height) => tools.rectangle.updateSize(width, height, lineStyle)}
@@ -423,6 +512,16 @@ export function DrawingViewport({ store, tools, projectSettings, layers, activeL
             position={lengthInputPosition}
           />
         )}
+        {mode === 'edit' && activeTool === 'move' && move.phase === 'distance' && (
+          <DistanceInput value={move.distanceInput} valid={move.canConfirm} onChange={(value) => tools.move.updateDistance(value)} onBack={() => tools.move.back()} onConfirm={confirmMove} />
+        )}
+        {mode === 'edit' && activeTool === 'copy' && copy.phase === 'distance' && (
+          <DistanceInput value={copy.distanceInput} valid={copy.canConfirm} onChange={(value) => tools.copy.updateDistance(value)} onBack={() => tools.copy.back()} onConfirm={confirmCopy} />
+        )}
+        {mode === 'edit' && activeTool === 'repeat' && repeat.phase === 'parameters' && (
+          <RepeatInput spacing={repeat.spacingInput} copies={repeat.copiesInput} valid={repeat.canConfirm}
+            onChange={(spacing, copies) => tools.repeat.updateParameters(spacing, copies)} onConfirm={confirmRepeat} />
+        )}
         {onEnterFullscreen && (
           <button className="fullscreen-control icon-button" type="button" onClick={onEnterFullscreen} aria-label={t('fullscreen')} title={t('fullscreen')}>
             <Icon name="expand" />
@@ -431,7 +530,11 @@ export function DrawingViewport({ store, tools, projectSettings, layers, activeL
         {mode === 'edit' && <SnapQuickControls />}
         {contextMenu && mode === 'edit' && (
           <DrawingContextMenu position={contextMenu} layers={targetLayers} onClose={() => setContextMenu(null)}
-            onMove={(layerId) => { onMoveSelection(layerId); setContextMenu(null) }}
+            disabled={!transformSelectionValid}
+            onMove={() => { tools.activate('move'); setContextMenu(null) }}
+            onCopy={() => { tools.activate('copy'); setContextMenu(null) }}
+            onRepeat={() => { tools.activate('repeat'); setContextMenu(null) }}
+            onMoveToLayer={(layerId) => { onMoveSelection(layerId); setContextMenu(null) }}
             onDelete={() => { onDeleteSelection(); setContextMenu(null) }} />
         )}
       </div>

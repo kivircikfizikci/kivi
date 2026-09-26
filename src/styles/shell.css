@@ -178,6 +178,14 @@
   stroke-dasharray: 7 5;
 }
 
+.transform-preview {
+  opacity: .48;
+}
+
+.transform-preview > * {
+  stroke-dasharray: 6 4;
+}
+
 .selection-highlight {
   stroke: var(--accent);
   stroke-width: 8;
@@ -224,6 +232,22 @@
   box-shadow: var(--shadow-soft);
   font-weight: 650;
   cursor: pointer;
+}
+
+.tool-prompt {
+  position: absolute;
+  z-index: 3;
+  top: 60px;
+  left: 50%;
+  padding: 5px 9px;
+  transform: translateX(-50%);
+  color: var(--ink-muted);
+  background: var(--floating-surface);
+  border: 1px solid var(--border);
+  border-radius: 99px;
+  box-shadow: var(--shadow-soft);
+  font-size: 12px;
+  pointer-events: none;
 }
 
 .length-input {
@@ -330,7 +354,8 @@
 }
 
 .app-shell.is-fullscreen .finish-tool-button,
-.app-shell.is-fullscreen .length-input {
+.app-shell.is-fullscreen .length-input,
+.app-shell.is-fullscreen .tool-prompt {
   display: none;
 }
 

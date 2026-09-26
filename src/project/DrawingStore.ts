@@ -6,6 +6,7 @@ import type { ArcEntity } from '../drawing/entities/ArcEntity.ts'
 import type { Entity } from '../drawing/entities/Entity.ts'
 import { EMPTY_DRAWING_STATE, type DrawingState } from './DrawingState.ts'
 import { HistoryManager } from './HistoryManager.ts'
+import { translateEntity, type Delta } from '../drawing/geometry/entityTransforms.ts'
 
 export interface DrawingSnapshot {
   state: DrawingState
@@ -54,6 +55,26 @@ export class DrawingStore {
   addEntity(entity: Entity) {
     if (this.readOnly) return false
     this.commit({ ...this.state, entities: [...this.state.entities, entity] })
+    return true
+  }
+
+  addEntities(entities: readonly Entity[]) {
+    if (this.readOnly || entities.length === 0) return false
+    this.commit({ ...this.state, entities: [...this.state.entities, ...entities] })
+    return true
+  }
+
+  translateEntities(ids: Iterable<string>, delta: Delta) {
+    if (this.readOnly || (!delta.x && !delta.y)) return false
+    const requested = new Set(ids)
+    let changed = false
+    const entities = this.state.entities.map((entity) => {
+      if (!requested.has(entity.id) || (entity.type === 'dimension' && entity.source.type === 'entity')) return entity
+      changed = true
+      return translateEntity(entity, delta)
+    })
+    if (!changed) return false
+    this.commit({ ...this.state, entities })
     return true
   }
 

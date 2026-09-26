@@ -18,9 +18,10 @@ interface TopBarProps {
   activeTool: ToolId
   canUndo: boolean
   canRedo: boolean
+  canTransform: boolean
 }
 
-export function TopBar({ onOpenSettings, onOpenShare, onOpenLayers, saveStatus, store, tools, activeTool, canUndo, canRedo }: TopBarProps) {
+export function TopBar({ onOpenSettings, onOpenShare, onOpenLayers, saveStatus, store, tools, activeTool, canUndo, canRedo, canTransform }: TopBarProps) {
   const { t } = useI18n()
   return (
     <header className="top-bar">
@@ -32,7 +33,7 @@ export function TopBar({ onOpenSettings, onOpenShare, onOpenLayers, saveStatus, 
         </span>
       </div>
       <div className="toolbar-group toolbar-center">
-        <ToolsMenu tools={tools} activeTool={activeTool} />
+        <ToolsMenu tools={tools} activeTool={activeTool} canTransform={canTransform} />
         <button className="icon-button compact" type="button" disabled={!canUndo} onClick={() => store.undo()} aria-label={t('undo')}><Icon name="undo" /></button>
         <button className="icon-button compact" type="button" disabled={!canRedo} onClick={() => store.redo()} aria-label={t('redo')}><Icon name="redo" /></button>
       </div>

@@ -571,7 +571,17 @@ button.tool-tile {
 
 .drawing-context-menu button:hover,
 .drawing-context-menu button:focus-visible { background: var(--accent-soft); }
+.drawing-context-menu button:disabled { opacity: .42; cursor: default; }
 .context-submenu { padding: 2px 0 2px 8px; border-left: 1px solid var(--border); }
+
+.repeat-limit {
+  grid-column: 1 / -1;
+  color: var(--ink-muted);
+  font-size: 11px;
+  text-align: right;
+}
+
+.repeat-input .length-actions { grid-template-columns: 1fr; }
 
 @media (max-width: 899px) {
   .drawing-context-menu { display: none; }

@@ -16,6 +16,7 @@ import { CommandBar } from '../ui/CommandBar/CommandBar.tsx'
 import type { CommandContext } from '../commands/commandRegistry.ts'
 import { LayerPanel } from '../ui/Layers/LayerPanel.tsx'
 import { parseCoordinate } from '../commands/coordinateParser.ts'
+import { canTransformSelection } from '../tools/transformEligibility.ts'
 
 export function DrawingWorkspace({ project, mode = 'edit' }: { project: Project; mode?: WorkspaceMode }) {
   const { t } = useI18n()
@@ -33,6 +34,7 @@ export function DrawingWorkspace({ project, mode = 'edit' }: { project: Project;
   const line = useSyncExternalStore(tools.line.subscribe, tools.line.getSnapshot)
   const selection = useSyncExternalStore(tools.select.subscribe, tools.select.getSnapshot)
   const fullscreen = useFullscreenMode()
+  const canTransform = useMemo(() => canTransformSelection(selection.selectedIds, drawing.state.entities, projectSnapshot.project.layers), [drawing.state.entities, projectSnapshot.project.layers, selection.selectedIds])
   const persistCamera = useCallback((camera: Parameters<ProjectSession['updateCamera']>[0]) => {
     if (mode === 'edit') session.updateCamera(camera)
   }, [mode, session])
@@ -97,7 +99,10 @@ export function DrawingWorkspace({ project, mode = 'edit' }: { project: Project;
   }, [selection.selectedIds, store, tools.select])
 
   const commandContext = useMemo<CommandContext>(() => ({
-    activateTool: (tool) => tools.activate(tool),
+    activateTool: (tool) => {
+      if ((tool === 'move' || tool === 'copy' || tool === 'repeat') && !canTransform) return
+      tools.activate(tool)
+    },
     deleteSelection,
     undo: () => { store.undo() },
     redo: () => { store.redo() },
@@ -106,7 +111,7 @@ export function DrawingWorkspace({ project, mode = 'edit' }: { project: Project;
     openLayers: () => setLayersOpen(true),
     enterFullscreen: () => { void fullscreen.enter() },
     openShare: () => setShareOpen(true),
-  }), [deleteSelection, fullscreen, navigate, store, tools])
+  }), [canTransform, deleteSelection, fullscreen, navigate, store, tools])
   const commandPrompt = useMemo(() => activeTool === 'line' && line.phase === 'placing' && !line.start ? {
     placeholder: t('startCoordinate'),
     submit: (value: string) => {
@@ -131,6 +136,7 @@ export function DrawingWorkspace({ project, mode = 'edit' }: { project: Project;
           activeTool={activeTool}
           canUndo={drawing.canUndo}
           canRedo={drawing.canRedo}
+          canTransform={canTransform}
         />
       )}
       {!fullscreen.active && mode === 'view' && <div className="view-mode-badge">{t('viewOnly')}</div>}
@@ -164,6 +170,7 @@ export function DrawingWorkspace({ project, mode = 'edit' }: { project: Project;
             selection={selection}
             canUndo={drawing.canUndo}
             canRedo={drawing.canRedo}
+            canTransform={canTransform}
           />
           <SettingsPanel
             open={settingsOpen}

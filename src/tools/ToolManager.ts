@@ -6,6 +6,9 @@ import type { Tool } from './Tool.ts'
 import { RectangleTool } from './RectangleTool.ts'
 import { CircleTool } from './CircleTool.ts'
 import { ArcTool } from './ArcTool.ts'
+import { RepeatTool } from './RepeatTool.ts'
+import { MoveTool } from './MoveTool.ts'
+import { CopyTool } from './CopyTool.ts'
 
 export class ToolManager {
   readonly line = new LineTool()
@@ -14,6 +17,9 @@ export class ToolManager {
   readonly rectangle = new RectangleTool()
   readonly circle = new CircleTool()
   readonly arc = new ArcTool()
+  readonly move = new MoveTool()
+  readonly copy = new CopyTool()
+  readonly repeat = new RepeatTool()
   private activeId: ToolId = 'select'
   private readonly listeners = new Set<() => void>()
 
@@ -49,6 +55,9 @@ export class ToolManager {
       case 'circle': return this.circle
       case 'arc': return this.arc
       case 'dimension': return this.dimension
+      case 'move': return this.move
+      case 'copy': return this.copy
+      case 'repeat': return this.repeat
       case 'select': return this.select
     }
   }

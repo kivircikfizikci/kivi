@@ -17,9 +17,10 @@ interface BottomDrawerProps {
   selection: SelectToolSnapshot
   canUndo: boolean
   canRedo: boolean
+  canTransform: boolean
 }
 
-export function BottomDrawer({ open, onOpen, onClose, store, tools, activeTool, selection, canUndo, canRedo }: BottomDrawerProps) {
+export function BottomDrawer({ open, onOpen, onClose, store, tools, activeTool, selection, canUndo, canRedo, canTransform }: BottomDrawerProps) {
   const { t } = useI18n()
   useEscapeKey(onClose, open)
 
@@ -71,6 +72,11 @@ export function BottomDrawer({ open, onOpen, onClose, store, tools, activeTool, 
             <Icon name="cursor" />
             <span>{t('select')}</span>
           </button>
+          {(['move', 'copy', 'repeat'] as const).map((tool) => (
+            <button key={tool} className={`tool-tile${activeTool === tool ? ' is-active' : ''}`} type="button" disabled={!canTransform} onClick={() => activate(tool)}>
+              <Icon name={tool} /><span>{t(tool)}</span>
+            </button>
+          ))}
           <button className="tool-tile" type="button" disabled={!canUndo} onClick={() => store.undo()}>
             <Icon name="undo" />
             <span>{t('undo')}</span>
