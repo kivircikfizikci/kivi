@@ -46,12 +46,13 @@ import { entitiesInSelectionBox, selectionBox } from '../selection/boxSelection.
 import { geometryStyleFromProject } from '../entities/geometryStyle.ts'
 import { resolveDimensionSegment } from '../geometry/dimension.ts'
 import { snapAnglesForIncrement } from '../geometry/angle.ts'
-import { cloneEntitiesWithNewIds, REPEAT_PREVIEW_LIMIT, repeatEntities, selectionAnchor, translateEntity } from '../geometry/entityTransforms.ts'
+import { cloneEntitiesWithNewIds, cloneTransformedEntitiesWithNewIds, mirrorEntity, REPEAT_PREVIEW_LIMIT, repeatEntities, rotateEntity, selectionAnchor, translateEntity } from '../geometry/entityTransforms.ts'
 import { TransformPreviewRenderer } from '../renderer/TransformPreviewRenderer.tsx'
-import { DistanceInput, RepeatInput } from '../renderer/TransformInputs.tsx'
+import { AngleInput, DistanceInput, MirrorInput, RepeatInput } from '../renderer/TransformInputs.tsx'
 import { canTransformSelection } from '../../tools/transformEligibility.ts'
 import { isOffsettable, offsetDistanceFromPointer, offsetEntity } from '../geometry/offset.ts'
 import { createTrimPlan, isTrimmable } from '../geometry/trim.ts'
+import { createLineExtendPlan } from '../geometry/extend.ts'
 
 interface DrawingViewportProps {
   store: DrawingStore
@@ -100,6 +101,9 @@ export function DrawingViewport({ store, tools, projectSettings, layers, activeL
   const repeat = useSyncExternalStore(tools.repeat.subscribe, tools.repeat.getSnapshot)
   const offset = useSyncExternalStore(tools.offset.subscribe, tools.offset.getSnapshot)
   const trim = useSyncExternalStore(tools.trim.subscribe, tools.trim.getSnapshot)
+  const rotate = useSyncExternalStore(tools.rotate.subscribe, tools.rotate.getSnapshot)
+  const mirror = useSyncExternalStore(tools.mirror.subscribe, tools.mirror.getSnapshot)
+  const extend = useSyncExternalStore(tools.extend.subscribe, tools.extend.getSnapshot)
   const selection = useSyncExternalStore(tools.select.subscribe, tools.select.getSnapshot)
   const [camera, setCamera] = useState(initialCamera ?? DEFAULT_CAMERA)
   const [viewport, setViewport] = useState<ViewportSize>({ width: 1, height: 1 })
@@ -177,7 +181,7 @@ export function DrawingViewport({ store, tools, projectSettings, layers, activeL
       pointer: worldPoint,
       entities: visibleEntities,
       zoom: camera.zoom,
-      angleOrigin: move.base ?? copy.base ?? repeat.origin ?? dimension.firstPoint ?? line.start ?? rectangle.start ?? circle.center ?? arc.center ?? undefined,
+      angleOrigin: rotate.pivot ?? mirror.axisA ?? move.base ?? copy.base ?? repeat.origin ?? dimension.firstPoint ?? line.start ?? rectangle.start ?? circle.center ?? arc.center ?? undefined,
       settings: {
         endpoint: settings.endpointSnapEnabled,
         midpoint: settings.midpointSnapEnabled,
@@ -188,7 +192,7 @@ export function DrawingViewport({ store, tools, projectSettings, layers, activeL
         angles: snapAnglesForIncrement(settings.angleSnapIncrement),
       },
     })
-  }, [arc.center, camera, circle.center, copy.base, dimension.firstPoint, line.start, move.base, projectSettings.gridSpacing, rectangle.start, repeat.origin, settings, snapManager, viewport, visibleEntities])
+  }, [arc.center, camera, circle.center, copy.base, dimension.firstPoint, line.start, mirror.axisA, move.base, projectSettings.gridSpacing, rectangle.start, repeat.origin, rotate.pivot, settings, snapManager, viewport, visibleEntities])
 
   const trimPlanAt = useCallback((screenPoint: Point, pointerType: string) => {
     const worldPoint = screenToWorld(screenPoint, camera, viewport)
@@ -196,6 +200,18 @@ export function DrawingViewport({ store, tools, projectSettings, layers, activeL
     const targets = selectableEntities.filter(isTrimmable)
     const target = selectionManager.findEntity(worldPoint, targets, camera.zoom, tolerance)
     return target && isTrimmable(target) ? createTrimPlan(target, visibleEntities, worldPoint) : null
+  }, [camera, selectableEntities, selectionManager, viewport, visibleEntities])
+
+  const extendPlanAt = useCallback((screenPoint: Point, pointerType: string) => {
+    const worldPoint = screenToWorld(screenPoint, camera, viewport)
+    const tolerance = pointerType === 'touch' ? SELECTION_TOLERANCE_TOUCH_PX : SELECTION_TOLERANCE_MOUSE_PX
+    const target = selectionManager.findLine(worldPoint, selectableEntities, camera.zoom, tolerance)
+    if (!target) return null
+    const endpointDistance = Math.min(
+      Math.hypot(worldPoint.x - target.start.x, worldPoint.y - target.start.y),
+      Math.hypot(worldPoint.x - target.end.x, worldPoint.y - target.end.y),
+    ) * camera.zoom
+    return endpointDistance <= tolerance * 1.5 ? createLineExtendPlan(target, visibleEntities, worldPoint) : null
   }, [camera, selectableEntities, selectionManager, viewport, visibleEntities])
 
   const handleSinglePoint = useCallback((screenPoint: Point, pointerType: string, toggleSelection: boolean) => {
@@ -240,6 +256,22 @@ export function DrawingViewport({ store, tools, projectSettings, layers, activeL
       return
     }
 
+    if (activeTool === 'rotate') {
+      if (!transformSelectionValid) return
+      const resolved = resolveSnap(screenPoint, pointerType)
+      if (rotate.phase === 'waitingPivot') tools.rotate.placePivot(resolved.point, resolved.snap)
+      else if (rotate.phase === 'choosingAngle') tools.rotate.chooseAngle(resolved.point, resolved.snap)
+      return
+    }
+
+    if (activeTool === 'mirror') {
+      if (!transformSelectionValid) return
+      const resolved = resolveSnap(screenPoint, pointerType)
+      if (mirror.phase === 'waitingFirst') tools.mirror.placeFirst(resolved.point, resolved.snap)
+      else if (mirror.phase === 'choosingSecond') tools.mirror.placeSecond(resolved.point, resolved.snap)
+      return
+    }
+
     if (activeTool === 'offset') {
       if (offset.phase === 'selecting') {
         const tolerance = pointerType === 'touch' ? SELECTION_TOLERANCE_TOUCH_PX : SELECTION_TOLERANCE_MOUSE_PX
@@ -260,6 +292,15 @@ export function DrawingViewport({ store, tools, projectSettings, layers, activeL
       if (plan && store.applyTrim(plan.targetId, plan.replacements)) {
         tools.select.clearSelection()
         tools.trim.updateCandidate(null)
+      }
+      return
+    }
+
+    if (activeTool === 'extend') {
+      const plan = extendPlanAt(screenPoint, pointerType)
+      if (plan && store.replaceEntity(plan.replacement)) {
+        tools.select.select(plan.targetId)
+        tools.extend.updateCandidate(null)
       }
       return
     }
@@ -292,7 +333,7 @@ export function DrawingViewport({ store, tools, projectSettings, layers, activeL
     const toggle = toggleSelection || (pointerType === 'touch' && selection.multiMode)
     if (entity && toggle) tools.select.toggleSelection(entity.id)
     else tools.select.select(entity?.id ?? null)
-  }, [activeLayerId, activeTool, camera, lineStyle, mode, offset.phase, offsetSource, resolveSnap, selectableEntities, selection.multiMode, selectionManager, store, tools, trimPlanAt, viewport])
+  }, [activeLayerId, activeTool, camera, extendPlanAt, lineStyle, mirror.phase, mode, offset.phase, offsetSource, resolveSnap, rotate.phase, selectableEntities, selection.multiMode, selectionManager, store, tools, transformSelectionValid, trimPlanAt, viewport])
 
   const onPointerDown = (event: ReactPointerEvent<SVGSVGElement>) => {
     const point = toScreenPoint(event)
@@ -383,10 +424,18 @@ export function DrawingViewport({ store, tools, projectSettings, layers, activeL
     } else if (mode === 'edit' && activeTool === 'repeat' && repeat.phase === 'direction') {
       const resolved = resolveSnap(point, event.pointerType)
       tools.repeat.updatePointer(resolved.point, resolved.snap)
+    } else if (mode === 'edit' && activeTool === 'rotate' && rotate.phase === 'choosingAngle') {
+      const resolved = resolveSnap(point, event.pointerType)
+      tools.rotate.updatePointer(resolved.point, resolved.snap)
+    } else if (mode === 'edit' && activeTool === 'mirror' && mirror.phase === 'choosingSecond') {
+      const resolved = resolveSnap(point, event.pointerType)
+      tools.mirror.updatePointer(resolved.point, resolved.snap)
     } else if (mode === 'edit' && activeTool === 'offset' && offset.phase === 'choosingSide') {
       tools.offset.updatePointer(screenToWorld(point, camera, viewport))
     } else if (mode === 'edit' && activeTool === 'trim') {
       tools.trim.updateCandidate(trimPlanAt(point, event.pointerType))
+    } else if (mode === 'edit' && activeTool === 'extend') {
+      tools.extend.updateCandidate(extendPlanAt(point, event.pointerType))
     } else if (mode === 'edit' && activeTool === 'dimension' && dimension.phase === 'waitingSecond') {
       const resolved = resolveSnap(point, event.pointerType)
       tools.dimension.updateSecondPoint(resolved.point, resolved.snap)
@@ -447,7 +496,7 @@ export function DrawingViewport({ store, tools, projectSettings, layers, activeL
     const entity = selectionManager.findEntity(worldPoint, selectableEntities, camera.zoom, SELECTION_TOLERANCE_MOUSE_PX)
     if (!entity) { setContextMenu(null); return }
     tools.select.setSelection(selectionForContextTarget(selection.selectedIds, entity.id))
-    setContextMenu({ x: Math.min(screenPoint.x, Math.max(6, viewport.width - 176)), y: Math.min(screenPoint.y, Math.max(6, viewport.height - 224)) })
+    setContextMenu({ x: Math.min(screenPoint.x, Math.max(6, viewport.width - 176)), y: Math.min(screenPoint.y, Math.max(6, viewport.height - 304)) })
   }
 
   const confirmLine = () => {
@@ -484,6 +533,27 @@ export function DrawingViewport({ store, tools, projectSettings, layers, activeL
       tools.finishActiveTool()
     }
   }
+  const confirmRotate = () => {
+    const parameters = tools.rotate.confirm()
+    if (parameters && store.transformEntities(selection.selectedIds, (entity) => rotateEntity(entity, parameters.pivot, parameters.angle))) tools.finishActiveTool()
+  }
+  const confirmMirror = () => {
+    const parameters = tools.mirror.confirm()
+    if (!parameters) return
+    if (parameters.keepOriginal) {
+      const clones = cloneTransformedEntitiesWithNewIds(selectedEntities, (entity) => mirrorEntity(entity, parameters.axisA, parameters.axisB))
+      if (store.addEntities(clones)) {
+        tools.select.setSelection(clones.map((entity) => entity.id))
+        tools.finishActiveTool()
+      }
+      return
+    }
+    const mirroredIds = new Set(selection.selectedIds)
+    for (const entity of drawing.state.entities) {
+      if (entity.type === 'dimension' && entity.source.type === 'entity' && mirroredIds.has(entity.source.targetEntityId)) mirroredIds.add(entity.id)
+    }
+    if (store.transformEntities(mirroredIds, (entity) => mirrorEntity(entity, parameters.axisA, parameters.axisB))) tools.finishActiveTool()
+  }
   const confirmOffset = () => {
     const distance = tools.offset.confirmDistance()
     const snapshot = tools.offset.getSnapshot()
@@ -512,8 +582,26 @@ export function DrawingViewport({ store, tools, projectSettings, layers, activeL
       let index = 0
       return repeatEntities(selectedEntities, repeat.direction, spacing, copies, () => `preview-repeat-${index++}`)
     }
+    if (activeTool === 'rotate' && rotate.pivot && rotate.phase !== 'waitingPivot') {
+      const ids = new Set(selectedEntities.map((entity) => entity.id))
+      const sources = visibleEntities.filter((entity) => ids.has(entity.id) || (entity.type === 'dimension' && entity.source.type === 'entity' && ids.has(entity.source.targetEntityId)))
+      return sources.map((entity) => ids.has(entity.id) ? rotateEntity(entity, rotate.pivot!, rotate.angle) : entity)
+    }
+    if (activeTool === 'mirror' && mirror.axisA && (mirror.axisB || mirror.pointer)) {
+      const axisB = mirror.axisB ?? mirror.pointer!
+      if (Math.hypot(axisB.x - mirror.axisA.x, axisB.y - mirror.axisA.y) <= Number.EPSILON) return []
+      if (mirror.keepOriginal) {
+        let index = 0
+        return cloneTransformedEntitiesWithNewIds(selectedEntities, (entity) => mirrorEntity(entity, mirror.axisA!, axisB), () => `preview-mirror-${index++}`)
+      }
+      const ids = new Set(selectedEntities.map((entity) => entity.id))
+      const sources = visibleEntities.filter((entity) => ids.has(entity.id) || (entity.type === 'dimension' && entity.source.type === 'entity' && ids.has(entity.source.targetEntityId)))
+      return sources.map((entity) => ids.has(entity.id) || (entity.type === 'dimension' && entity.source.type === 'entity' && ids.has(entity.source.targetEntityId))
+        ? mirrorEntity(entity, mirror.axisA!, axisB)
+        : entity)
+    }
     return []
-  }, [activeTool, copy.delta, copy.phase, move.delta, move.phase, repeat.copiesInput, repeat.direction, repeat.phase, repeat.spacingInput, selectedEntities, visibleEntities])
+  }, [activeTool, copy.delta, copy.phase, mirror.axisA, mirror.axisB, mirror.keepOriginal, mirror.pointer, move.delta, move.phase, repeat.copiesInput, repeat.direction, repeat.phase, repeat.spacingInput, rotate.angle, rotate.phase, rotate.pivot, selectedEntities, visibleEntities])
   const offsetPreview = useMemo(() => {
     if (activeTool !== 'offset' || !offsetSource || !offset.pointer) return null
     const distance = offset.phase === 'distance'
@@ -532,6 +620,9 @@ export function DrawingViewport({ store, tools, projectSettings, layers, activeL
     : undefined
   const offsetInputPosition = offset.pointer
     ? positionLengthInput(worldToScreen(offset.pointer, camera, viewport), viewport)
+    : undefined
+  const rotateInputPosition = rotate.pointer
+    ? positionLengthInput(worldToScreen(rotate.pointer, camera, viewport), viewport)
     : undefined
 
   return (
@@ -609,20 +700,32 @@ export function DrawingViewport({ store, tools, projectSettings, layers, activeL
             {mode === 'edit' && activeTool === 'move' && <SnapIndicatorRenderer snap={move.snap} camera={camera} viewport={viewport} />}
             {mode === 'edit' && activeTool === 'copy' && <SnapIndicatorRenderer snap={copy.snap} camera={camera} viewport={viewport} />}
             {mode === 'edit' && activeTool === 'repeat' && <SnapIndicatorRenderer snap={repeat.snap} camera={camera} viewport={viewport} />}
+            {mode === 'edit' && activeTool === 'rotate' && <SnapIndicatorRenderer snap={rotate.snap} camera={camera} viewport={viewport} />}
+            {mode === 'edit' && activeTool === 'mirror' && <SnapIndicatorRenderer snap={mirror.snap} camera={camera} viewport={viewport} />}
+            {mode === 'edit' && activeTool === 'rotate' && rotate.pivot && rotate.pointer && <PreviewRenderer start={rotate.pivot} end={rotate.pointer} camera={camera} viewport={viewport} color={projectSettings.lineColor} width={1} />}
+            {mode === 'edit' && activeTool === 'mirror' && mirror.axisA && (mirror.axisB || mirror.pointer) && <PreviewRenderer start={mirror.axisA} end={mirror.axisB ?? mirror.pointer} camera={camera} viewport={viewport} color={projectSettings.lineColor} width={1} />}
             {mode === 'edit' && offsetPreview && <TransformPreviewRenderer entities={[offsetPreview]} camera={camera} viewport={viewport} settings={projectSettings} />}
             {mode === 'edit' && activeTool === 'trim' && trim.candidate && (
               <g className="trim-preview"><TransformPreviewRenderer entities={[trim.candidate.removedPortion]} camera={camera} viewport={viewport} settings={projectSettings} /></g>
             )}
+            {mode === 'edit' && activeTool === 'extend' && extend.candidate && (
+              <g className="transform-preview">
+                <PreviewRenderer start={extend.candidate.extension.start} end={extend.candidate.extension.end} camera={camera} viewport={viewport} color={extend.candidate.extension.style.color} width={extend.candidate.extension.style.width} />
+                <ExtendEndpoint point={extend.candidate.extension.start} camera={camera} viewport={viewport} />
+              </g>
+            )}
           </g>
         </svg>
 
-        {mode === 'edit' && (activeTool === 'dimension' || activeTool === 'arc' || activeTool === 'move' || activeTool === 'copy' || activeTool === 'repeat' || activeTool === 'offset' || activeTool === 'trim' || (activeTool === 'line' && line.phase === 'placing') || (activeTool === 'rectangle' && rectangle.phase === 'placing') || (activeTool === 'circle' && circle.phase === 'placing')) && (
+        {mode === 'edit' && (activeTool === 'dimension' || activeTool === 'arc' || activeTool === 'move' || activeTool === 'copy' || activeTool === 'repeat' || activeTool === 'rotate' || activeTool === 'mirror' || activeTool === 'offset' || activeTool === 'trim' || activeTool === 'extend' || (activeTool === 'line' && line.phase === 'placing') || (activeTool === 'rectangle' && rectangle.phase === 'placing') || (activeTool === 'circle' && circle.phase === 'placing')) && (
           <button className="finish-tool-button" type="button" onClick={() => tools.finishActiveTool()}>{t('done')}</button>
         )}
         {mode === 'edit' && (activeTool === 'move' || activeTool === 'copy') && (activeTool === 'move' ? move.phase : copy.phase) !== 'distance' && (
           <div className="tool-prompt" role="status">{t((activeTool === 'move' ? move.phase : copy.phase) === 'waitingBase' ? 'basePoint' : 'destinationPoint')}</div>
         )}
         {mode === 'edit' && activeTool === 'repeat' && repeat.phase === 'direction' && <div className="tool-prompt" role="status">{t('direction')}</div>}
+        {mode === 'edit' && activeTool === 'rotate' && rotate.phase !== 'angle' && <div className="tool-prompt" role="status">{t(rotate.phase === 'waitingPivot' ? 'pivotPoint' : 'angle')}</div>}
+        {mode === 'edit' && activeTool === 'mirror' && mirror.phase !== 'ready' && <div className="tool-prompt" role="status">{t(mirror.phase === 'waitingFirst' ? 'axis' : 'secondAxisPoint')}</div>}
         {mode === 'edit' && activeTool === 'offset' && offset.phase !== 'distance' && <div className="tool-prompt" role="status">{t(offset.phase === 'selecting' ? 'selectOffsetSource' : 'selectOffsetSide')}</div>}
         {mode === 'edit' && rectangle.phase === 'size' && (
           <RectangleInput width={rectangle.widthInput} height={rectangle.heightInput} canConfirm={rectangle.canConfirm} position={rectangleInputPosition}
@@ -655,6 +758,14 @@ export function DrawingViewport({ store, tools, projectSettings, layers, activeL
           <RepeatInput spacing={repeat.spacingInput} copies={repeat.copiesInput} valid={repeat.canConfirm}
             onChange={(spacing, copies) => tools.repeat.updateParameters(spacing, copies)} onConfirm={confirmRepeat} />
         )}
+        {mode === 'edit' && activeTool === 'rotate' && rotate.phase === 'angle' && (
+          <AngleInput value={rotate.angleInput} valid={rotate.canConfirm} position={rotateInputPosition}
+            onChange={(value) => tools.rotate.updateAngle(value)} onBack={() => tools.rotate.back()} onConfirm={confirmRotate} />
+        )}
+        {mode === 'edit' && activeTool === 'mirror' && mirror.phase !== 'waitingFirst' && (
+          <MirrorInput keepOriginal={mirror.keepOriginal} ready={mirror.phase === 'ready'}
+            onKeepOriginalChange={(value) => tools.mirror.setKeepOriginal(value)} onBack={() => tools.mirror.back()} onConfirm={confirmMirror} />
+        )}
         {mode === 'edit' && activeTool === 'offset' && offset.phase === 'distance' && (
           <DistanceInput value={offset.distanceInput} valid={Boolean(offset.canConfirm && offsetPreview)} position={offsetInputPosition}
             onChange={(value) => tools.offset.updateDistance(value)} onBack={() => tools.offset.back()} onConfirm={confirmOffset} />
@@ -672,6 +783,8 @@ export function DrawingViewport({ store, tools, projectSettings, layers, activeL
             onMove={() => { tools.activate('move'); setContextMenu(null) }}
             onCopy={() => { tools.activate('copy'); setContextMenu(null) }}
             onRepeat={() => { tools.activate('repeat'); setContextMenu(null) }}
+            onRotate={() => { tools.activate('rotate'); setContextMenu(null) }}
+            onMirror={() => { tools.activate('mirror'); setContextMenu(null) }}
             onMoveToLayer={(layerId) => { onMoveSelection(layerId); setContextMenu(null) }}
             onDelete={() => { onDeleteSelection(); setContextMenu(null) }} />
         )}
@@ -694,4 +807,9 @@ function DimensionPointPreview({ start, end, camera, viewport }: { start: Point;
       {b && <circle cx={b.x} cy={b.y} r="4" />}
     </g>
   )
+}
+
+function ExtendEndpoint({ point, camera, viewport }: { point: Point; camera: Camera; viewport: ViewportSize }) {
+  const screen = worldToScreen(point, camera, viewport)
+  return <circle className="extend-endpoint-preview" cx={screen.x} cy={screen.y} r="5" />
 }

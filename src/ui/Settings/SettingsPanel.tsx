@@ -3,7 +3,14 @@ import { useI18n } from '../../i18n/I18nContext'
 import { useSettings } from '../../settings/useSettings'
 import { useEscapeKey } from '../../hooks/useEscapeKey'
 import type { Locale } from '../../i18n/types'
-import { defaultSettings, type AppTheme } from '../../types/settings'
+import {
+  defaultSettings,
+  MAX_DESKTOP_TOOLBAR_SHORTCUTS,
+  MAX_MOBILE_TOOLBAR_SHORTCUTS,
+  toolbarShortcutIds,
+  toggleToolbarShortcut,
+  type AppTheme,
+} from '../../types/settings'
 import type { ProjectSettings } from '../../types/project.ts'
 import { defaultProjectSettings } from '../../project/projectMigrations.ts'
 
@@ -47,6 +54,56 @@ export function SettingsPanel({ open, onClose, projectSettings, onProjectSetting
               <option value="dark">{t('dark')}</option>
             </select>
           </label>
+
+          <div className="setting-row toolbar-shortcut-setting">
+            <span className="setting-description">
+              <span>{t('mobileShortcuts')}</span>
+              <small>{t('mobileShortcutsHint')}</small>
+            </span>
+            <span className="toolbar-shortcut-options">
+              {toolbarShortcutIds.map((shortcut) => {
+                const selected = settings.mobileToolbarShortcuts.includes(shortcut)
+                const limitReached = settings.mobileToolbarShortcuts.length >= MAX_MOBILE_TOOLBAR_SHORTCUTS
+                return (
+                  <label key={shortcut} className={`shortcut-option${selected ? ' is-selected' : ''}`}>
+                    <input
+                      type="checkbox"
+                      checked={selected}
+                      disabled={!selected && limitReached}
+                      onChange={() => updateSettings({ mobileToolbarShortcuts: toggleToolbarShortcut(settings.mobileToolbarShortcuts, shortcut, MAX_MOBILE_TOOLBAR_SHORTCUTS) })}
+                    />
+                    <Icon name={shortcut === 'select' ? 'cursor' : shortcut} />
+                    <span>{t(shortcut)}</span>
+                  </label>
+                )
+              })}
+            </span>
+          </div>
+
+          <div className="setting-row toolbar-shortcut-setting">
+            <span className="setting-description">
+              <span>{t('desktopShortcuts')}</span>
+              <small>{t('desktopShortcutsHint')}</small>
+            </span>
+            <span className="toolbar-shortcut-options">
+              {toolbarShortcutIds.map((shortcut) => {
+                const selected = settings.desktopToolbarShortcuts.includes(shortcut)
+                const limitReached = settings.desktopToolbarShortcuts.length >= MAX_DESKTOP_TOOLBAR_SHORTCUTS
+                return (
+                  <label key={shortcut} className={`shortcut-option${selected ? ' is-selected' : ''}`}>
+                    <input
+                      type="checkbox"
+                      checked={selected}
+                      disabled={!selected && limitReached}
+                      onChange={() => updateSettings({ desktopToolbarShortcuts: toggleToolbarShortcut(settings.desktopToolbarShortcuts, shortcut, MAX_DESKTOP_TOOLBAR_SHORTCUTS) })}
+                    />
+                    <Icon name={shortcut === 'select' ? 'cursor' : shortcut} />
+                    <span>{t(shortcut)}</span>
+                  </label>
+                )
+              })}
+            </span>
+          </div>
 
           <div className="settings-section-label settings-row-label">{t('canvas')}</div>
           <label className="setting-row color-row">
@@ -161,6 +218,8 @@ export function SettingsPanel({ open, onClose, projectSettings, onProjectSetting
                 gridSnapEnabled: defaultSettings.gridSnapEnabled,
                 angleSnapEnabled: defaultSettings.angleSnapEnabled,
                 angleSnapIncrement: defaultSettings.angleSnapIncrement,
+                mobileToolbarShortcuts: defaultSettings.mobileToolbarShortcuts,
+                desktopToolbarShortcuts: defaultSettings.desktopToolbarShortcuts,
               })
             }}>{t('resetSettings')}</button>
             <button className="primary-button" type="button" onClick={onSave}>{t('saveSettings')}</button>

@@ -11,6 +11,9 @@ import { MoveTool } from './MoveTool.ts'
 import { CopyTool } from './CopyTool.ts'
 import { OffsetTool } from './OffsetTool.ts'
 import { TrimTool } from './TrimTool.ts'
+import { RotateTool } from './RotateTool.ts'
+import { MirrorTool } from './MirrorTool.ts'
+import { ExtendTool } from './ExtendTool.ts'
 
 export class ToolManager {
   readonly line = new LineTool()
@@ -24,6 +27,9 @@ export class ToolManager {
   readonly repeat = new RepeatTool()
   readonly offset = new OffsetTool()
   readonly trim = new TrimTool()
+  readonly rotate = new RotateTool()
+  readonly mirror = new MirrorTool()
+  readonly extend = new ExtendTool()
   private activeId: ToolId = 'select'
   private readonly listeners = new Set<() => void>()
 
@@ -64,6 +70,9 @@ export class ToolManager {
       case 'repeat': return this.repeat
       case 'offset': return this.offset
       case 'trim': return this.trim
+      case 'rotate': return this.rotate
+      case 'mirror': return this.mirror
+      case 'extend': return this.extend
       case 'select': return this.select
     }
   }

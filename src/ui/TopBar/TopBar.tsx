@@ -6,6 +6,8 @@ import type { ToolManager } from '../../tools/ToolManager.ts'
 import type { ToolId } from '../../tools/Tool.ts'
 import { MainMenu } from '../MainMenu/MainMenu.tsx'
 import { ToolsMenu } from '../ToolsMenu/ToolsMenu.tsx'
+import { useSettings } from '../../settings/useSettings.ts'
+import type { ToolbarShortcut } from '../../types/settings.ts'
 
 interface TopBarProps {
   onOpenSettings: () => void
@@ -23,6 +25,21 @@ interface TopBarProps {
 
 export function TopBar({ onOpenSettings, onOpenShare, onOpenLayers, onOpenProjects, saveStatus, store, tools, activeTool, canUndo, canRedo, canTransform }: TopBarProps) {
   const { t } = useI18n()
+  const { settings } = useSettings()
+
+  const shortcutDisabled = (shortcut: ToolbarShortcut) => {
+    if (shortcut === 'move' || shortcut === 'copy') return !canTransform
+    if (shortcut === 'undo') return !canUndo
+    if (shortcut === 'redo') return !canRedo
+    return false
+  }
+
+  const runShortcut = (shortcut: ToolbarShortcut) => {
+    if (shortcut === 'undo') store.undo()
+    else if (shortcut === 'redo') store.redo()
+    else tools.activate(shortcut)
+  }
+
   return (
     <header className="top-bar">
       <div className="toolbar-group toolbar-left">
@@ -34,8 +51,34 @@ export function TopBar({ onOpenSettings, onOpenShare, onOpenLayers, onOpenProjec
       </div>
       <div className="toolbar-group toolbar-center">
         <ToolsMenu tools={tools} activeTool={activeTool} canTransform={canTransform} />
-        <button className="icon-button compact" type="button" disabled={!canUndo} onClick={() => store.undo()} aria-label={t('undo')}><Icon name="undo" /></button>
-        <button className="icon-button compact" type="button" disabled={!canRedo} onClick={() => store.redo()} aria-label={t('redo')}><Icon name="redo" /></button>
+        {settings.desktopToolbarShortcuts.map((shortcut) => (
+          <button
+            key={shortcut}
+            className={`icon-button compact${shortcut === activeTool ? ' is-active' : ''}`}
+            type="button"
+            disabled={shortcutDisabled(shortcut)}
+            onClick={() => runShortcut(shortcut)}
+            aria-label={t(shortcut)}
+            title={t(shortcut)}
+          >
+            <Icon name={shortcut === 'select' ? 'cursor' : shortcut} />
+          </button>
+        ))}
+      </div>
+      <div className="mobile-toolbar-shortcuts" role="toolbar" aria-label={t('mobileShortcuts')}>
+        {settings.mobileToolbarShortcuts.map((shortcut) => (
+          <button
+            key={shortcut}
+            className={`icon-button mobile-shortcut-button${shortcut === activeTool ? ' is-active' : ''}`}
+            type="button"
+            disabled={shortcutDisabled(shortcut)}
+            onClick={() => runShortcut(shortcut)}
+            aria-label={t(shortcut)}
+            title={t(shortcut)}
+          >
+            <Icon name={shortcut === 'select' ? 'cursor' : shortcut} />
+          </button>
+        ))}
       </div>
       <div className="toolbar-group toolbar-right">
         <button className="share-button projects-button" type="button" onClick={onOpenProjects} aria-label={t('projects')} title={t('projects')}>

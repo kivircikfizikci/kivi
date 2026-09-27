@@ -4,6 +4,7 @@ import type { Entity } from '../entities/Entity.ts'
 import type { LineEntity } from '../entities/LineEntity.ts'
 import type { RectangleEntity } from '../entities/RectangleEntity.ts'
 import type { Point } from './Point.ts'
+import { rotatePoint } from './entityTransforms.ts'
 
 export type OffsettableEntity = LineEntity | RectangleEntity | CircleEntity | ArcEntity
 
@@ -19,15 +20,17 @@ export function offsetDistanceFromPointer(entity: OffsettableEntity, pointer: Po
     return length <= Number.EPSILON ? 0 : Math.abs(dx * (pointer.y - entity.start.y) - dy * (pointer.x - entity.start.x)) / length
   }
   if (entity.type === 'circle' || entity.type === 'arc') return Math.abs(Math.hypot(pointer.x - entity.center.x, pointer.y - entity.center.y) - entity.radius)
+  const rotation = entity.rotation ?? 0
+  const localPointer = rotatePoint(pointer, entity.origin, -rotation)
   const minX = entity.origin.x
   const minY = entity.origin.y
   const maxX = entity.origin.x + entity.width
   const maxY = entity.origin.y + entity.height
-  if (pointer.x >= minX && pointer.x <= maxX && pointer.y >= minY && pointer.y <= maxY) {
-    return Math.min(pointer.x - minX, maxX - pointer.x, pointer.y - minY, maxY - pointer.y)
+  if (localPointer.x >= minX && localPointer.x <= maxX && localPointer.y >= minY && localPointer.y <= maxY) {
+    return Math.min(localPointer.x - minX, maxX - localPointer.x, localPointer.y - minY, maxY - localPointer.y)
   }
-  const dx = Math.max(minX - pointer.x, 0, pointer.x - maxX)
-  const dy = Math.max(minY - pointer.y, 0, pointer.y - maxY)
+  const dx = Math.max(minX - localPointer.x, 0, localPointer.x - maxX)
+  const dy = Math.max(minY - localPointer.y, 0, localPointer.y - maxY)
   return Math.hypot(dx, dy)
 }
 
@@ -45,9 +48,10 @@ export function offsetEntity(entity: OffsettableEntity, pointer: Point, distance
   }
   if (entity.type === 'rectangle') {
     const inside = pointInsideRectangle(pointer, entity)
-    const origin = inside
+    const localOrigin = inside
       ? { x: entity.origin.x + distance, y: entity.origin.y + distance }
       : { x: entity.origin.x - distance, y: entity.origin.y - distance }
+    const origin = rotatePoint(localOrigin, entity.origin, entity.rotation ?? 0)
     const width = entity.width + (inside ? -2 : 2) * distance
     const height = entity.height + (inside ? -2 : 2) * distance
     if (width <= 0 || height <= 0) return null
@@ -60,6 +64,7 @@ export function offsetEntity(entity: OffsettableEntity, pointer: Point, distance
 }
 
 function pointInsideRectangle(point: Point, rectangle: RectangleEntity) {
-  return point.x > rectangle.origin.x && point.x < rectangle.origin.x + rectangle.width &&
-    point.y > rectangle.origin.y && point.y < rectangle.origin.y + rectangle.height
+  const local = rotatePoint(point, rectangle.origin, -(rectangle.rotation ?? 0))
+  return local.x > rectangle.origin.x && local.x < rectangle.origin.x + rectangle.width &&
+    local.y > rectangle.origin.y && local.y < rectangle.origin.y + rectangle.height
 }

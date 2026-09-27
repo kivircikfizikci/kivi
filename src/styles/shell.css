@@ -34,6 +34,36 @@
   justify-self: center;
 }
 
+.mobile-toolbar-shortcuts {
+  display: flex;
+  grid-column: 2;
+  align-items: center;
+  justify-self: center;
+  gap: 3px;
+}
+
+.mobile-shortcut-button {
+  width: 34px;
+  height: 38px;
+}
+
+.mobile-shortcut-button svg {
+  width: 18px;
+  height: 18px;
+}
+
+.mobile-shortcut-button.is-active {
+  color: var(--accent);
+  border-color: var(--accent-border);
+  background: var(--accent-soft);
+}
+
+.toolbar-center .icon-button.is-active {
+  color: var(--accent);
+  border-color: var(--accent-border);
+  background: var(--accent-soft);
+}
+
 .toolbar-right {
   grid-column: 3;
   justify-self: end;
@@ -162,8 +192,11 @@
 .drawing-svg.tool-rectangle,
 .drawing-svg.tool-circle,
 .drawing-svg.tool-arc,
+.drawing-svg.tool-rotate,
+.drawing-svg.tool-mirror,
 .drawing-svg.tool-offset,
-.drawing-svg.tool-trim {
+.drawing-svg.tool-trim,
+.drawing-svg.tool-extend {
   cursor: crosshair;
 }
 
@@ -235,6 +268,12 @@
   fill: var(--surface);
   stroke: var(--accent);
   stroke-width: 1.8;
+}
+
+.extend-endpoint-preview {
+  fill: var(--accent-soft);
+  stroke: var(--accent);
+  stroke-width: 2;
 }
 
 .finish-tool-button {
@@ -637,6 +676,10 @@
 
   .toolbar-center {
     display: flex;
+  }
+
+  .mobile-toolbar-shortcuts {
+    display: none;
   }
 
   .share-button {

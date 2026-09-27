@@ -8,6 +8,8 @@ export interface RectangleEntity {
   origin: Point
   width: number
   height: number
+  /** World-space degrees from +X; positive angles turn counter-clockwise. */
+  rotation: number
   style: LineStyle
   layerId: string
 }
@@ -19,6 +21,7 @@ export function createRectangleEntity(origin: Point, width: number, height: numb
     origin: { ...origin },
     width,
     height,
+    rotation: 0,
     style: { ...style },
     layerId,
   }

@@ -63,7 +63,8 @@ export function createDrawingExportModel(project: Pick<Project, 'drawing' | 'pro
     }
     if (entity.type === 'rectangle') {
       const corners = rectangleCorners(entity).map(mapPoint)
-      rectangles.push({ origin: corners[3]!, width: entity.width, height: entity.height, color: entity.style.color, strokeWidth: entity.style.width })
+      if ((entity.rotation ?? 0) === 0) rectangles.push({ origin: corners[3]!, width: entity.width, height: entity.height, color: entity.style.color, strokeWidth: entity.style.width })
+      else corners.forEach((start, index) => strokes.push({ start, end: corners[(index + 1) % corners.length]!, color: entity.style.color, width: entity.style.width }))
       continue
     }
     if (entity.type === 'circle') {

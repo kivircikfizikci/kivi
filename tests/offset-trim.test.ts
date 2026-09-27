@@ -21,7 +21,7 @@ import { createDrawingPdf } from '../src/export/pdfExport.ts'
 
 const style = { color: '#234f41', width: 2 }
 const horizontal: LineEntity = { id: 'line', type: 'line', start: { x: 0, y: 0 }, end: { x: 10, y: 0 }, style, layerId: 'steel' }
-const rectangle: RectangleEntity = { id: 'rect', type: 'rectangle', origin: { x: 0, y: 0 }, width: 200, height: 100, style, layerId: 'steel' }
+const rectangle: RectangleEntity = { id: 'rect', type: 'rectangle', origin: { x: 0, y: 0 }, width: 200, height: 100, rotation: 0, style, layerId: 'steel' }
 const circle: CircleEntity = { id: 'circle', type: 'circle', center: { x: 0, y: 0 }, radius: 50, style, layerId: 'steel' }
 const arc: ArcEntity = { id: 'arc', type: 'arc', center: { x: 0, y: 0 }, radius: 50, startAngle: 10, endAngle: 130, direction: 'ccw', style, layerId: 'steel' }
 

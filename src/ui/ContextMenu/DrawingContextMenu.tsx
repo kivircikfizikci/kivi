@@ -6,12 +6,14 @@ import { transformContextActions } from './contextActions.ts'
 
 export interface ContextMenuPosition { x: number; y: number }
 
-export function DrawingContextMenu({ position, layers, onOffset, canOffset, onMove, onCopy, onRepeat, onMoveToLayer, onDelete, disabled = false, onClose }: {
+export function DrawingContextMenu({ position, layers, onOffset, canOffset, onMove, onCopy, onRepeat, onRotate, onMirror, onMoveToLayer, onDelete, disabled = false, onClose }: {
   position: ContextMenuPosition
   layers: readonly Layer[]
   onMove: () => void
   onCopy: () => void
   onRepeat: () => void
+  onRotate: () => void
+  onMirror: () => void
   onOffset: () => void
   canOffset: boolean
   onMoveToLayer: (layerId: string) => void
@@ -22,7 +24,7 @@ export function DrawingContextMenu({ position, layers, onOffset, canOffset, onMo
   const { t } = useI18n()
   const ref = useRef<HTMLDivElement>(null)
   const [submenu, setSubmenu] = useState(false)
-  const transformCallbacks = { move: onMove, copy: onCopy, repeat: onRepeat }
+  const transformCallbacks = { move: onMove, copy: onCopy, repeat: onRepeat, rotate: onRotate, mirror: onMirror }
   useEscapeKey(onClose, true)
 
   useEffect(() => {

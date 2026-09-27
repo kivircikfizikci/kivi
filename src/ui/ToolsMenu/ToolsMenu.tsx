@@ -20,8 +20,11 @@ export function ToolsMenu({ tools, activeTool, canTransform }: { tools: ToolMana
     ['move', 'move', 'move'],
     ['copy', 'copy', 'copy'],
     ['repeat', 'repeat', 'repeat'],
+    ['rotate', 'rotate', 'rotate'],
+    ['mirror', 'mirror', 'mirror'],
     ['offset', 'offset', 'offset'],
     ['trim', 'trim', 'trim'],
+    ['extend', 'extend', 'extend'],
   ] as const
 
   return (
@@ -34,7 +37,7 @@ export function ToolsMenu({ tools, activeTool, canTransform }: { tools: ToolMana
       {open && <button className="popover-dismiss" type="button" onClick={() => setOpen(false)} aria-label={t('close')} />}
       <div className={`compact-popover tools-popover${open ? ' is-open' : ''}`} aria-hidden={!open}>
         {items.map(([tool, icon, label]) => (
-          <button className={activeTool === tool ? 'is-active' : ''} type="button" key={tool} disabled={['move', 'copy', 'repeat'].includes(tool) && !canTransform} onClick={() => activateToolFromMenu(tools, tool, () => setOpen(false))}>
+          <button className={activeTool === tool ? 'is-active' : ''} type="button" key={tool} disabled={['move', 'copy', 'repeat', 'rotate', 'mirror'].includes(tool) && !canTransform} onClick={() => activateToolFromMenu(tools, tool, () => setOpen(false))}>
             <Icon name={icon} /><span>{t(label)}</span>
           </button>
         ))}

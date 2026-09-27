@@ -78,6 +78,30 @@ export class DrawingStore {
     return true
   }
 
+  transformEntities(ids: Iterable<string>, transform: (entity: Entity) => Entity) {
+    if (this.readOnly) return false
+    const requested = new Set(ids)
+    let changed = false
+    const entities = this.state.entities.map((entity) => {
+      if (!requested.has(entity.id)) return entity
+      changed = true
+      return transform(entity)
+    })
+    if (!changed) return false
+    this.commit({ ...this.state, entities })
+    return true
+  }
+
+  replaceEntity(entity: Entity) {
+    if (this.readOnly) return false
+    const index = this.state.entities.findIndex((candidate) => candidate.id === entity.id)
+    if (index < 0) return false
+    const entities = [...this.state.entities]
+    entities[index] = entity
+    this.commit({ ...this.state, entities })
+    return true
+  }
+
   applyTrim(targetId: string, replacements: readonly (LineEntity | ArcEntity)[]) {
     if (this.readOnly) return false
     const targetIndex = this.state.entities.findIndex((entity) => entity.id === targetId && (entity.type === 'line' || entity.type === 'arc'))

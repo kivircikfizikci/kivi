@@ -1,1 +1,1 @@
-export const transformContextActions = ['move', 'copy', 'repeat'] as const
+export const transformContextActions = ['move', 'copy', 'repeat', 'rotate', 'mirror'] as const

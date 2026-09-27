@@ -17,8 +17,20 @@ export function migrateProject(value: unknown): Project {
     const project = value as unknown as Project
     return {
       ...project,
-      drawing: { version: 1, entities: project.drawing.entities },
+      drawing: { version: 1, entities: migrateRectangleRotation(project.drawing.entities) },
       projectSettings: { ...defaultProjectSettings(), ...project.projectSettings },
+      activeLayerId: resolveActiveLayer(project.layers, project.activeLayerId),
+      view: isProjectView(project.view) ? project.view : { camera: structuredClone(DEFAULT_CAMERA) },
+      sync: { ...defaultSyncMetadata(), ...(isRecord(project.sync) ? project.sync : {}) },
+    }
+  }
+
+  if (value.version === 4 && isDrawingState(value.drawing) && isProjectSettings(value.projectSettings) && isLayers(value.layers)) {
+    const project = value as unknown as Omit<Project, 'version' | 'drawing'> & { drawing: DrawingState }
+    return {
+      ...project,
+      version: CURRENT_PROJECT_VERSION,
+      drawing: { version: 1, entities: migrateRectangleRotation(project.drawing.entities) },
       activeLayerId: resolveActiveLayer(project.layers, project.activeLayerId),
       view: isProjectView(project.view) ? project.view : { camera: structuredClone(DEFAULT_CAMERA) },
       sync: { ...defaultSyncMetadata(), ...(isRecord(project.sync) ? project.sync : {}) },
@@ -30,7 +42,7 @@ export function migrateProject(value: unknown): Project {
     return {
       ...project,
       version: CURRENT_PROJECT_VERSION,
-      drawing: { version: 1, entities: migrateDimensionSources(project.drawing.entities) },
+      drawing: { version: 1, entities: migrateRectangleRotation(migrateDimensionSources(project.drawing.entities)) },
       activeLayerId: resolveActiveLayer(project.layers, project.activeLayerId),
       view: isProjectView(project.view) ? project.view : { camera: structuredClone(DEFAULT_CAMERA) },
       sync: { ...defaultSyncMetadata(), ...(isRecord(project.sync) ? project.sync : {}) },
@@ -42,7 +54,7 @@ export function migrateProject(value: unknown): Project {
     return {
       ...project,
       version: CURRENT_PROJECT_VERSION,
-      drawing: { version: 1, entities: assignBuiltInLayers(project.drawing.entities) },
+      drawing: { version: 1, entities: migrateRectangleRotation(assignBuiltInLayers(project.drawing.entities)) },
       projectSettings: { ...defaultProjectSettings(), ...project.projectSettings },
       layers: createBuiltInLayers(),
       activeLayerId: DEFAULT_LAYER_ID,
@@ -57,7 +69,7 @@ export function migrateProject(value: unknown): Project {
     return {
       ...project,
       version: CURRENT_PROJECT_VERSION,
-      drawing: { version: 1, entities: assignBuiltInLayers(project.drawing.entities) },
+      drawing: { version: 1, entities: migrateRectangleRotation(assignBuiltInLayers(project.drawing.entities)) },
       projectSettings: { ...defaultProjectSettings(), ...project.projectSettings },
       layers: createBuiltInLayers(),
       activeLayerId: DEFAULT_LAYER_ID,
@@ -75,7 +87,7 @@ export function migrateProject(value: unknown): Project {
       version: CURRENT_PROJECT_VERSION,
       createdAt: typeof value.createdAt === 'string' ? value.createdAt : now,
       updatedAt: typeof value.updatedAt === 'string' ? value.updatedAt : now,
-      drawing: { version: 1, entities: assignBuiltInLayers(value.data.entities) },
+      drawing: { version: 1, entities: migrateRectangleRotation(assignBuiltInLayers(value.data.entities)) },
       projectSettings: defaultProjectSettings(),
       layers: createBuiltInLayers(),
       activeLayerId: DEFAULT_LAYER_ID,
@@ -143,6 +155,12 @@ function migrateDimensionSources(entities: readonly Entity[]): Entity[] {
     const { targetEntityId, ...rest } = legacy
     return { ...rest, source: { type: 'entity', targetEntityId } } as Entity
   })
+}
+
+function migrateRectangleRotation(entities: readonly Entity[]): Entity[] {
+  return entities.map((entity) => entity.type === 'rectangle'
+    ? { ...entity, rotation: typeof entity.rotation === 'number' ? entity.rotation : 0 }
+    : entity)
 }
 
 function resolveActiveLayer(layers: readonly Layer[], requested: unknown) {

@@ -24,3 +24,22 @@ export function RepeatInput({ spacing, copies, valid, onChange, onConfirm }: { s
     <div className="length-actions"><button type="submit" className="primary-button" disabled={!valid}>{t('confirm')}</button></div>
   </form>
 }
+
+export function AngleInput({ value, valid, onChange, onBack, onConfirm, position }: { value: string; valid: boolean; onChange: (value: string) => void; onBack: () => void; onConfirm: () => void; position?: Point }) {
+  const { t } = useI18n(); const ref = useRef<HTMLInputElement>(null)
+  useEffect(() => { ref.current?.focus(); ref.current?.select() }, [])
+  return <form className="length-input transform-input" style={position ? { '--length-input-x': `${position.x}px`, '--length-input-y': `${position.y}px` } as CSSProperties : undefined} onSubmit={(event) => { event.preventDefault(); if (valid) onConfirm() }}>
+    <label htmlFor="rotate-angle">{t('angle')}</label>
+    <div className="length-field"><input ref={ref} id="rotate-angle" inputMode="decimal" value={value} onChange={(event) => onChange(event.target.value)} /><span>°</span></div>
+    <div className="length-actions"><button type="button" className="secondary-button" onClick={onBack}>{t('back')}</button><button type="submit" className="primary-button" disabled={!valid}>{t('confirm')}</button></div>
+  </form>
+}
+
+export function MirrorInput({ keepOriginal, ready, onKeepOriginalChange, onBack, onConfirm }: { keepOriginal: boolean; ready: boolean; onKeepOriginalChange: (value: boolean) => void; onBack: () => void; onConfirm: () => void }) {
+  const { t } = useI18n()
+  return <form className="length-input mirror-input" onSubmit={(event) => { event.preventDefault(); if (ready) onConfirm() }}>
+    <label>{t('mirror')}</label>
+    <label className="mirror-keep"><span>{t('keepOriginal')}</span><input type="checkbox" checked={keepOriginal} onChange={(event) => onKeepOriginalChange(event.target.checked)} /></label>
+    <div className="length-actions"><button type="button" className="secondary-button" disabled={!ready} onClick={onBack}>{t('back')}</button><button type="submit" className="primary-button" disabled={!ready}>{t('confirm')}</button></div>
+  </form>
+}

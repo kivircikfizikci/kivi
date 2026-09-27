@@ -25,7 +25,25 @@ export function lineLineIntersections(a: LineSegment, b: LineSegment): GeometryI
   return [{ point: addScaled(a.start, r, t), parameterA: t, parameterB: clampUnit(parameterB) }]
 }
 
+/** Intersects an unbounded first line with a finite second segment. */
+export function infiniteLineSegmentIntersections(a: LineSegment, b: LineSegment): GeometryIntersection[] {
+  const r = subtract(a.end, a.start)
+  const s = subtract(b.end, b.start)
+  const denominator = cross(r, s)
+  if (Math.abs(denominator) <= GEOMETRY_EPSILON) return []
+  const delta = subtract(b.start, a.start)
+  const parameterA = cross(delta, s) / denominator
+  const parameterB = cross(delta, r) / denominator
+  if (!withinSegment(parameterB)) return []
+  return [{ point: addScaled(a.start, r, parameterA), parameterA, parameterB: clampUnit(parameterB) }]
+}
+
 export function lineCircleIntersections(line: LineSegment, circle: Pick<CircleEntity, 'center' | 'radius'>): GeometryIntersection[] {
+  return infiniteLineCircleIntersections(line, circle).filter((intersection) => withinSegment(intersection.parameterA)).map((intersection) => ({ ...intersection, parameterA: clampUnit(intersection.parameterA) }))
+}
+
+/** Intersects an unbounded first line with a circle. */
+export function infiniteLineCircleIntersections(line: LineSegment, circle: Pick<CircleEntity, 'center' | 'radius'>): GeometryIntersection[] {
   const direction = subtract(line.end, line.start)
   const fromCenter = subtract(line.start, circle.center)
   const a = dot(direction, direction)
@@ -38,13 +56,17 @@ export function lineCircleIntersections(line: LineSegment, circle: Pick<CircleEn
   const parameters = root <= GEOMETRY_EPSILON
     ? [-b / (2 * a)]
     : [(-b - root) / (2 * a), (-b + root) / (2 * a)]
-  return dedupeIntersections(parameters
-    .filter(withinSegment)
-    .map((parameterA) => {
-      const t = clampUnit(parameterA)
-      const point = addScaled(line.start, direction, t)
-      return { point, parameterA: t, parameterB: normalizeDegrees(angleFromCenter(circle.center, point)) / 360 }
+  return dedupeIntersections(parameters.map((parameterA) => {
+      const point = addScaled(line.start, direction, parameterA)
+      return { point, parameterA, parameterB: normalizeDegrees(angleFromCenter(circle.center, point)) / 360 }
     }))
+}
+
+export function infiniteLineArcIntersections(line: LineSegment, arc: Pick<ArcEntity, 'center' | 'radius' | 'startAngle' | 'endAngle' | 'direction'>): GeometryIntersection[] {
+  return infiniteLineCircleIntersections(line, arc).flatMap((intersection) => {
+    const parameterB = arcParameterAtPoint(arc, intersection.point)
+    return parameterB === null ? [] : [{ ...intersection, parameterB }]
+  })
 }
 
 export function lineArcIntersections(line: LineSegment, arc: Pick<ArcEntity, 'center' | 'radius' | 'startAngle' | 'endAngle' | 'direction'>): GeometryIntersection[] {

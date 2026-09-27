@@ -19,7 +19,7 @@ import { createDrawingExportModel } from '../src/export/DrawingExportModel.ts'
 
 const entities: Entity[] = [
   { id: 'line', type: 'line', start: { x: 0, y: 0 }, end: { x: 20, y: 0 }, style: { color: '#123456', width: 2 }, layerId: 'default' },
-  { id: 'rect', type: 'rectangle', origin: { x: 2, y: 3 }, width: 10, height: 5, style: { color: '#223344', width: 3 }, layerId: 'steel' },
+  { id: 'rect', type: 'rectangle', origin: { x: 2, y: 3 }, width: 10, height: 5, rotation: 0, style: { color: '#223344', width: 3 }, layerId: 'steel' },
   { id: 'circle', type: 'circle', center: { x: 5, y: 6 }, radius: 4, style: { color: '#334455', width: 1 }, layerId: 'default' },
   { id: 'arc', type: 'arc', center: { x: 8, y: 9 }, radius: 6, startAngle: 0, endAngle: 90, direction: 'ccw', style: { color: '#445566', width: 2 }, layerId: 'default' },
   { id: 'free-dim', type: 'dimension', source: { type: 'points', start: { x: 0, y: 0 }, end: { x: 5, y: 0 } }, offset: 2, side: 1, style: { color: '#555' }, layerId: 'dimensions' },
@@ -172,8 +172,8 @@ test('move copy and repeat commands and aliases remain registry driven', () => {
   assert.equal(commandRegistry.filter((command) => ['move', 'copy', 'repeat'].includes(command.id)).length, 3)
 })
 
-test('desktop context menu exposes the three selection transform actions', () => {
-  assert.deepEqual(transformContextActions, ['move', 'copy', 'repeat'])
+test('desktop context menu exposes selection transform actions', () => {
+  assert.deepEqual(transformContextActions, ['move', 'copy', 'repeat', 'rotate', 'mirror'])
 })
 
 test('committed transformed state autosaves through ProjectSession', async () => {
