@@ -1,6 +1,21 @@
 export type HelpArticleId = 'home' | 'getting-started' | 'projects' | 'drawing-basics' | 'dimensions' | 'layers' | 'export' | 'commands' | 'release-notes' | 'about' | 'social' | 'support'
 export interface HelpArticle { id: HelpArticleId; title: string; summary: string; sections: { heading: string; body: string }[] }
 
+export const editorToolbarHelp = {
+  en: {
+    guideHeading: 'Editor header',
+    guideBody: 'The top row contains the project name, centered Undo and Redo, and project-level actions. The second row contains the Draw, Dimension, and Modify tool groups. Commands and snap controls remain in the desktop footer.',
+    releaseHeading: 'Clear two-row editor toolbar',
+    releaseBody: 'Project actions and drawing tools now occupy separate, fixed rows. Undo and Redo stay centered even when the project name or right-side actions change width.',
+  },
+  tr: {
+    guideHeading: 'Editör başlığı',
+    guideBody: 'Üst satırda proje adı, ortalanmış Geri Al ve Yinele ile proje işlemleri bulunur. İkinci satır Çizim, Ölçü ve Düzenle araç gruplarına ayrılır. Komut alanı ve yakalama kontrolleri masaüstü alt çubuğunda kalır.',
+    releaseHeading: 'Net iki satırlı editör araç çubuğu',
+    releaseBody: 'Proje işlemleri ve çizim araçları artık ayrı, sabit satırlarda bulunuyor. Proje adı veya sağ taraftaki işlemler genişlese bile Geri Al ve Yinele ortada kalıyor.',
+  },
+} as const
+
 export const helpArticles: HelpArticle[] = [
   { id: 'home', title: 'Kivi Help', summary: 'Simple guides for projects, drawing and sharing.', sections: [{ heading: 'Start here', body: 'Create a drawing from the project hub, then choose a tool from the grouped editor toolbar.' }] },
   { id: 'getting-started', title: 'Getting started', summary: 'Create your first measured drawing.', sections: [{ heading: 'A quick workflow', body: 'Choose New Drawing, select Line or a shape tool, place points, then use Dimension to add measurements. Your work saves locally as you draw.' }] },

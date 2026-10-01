@@ -8,3 +8,4 @@ export const editorToolGroups: { id: 'draw' | 'dimensionTools' | 'modify'; tools
 ]
 
 export const editorPrimaryLayout = { center: ['undo', 'redo'], right: ['share', 'layers', 'settings', 'help', 'account'] } as const
+export const editorHeaderRows = ['primary', 'tools'] as const

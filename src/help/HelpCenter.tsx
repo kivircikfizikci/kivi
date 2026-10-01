@@ -2,16 +2,19 @@ import { useState, type FormEvent } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { feedbackService, validateFeedback } from '../feedback/FeedbackService.ts'
 import { KiviLogo } from '../ui/Brand/KiviLogo.tsx'
-import { helpArticleForPath, helpArticles } from './helpContent.ts'
+import { useSettings } from '../settings/useSettings.ts'
+import { editorToolbarHelp, helpArticleForPath, helpArticles } from './helpContent.ts'
 
 export function HelpCenter() {
   const location = useLocation()
+  const { settings } = useSettings()
   const feedback = location.pathname.endsWith('/feedback')
   const article = helpArticleForPath(location.pathname)
+  const toolbarHelp = editorToolbarHelp[settings.language]
   return <main className="help-center">
     <header className="help-header"><Link to="/"><KiviLogo /></Link><span>Help Center</span><Link to="/">Open Kivi</Link></header>
     <aside className="help-nav"><nav>{helpArticles.map((item) => <Link className={article.id === item.id && !feedback ? 'is-active' : ''} key={item.id} to={item.id === 'home' ? '/help' : `/help/${item.id}`}>{item.title}</Link>)}<Link className={feedback ? 'is-active' : ''} to="/help/feedback">Provide feedback</Link></nav></aside>
-    <article className="help-article">{feedback ? <FeedbackForm /> : <><span className="help-eyebrow">KIVI GUIDE</span><h1>{article.title}</h1><p className="help-summary">{article.summary}</p>{article.sections.map((section) => <section key={section.heading}><h2>{section.heading}</h2><p>{section.body}</p></section>)}</>}</article>
+    <article className="help-article">{feedback ? <FeedbackForm /> : <><span className="help-eyebrow">KIVI GUIDE</span><h1>{article.title}</h1><p className="help-summary">{article.summary}</p>{article.sections.map((section) => <section key={section.heading}><h2>{section.heading}</h2><p>{section.body}</p></section>)}{article.id === 'drawing-basics' && <section><h2>{toolbarHelp.guideHeading}</h2><p>{toolbarHelp.guideBody}</p></section>}{article.id === 'release-notes' && <section><h2>{toolbarHelp.releaseHeading}</h2><p>{toolbarHelp.releaseBody}</p></section>}</>}</article>
   </main>
 }
 

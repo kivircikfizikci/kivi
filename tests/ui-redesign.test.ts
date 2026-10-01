@@ -1,12 +1,12 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import { InactiveFeedbackService, validateFeedback } from '../src/feedback/FeedbackService.ts'
-import { helpArticleForPath, helpArticles } from '../src/help/helpContent.ts'
+import { editorToolbarHelp, helpArticleForPath, helpArticles } from '../src/help/helpContent.ts'
 import { defaultProjectName, projectFileName, recentProjects } from '../src/project/projectPresentation.ts'
 import type { Project } from '../src/types/project.ts'
 import { precisionCrosshairTools } from '../src/drawing/precisionCrosshair.ts'
 import { settingsPresentationForWidth, settingsTabs } from '../src/ui/Settings/settingsLayout.ts'
-import { editorPrimaryLayout, editorToolGroups } from '../src/ui/TopBar/editorLayout.ts'
+import { editorHeaderRows, editorPrimaryLayout, editorToolGroups } from '../src/ui/TopBar/editorLayout.ts'
 
 function project(id: string, updatedAt: string): Project {
   return { id, name: id, updatedAt } as Project
@@ -25,6 +25,7 @@ test('hub recents are newest-first and limited to five', () => {
 })
 
 test('editor layout keeps history centered, global actions right, and all tools categorized', () => {
+  assert.deepEqual(editorHeaderRows, ['primary', 'tools'])
   assert.deepEqual(editorPrimaryLayout.center, ['undo', 'redo'])
   assert.deepEqual(editorPrimaryLayout.right, ['share', 'layers', 'settings', 'help', 'account'])
   assert.deepEqual(editorToolGroups.map((group) => group.id), ['draw', 'dimensionTools', 'modify'])
@@ -43,6 +44,10 @@ test('help routes resolve maintainable articles including release notes', () => 
   assert.equal(helpArticleForPath('/help/release-notes').id, 'release-notes')
   assert.ok(helpArticles.some((article) => article.id === 'layers'))
   assert.ok(helpArticles.some((article) => article.id === 'commands'))
+  assert.match(editorToolbarHelp.en.guideBody, /top row/)
+  assert.match(editorToolbarHelp.tr.guideBody, /Üst satır/)
+  assert.match(editorToolbarHelp.en.releaseBody, /separate, fixed rows/)
+  assert.match(editorToolbarHelp.tr.releaseBody, /ayrı, sabit satırlarda/)
 })
 
 test('feedback validates locally and inactive service never fakes a submission', async () => {
