@@ -55,8 +55,10 @@ export function ProjectRoute() {
           navigate('/', { replace: true })
           return
         }
-        updateSettings({ lastOpenProjectId: loaded.id })
-        setProject(loaded)
+        const opened = { ...loaded, updatedAt: new Date().toISOString() }
+        updateSettings({ lastOpenProjectId: opened.id })
+        setProject(opened)
+        void projectService.updateProject(opened)
       })
       .catch(() => {
         if (active) navigate('/projects', { replace: true })

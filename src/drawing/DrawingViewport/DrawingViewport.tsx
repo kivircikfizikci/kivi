@@ -53,6 +53,7 @@ import { canTransformSelection } from '../../tools/transformEligibility.ts'
 import { isOffsettable, offsetDistanceFromPointer, offsetEntity } from '../geometry/offset.ts'
 import { createTrimPlan, isTrimmable } from '../geometry/trim.ts'
 import { createLineExtendPlan } from '../geometry/extend.ts'
+import { precisionCrosshairTools } from '../precisionCrosshair.ts'
 
 interface DrawingViewportProps {
   store: DrawingStore
@@ -109,6 +110,7 @@ export function DrawingViewport({ store, tools, projectSettings, layers, activeL
   const [viewport, setViewport] = useState<ViewportSize>({ width: 1, height: 1 })
   const [contextMenu, setContextMenu] = useState<ContextMenuPosition | null>(null)
   const [marquee, setMarquee] = useState<MarqueeGesture | null>(null)
+  const [cursorPoint, setCursorPoint] = useState<Point | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const svgRef = useRef<SVGSVGElement>(null)
   const pointers = useRef(new Map<number, TrackedPointer>())
@@ -371,6 +373,7 @@ export function DrawingViewport({ store, tools, projectSettings, layers, activeL
 
   const onPointerMove = (event: ReactPointerEvent<SVGSVGElement>) => {
     const point = toScreenPoint(event)
+    setCursorPoint(event.pointerType === 'mouse' && mode === 'edit' && precisionCrosshairTools.has(activeTool) ? point : null)
     const previous = pointers.current.get(event.pointerId)
     if (previous) pointers.current.set(event.pointerId, { ...point, pointerType: event.pointerType })
 
@@ -640,6 +643,7 @@ export function DrawingViewport({ store, tools, projectSettings, layers, activeL
           onPointerCancel={(event) => endPointer(event, true)}
           onWheel={onWheel}
           onContextMenu={handleContextMenu}
+          onPointerLeave={() => setCursorPoint(null)}
         >
           {projectSettings.gridEnabled && (
             <>
@@ -714,6 +718,7 @@ export function DrawingViewport({ store, tools, projectSettings, layers, activeL
                 <ExtendEndpoint point={extend.candidate.extension.start} camera={camera} viewport={viewport} />
               </g>
             )}
+            {cursorPoint && <g className="precision-crosshair" pointerEvents="none"><line x1={cursorPoint.x - 18} y1={cursorPoint.y} x2={cursorPoint.x - 4} y2={cursorPoint.y} /><line x1={cursorPoint.x + 4} y1={cursorPoint.y} x2={cursorPoint.x + 18} y2={cursorPoint.y} /><line x1={cursorPoint.x} y1={cursorPoint.y - 18} x2={cursorPoint.x} y2={cursorPoint.y - 4} /><line x1={cursorPoint.x} y1={cursorPoint.y + 4} x2={cursorPoint.x} y2={cursorPoint.y + 18} /><circle cx={cursorPoint.x} cy={cursorPoint.y} r="1.5" /></g>}
           </g>
         </svg>
 

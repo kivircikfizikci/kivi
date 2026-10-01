@@ -129,6 +129,7 @@ export function DrawingWorkspace({ project, mode = 'edit' }: { project: Project;
     <div ref={fullscreen.containerRef} className={`app-shell${fullscreen.active ? ' is-fullscreen' : ''}${!fullscreen.active && mode === 'edit' ? ' has-workspace-footer' : ''}`}>
       {!fullscreen.active && mode === 'edit' && (
         <TopBar
+          projectName={projectSnapshot.project.name}
           onOpenSettings={() => setSettingsOpen(true)}
           onOpenShare={() => setShareOpen(true)}
           onOpenLayers={() => setLayersOpen(true)}
@@ -183,7 +184,7 @@ export function DrawingWorkspace({ project, mode = 'edit' }: { project: Project;
             onClose={() => setSettingsOpen(false)}
             projectSettings={projectSnapshot.project.projectSettings}
             onProjectSettingsChange={(updates) => session.updateProjectSettings(updates)}
-            onSave={() => { void session.flush(); setSettingsOpen(false) }}
+            onDone={() => { void session.flush() }}
           />
           <LayerPanel open={layersOpen} layers={projectSnapshot.project.layers} activeLayerId={projectSnapshot.project.activeLayerId}
             onClose={() => setLayersOpen(false)} onCreate={(name) => { session.createLayer(name) }}

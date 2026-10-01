@@ -37,6 +37,8 @@ export interface AppSettings {
   defaultLineColor: string
   defaultLineWidth: number
   defaultDimensionColor: string
+  defaultDimensionDisplayUnit: 'cm' | 'mm'
+  defaultShowDimensionUnit: boolean
   angleSnapEnabled: boolean
   angleSnapIncrement: number
   endpointSnapEnabled: boolean
@@ -59,6 +61,8 @@ export const defaultSettings: AppSettings = {
   defaultLineColor: '#2f4940',
   defaultLineWidth: 2,
   defaultDimensionColor: '#315c4c',
+  defaultDimensionDisplayUnit: 'cm',
+  defaultShowDimensionUnit: false,
   angleSnapEnabled: true,
   angleSnapIncrement: 15,
   endpointSnapEnabled: true,
