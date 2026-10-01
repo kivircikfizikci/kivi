@@ -2,7 +2,7 @@ import type { Point } from '../drawing/geometry/Point.ts'
 import { buildDimensionGeometry, resolveDimensionSegment } from '../drawing/geometry/dimension.ts'
 import { formatDimension } from '../drawing/geometry/formatDimension.ts'
 import type { Project } from '../types/project.ts'
-import { calculateDrawingBounds, type DrawingBounds } from './drawingBounds.ts'
+import { calculateDrawingExportLayout, type DrawingBounds } from './drawingBounds.ts'
 import { exportBoundsFromWorldBounds, worldPointToExportPoint } from './exportCoordinates.ts'
 import { resolveDimensionColor } from '../drawing/geometry/dimensionColor.ts'
 import { rectangleCorners } from '../drawing/geometry/rectangle.ts'
@@ -47,7 +47,8 @@ export interface DrawingExportModel {
 
 export function createDrawingExportModel(project: Pick<Project, 'drawing' | 'projectSettings'> & Partial<Pick<Project, 'layers'>>): DrawingExportModel {
   const entities = entitiesOnVisibleLayers(project.drawing.entities, project.layers ?? createBuiltInLayers())
-  const worldBounds = calculateDrawingBounds(entities, project.projectSettings)
+  const { bounds: worldBounds, worldUnitsPerPixel } = calculateDrawingExportLayout(entities, project.projectSettings)
+  const visualSize = (pixels: number) => pixels * worldUnitsPerPixel
   const mapPoint = (point: Point) => worldPointToExportPoint(point, worldBounds)
   const strokes: ExportStroke[] = []
   const polygons: ExportPolygon[] = []
@@ -58,21 +59,21 @@ export function createDrawingExportModel(project: Pick<Project, 'drawing' | 'pro
 
   for (const entity of entities) {
     if (entity.type === 'line') {
-      strokes.push({ start: mapPoint(entity.start), end: mapPoint(entity.end), color: entity.style.color, width: entity.style.width })
+      strokes.push({ start: mapPoint(entity.start), end: mapPoint(entity.end), color: entity.style.color, width: visualSize(entity.style.width) })
       continue
     }
     if (entity.type === 'rectangle') {
       const corners = rectangleCorners(entity).map(mapPoint)
-      if ((entity.rotation ?? 0) === 0) rectangles.push({ origin: corners[3]!, width: entity.width, height: entity.height, color: entity.style.color, strokeWidth: entity.style.width })
-      else corners.forEach((start, index) => strokes.push({ start, end: corners[(index + 1) % corners.length]!, color: entity.style.color, width: entity.style.width }))
+      if ((entity.rotation ?? 0) === 0) rectangles.push({ origin: corners[3]!, width: entity.width, height: entity.height, color: entity.style.color, strokeWidth: visualSize(entity.style.width) })
+      else corners.forEach((start, index) => strokes.push({ start, end: corners[(index + 1) % corners.length]!, color: entity.style.color, width: visualSize(entity.style.width) }))
       continue
     }
     if (entity.type === 'circle') {
-      circles.push({ center: mapPoint(entity.center), radius: entity.radius, color: entity.style.color, strokeWidth: entity.style.width })
+      circles.push({ center: mapPoint(entity.center), radius: entity.radius, color: entity.style.color, strokeWidth: visualSize(entity.style.width) })
       continue
     }
     if (entity.type === 'arc') {
-      arcs.push({ center: mapPoint(entity.center), radius: entity.radius, startAngle: entity.startAngle, endAngle: entity.endAngle, direction: entity.direction, color: entity.style.color, strokeWidth: entity.style.width })
+      arcs.push({ center: mapPoint(entity.center), radius: entity.radius, startAngle: entity.startAngle, endAngle: entity.endAngle, direction: entity.direction, color: entity.style.color, strokeWidth: visualSize(entity.style.width) })
       continue
     }
     const segment = resolveDimensionSegment(entity, entities)
@@ -86,20 +87,20 @@ export function createDrawingExportModel(project: Pick<Project, 'drawing' | 'pro
     const end = mapPoint(geometry.end)
     const direction = unitDirection(start, end)
     strokes.push(
-      { start: targetStart, end: start, color, width: 1.2 },
-      { start: targetEnd, end, color, width: 1.2 },
-      { start, end, color, width: 1.2 },
+      { start: targetStart, end: start, color, width: visualSize(1.2) },
+      { start: targetEnd, end, color, width: visualSize(1.2) },
+      { start, end, color, width: visualSize(1.2) },
     )
     polygons.push(
-      { points: arrow(start, direction, 1), color },
-      { points: arrow(end, direction, -1), color },
+      { points: arrow(start, direction, 1, worldUnitsPerPixel), color },
+      { points: arrow(end, direction, -1, worldUnitsPerPixel), color },
     )
     const text = mapPoint(geometry.text)
     labels.push({
-      position: { x: text.x, y: text.y - 7 },
+      position: { x: text.x, y: text.y - visualSize(7) },
       text: formatDimension(geometry.length, project.projectSettings),
       color,
-      size: entity.style.textSize ?? 13,
+      size: visualSize(entity.style.textSize ?? 13),
       rotation: geometry.rotation,
     })
   }
@@ -122,11 +123,13 @@ function unitDirection(start: Point, end: Point) {
   return { x: (end.x - start.x) / length, y: (end.y - start.y) / length }
 }
 
-function arrow(tip: Point, direction: Point, sign: number): Point[] {
-  const base = { x: tip.x + direction.x * sign * 8, y: tip.y + direction.y * sign * 8 }
+function arrow(tip: Point, direction: Point, sign: number, worldUnitsPerPixel: number): Point[] {
+  const length = 8 * worldUnitsPerPixel
+  const halfWidth = 2.7 * worldUnitsPerPixel
+  const base = { x: tip.x + direction.x * sign * length, y: tip.y + direction.y * sign * length }
   return [
     tip,
-    { x: base.x - direction.y * 2.7, y: base.y + direction.x * 2.7 },
-    { x: base.x + direction.y * 2.7, y: base.y - direction.x * 2.7 },
+    { x: base.x - direction.y * halfWidth, y: base.y + direction.x * halfWidth },
+    { x: base.x + direction.y * halfWidth, y: base.y - direction.x * halfWidth },
   ]
 }

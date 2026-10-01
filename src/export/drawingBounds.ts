@@ -14,8 +14,20 @@ export interface DrawingBounds {
   height: number
 }
 
+export interface DrawingExportLayout {
+  bounds: DrawingBounds
+  worldUnitsPerPixel: number
+}
+
+const EXPORT_REFERENCE_VIEWPORT_PX = 1000
+
 export function calculateDrawingBounds(entities: readonly Entity[], settings: ProjectSettings): DrawingBounds {
+  return calculateDrawingExportLayout(entities, settings).bounds
+}
+
+export function calculateDrawingExportLayout(entities: readonly Entity[], settings: ProjectSettings): DrawingExportLayout {
   const points: Array<{ x: number; y: number }> = []
+  const labels: Array<{ position: { x: number; y: number }; text: string; textSize: number }> = []
 
   for (const entity of entities) {
     if (entity.type === 'line') {
@@ -45,23 +57,33 @@ export function calculateDrawingBounds(entities: readonly Entity[], settings: Pr
     const geometry = buildDimensionGeometry(segment, entity)
     if (!geometry) continue
     points.push(segment.start, segment.end, geometry.start, geometry.end)
-    const textSize = entity.style.textSize ?? 13
-    const labelWidth = formatDimension(geometry.length, settings).length * textSize * 0.62
-    const radius = Math.hypot(labelWidth / 2, textSize) + 4
+    labels.push({ position: geometry.text, text: formatDimension(geometry.length, settings), textSize: entity.style.textSize ?? 13 })
+  }
+
+  if (points.length === 0) return { bounds: createBounds(0, 0, 100, 100), worldUnitsPerPixel: 0.1 }
+  const geometryMinX = Math.min(...points.map((point) => point.x))
+  const geometryMinY = Math.min(...points.map((point) => point.y))
+  const geometryMaxX = Math.max(...points.map((point) => point.x))
+  const geometryMaxY = Math.max(...points.map((point) => point.y))
+  const geometrySpan = Math.max(geometryMaxX - geometryMinX, geometryMaxY - geometryMinY, 1)
+  const worldUnitsPerPixel = geometrySpan / EXPORT_REFERENCE_VIEWPORT_PX
+
+  for (const label of labels) {
+    const labelWidth = label.text.length * label.textSize * 0.62 * worldUnitsPerPixel
+    const labelHeight = label.textSize * worldUnitsPerPixel
+    const radius = Math.hypot(labelWidth / 2, labelHeight) + 4 * worldUnitsPerPixel
     points.push(
-      { x: geometry.text.x - radius, y: geometry.text.y - radius },
-      { x: geometry.text.x + radius, y: geometry.text.y + radius },
+      { x: label.position.x - radius, y: label.position.y - radius },
+      { x: label.position.x + radius, y: label.position.y + radius },
     )
   }
 
-  if (points.length === 0) return createBounds(0, 0, 100, 100)
   const minX = Math.min(...points.map((point) => point.x))
   const minY = Math.min(...points.map((point) => point.y))
   const maxX = Math.max(...points.map((point) => point.x))
   const maxY = Math.max(...points.map((point) => point.y))
-  const span = Math.max(maxX - minX, maxY - minY, 1)
-  const padding = Math.max(12, span * 0.06)
-  return createBounds(minX - padding, minY - padding, maxX + padding, maxY + padding)
+  const padding = geometrySpan * 0.06
+  return { bounds: createBounds(minX - padding, minY - padding, maxX + padding, maxY + padding), worldUnitsPerPixel }
 }
 
 function createBounds(minX: number, minY: number, maxX: number, maxY: number): DrawingBounds {

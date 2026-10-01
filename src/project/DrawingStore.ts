@@ -92,6 +92,19 @@ export class DrawingStore {
     return true
   }
 
+  updateGeometryColor(color: string) {
+    if (this.readOnly) return false
+    let changed = false
+    const entities = this.state.entities.map((entity) => {
+      if (entity.type === 'dimension' || entity.style.color === color) return entity
+      changed = true
+      return { ...entity, style: { ...entity.style, color } }
+    })
+    if (!changed) return false
+    this.commit({ ...this.state, entities })
+    return true
+  }
+
   replaceEntity(entity: Entity) {
     if (this.readOnly) return false
     const index = this.state.entities.findIndex((candidate) => candidate.id === entity.id)

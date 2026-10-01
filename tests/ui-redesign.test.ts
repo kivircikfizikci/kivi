@@ -6,7 +6,7 @@ import { defaultProjectName, projectFileName, recentProjects } from '../src/proj
 import type { Project } from '../src/types/project.ts'
 import { precisionCrosshairTools } from '../src/drawing/precisionCrosshair.ts'
 import { settingsPresentationForWidth, settingsTabs } from '../src/ui/Settings/settingsLayout.ts'
-import { editorHeaderRows, editorPrimaryLayout, editorResponsiveLayout, editorToolGroups } from '../src/ui/TopBar/editorLayout.ts'
+import { editorHeaderRows, editorModifyActions, editorPrimaryLayout, editorResponsiveLayout, editorToolGroups } from '../src/ui/TopBar/editorLayout.ts'
 
 function project(id: string, updatedAt: string): Project {
   return { id, name: id, updatedAt } as Project
@@ -41,6 +41,7 @@ test('editor layout keeps history centered, global actions right, and all tools 
   assert.deepEqual(editorToolGroups.map((group) => group.id), ['draw', 'dimensionTools', 'modify'])
   const tools = editorToolGroups.flatMap((group) => group.tools.map((tool) => tool.id))
   assert.deepEqual(tools, ['line', 'rectangle', 'circle', 'arc', 'dimension', 'select', 'move', 'copy', 'repeat', 'rotate', 'mirror', 'offset', 'trim', 'extend'])
+  assert.deepEqual(editorModifyActions, [{ id: 'delete', icon: 'trash' }])
 })
 
 test('settings use requested tabs and responsive presentation', () => {

@@ -11,7 +11,7 @@ import type { ToolbarShortcut } from '../../types/settings.ts'
 import { KiviLogo } from '../Brand/KiviLogo.tsx'
 import { GlobalActions } from '../GlobalActions/GlobalActions.tsx'
 import { Icon } from '../Icon/Icon.tsx'
-import { editorToolGroups, editorToolIcon } from './editorLayout.ts'
+import { editorModifyActions, editorToolGroups, editorToolIcon } from './editorLayout.ts'
 
 interface TopBarProps { projectName: string; onOpenSettings: () => void; onOpenShare: () => void; onOpenLayers: () => void; onOpenProjects: () => void; onDeleteSelection: () => void; store: DrawingStore; tools: ToolManager; activeTool: ToolId; canUndo: boolean; canRedo: boolean; canTransform: boolean; canDelete: boolean }
 
@@ -61,7 +61,10 @@ export function TopBar(props: TopBarProps) {
           return <div className={`editor-tool-group${activeInGroup ? ' has-active-tool' : ''}`} key={group.id}>
             <span className="editor-tool-group-label">{t(group.id)}</span>
             <button className="tool-group-trigger" type="button" onClick={() => setOpenGroup(openGroup === group.id ? null : group.id)} aria-expanded={openGroup === group.id}><span>{t(group.id)}{activeInGroup ? ` · ${t(activeInGroup.id)}` : ''}</span><Icon name="chevronDown" /></button>
-            <div className={`editor-tool-items tool-group-items${openGroup === group.id ? ' is-open' : ''}`}>{group.tools.map((tool) => <button key={tool.id} className={`editor-tool-button${props.activeTool === tool.id ? ' is-active' : ''}`} type="button" disabled={disabled(tool.id)} onClick={() => { props.tools.activate(tool.id); setOpenGroup(null) }} title={t(tool.id)} aria-label={t(tool.id)}><Icon name={tool.icon} /><span>{t(tool.id)}</span></button>)}</div>
+            <div className={`editor-tool-items tool-group-items${openGroup === group.id ? ' is-open' : ''}`}>
+              {group.tools.map((tool) => <button key={tool.id} className={`editor-tool-button${props.activeTool === tool.id ? ' is-active' : ''}`} type="button" disabled={disabled(tool.id)} onClick={() => { props.tools.activate(tool.id); setOpenGroup(null) }} title={t(tool.id)} aria-label={t(tool.id)}><Icon name={tool.icon} /><span>{t(tool.id)}</span></button>)}
+              {group.id === 'modify' && editorModifyActions.map((action) => <button key={action.id} className="editor-tool-button modify-action-button" type="button" disabled={!props.canDelete} onClick={() => { props.onDeleteSelection(); setOpenGroup(null) }} title={t(action.id)} aria-label={t(action.id)}><Icon name={action.icon} /><span>{t(action.id)}</span></button>)}
+            </div>
           </div>
         })}
       </div>

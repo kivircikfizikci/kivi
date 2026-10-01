@@ -62,9 +62,9 @@
 .hub-empty-state h2 { font-size:20px; }
 .hub-empty-state p { margin-top:7px; color:var(--ink-muted); font-size:13px; }
 
-.editor-header { display:grid; grid-template-columns:minmax(0,1fr); grid-template-rows:48px 60px; gap:0; padding:env(safe-area-inset-top) 0 0; background:var(--surface); border-bottom:1px solid var(--border); }
+.editor-header { display:grid; grid-template-columns:minmax(0,1fr); gap:0; padding:env(safe-area-inset-top) 0 0; background:var(--surface); border-bottom:1px solid var(--border); }
 .app-shell { --top-bar-height:108px; }
-.desktop-primary-bar { display:grid; min-width:0; grid-column:1; grid-row:1; grid-template-columns:minmax(0,1fr) auto minmax(0,1fr); align-items:center; padding:0 10px; border-bottom:1px solid var(--border); }
+.desktop-primary-bar { display:grid; min-width:0; grid-column:1; grid-row:1; grid-template-columns:minmax(0,1fr) auto minmax(0,1fr); align-items:center; padding:4px 12px 4px; border-bottom:1px solid var(--border); }
 .desktop-primary-left { display:flex; min-width:0; grid-column:1; align-items:center; justify-self:start; gap:8px; overflow:hidden; }
 .desktop-primary-center { grid-column:2; justify-self:center; }
 .desktop-primary-right { display:flex; grid-column:3; align-items:center; justify-self:end; gap:5px; }
@@ -76,7 +76,7 @@
 .header-center-actions { display:flex; align-items:center; justify-content:center; gap:7px; }
 .configured-shortcuts { display:flex; align-items:center; gap:2px; padding-left:7px; border-left:1px solid var(--border); }
 .configured-shortcuts:empty { display:none; }
-.editor-tool-bar { display:flex; min-width:0; grid-column:1; grid-row:2; align-items:stretch; justify-content:center; padding:4px 12px 3px; overflow:hidden; background:var(--surface); }
+.editor-tool-bar { display:flex; min-width:0; grid-column:1; grid-row:2; align-items:stretch; justify-content:center; padding:4px 12px 4px; overflow:hidden; background:var(--surface); }
 .editor-tool-groups { display:flex; align-items:stretch; justify-content:center; }
 .editor-tool-group { position:relative; display:grid; grid-template-rows:14px 36px; align-content:center; gap:1px; padding:0 13px; border-right:1px solid var(--border); }
 .editor-tool-group:first-child { padding-left:2px; }

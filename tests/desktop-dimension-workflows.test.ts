@@ -96,6 +96,16 @@ test('dimension tool infers entity targets and otherwise completes the two-point
   assert.deepEqual(pointDimension.source, { type: 'points', start: { x: 10, y: 10 }, end: { x: 40, y: 10 } })
 })
 
+test('dimension tool exposes snap feedback before its first point is placed', () => {
+  const tool = new DimensionTool()
+  const snap = { kind: 'endpoint', point: { x: 10, y: 20 }, distancePixels: 2, entityId: line.id } as const
+  tool.activate()
+  tool.updatePointer(snap.point, snap)
+  assert.equal(tool.getSnapshot().phase, 'waitingFirst')
+  assert.deepEqual(tool.getSnapshot().snap, snap)
+  assert.equal(tool.getSnapshot().firstPoint, null)
+})
+
 test('free dimensions select, persist through history, and survive deletion of unrelated lines', () => {
   const pointDimension = createPointDimension({ x: 0, y: 0 }, { x: 30, y: 0 }, 10, 1)
   const linked: DimensionEntity = { ...pointDimension, id: 'linked', source: { type: 'entity', targetEntityId: line.id }, offset: 20 }

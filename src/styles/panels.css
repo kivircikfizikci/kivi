@@ -730,6 +730,20 @@ button.tool-tile {
   gap: 9px;
 }
 
+.toolbar-shortcut-setting.is-mobile-only {
+  display: none;
+}
+
+@media (max-width: 899px) {
+  .toolbar-shortcut-setting.is-desktop-only {
+    display: none;
+  }
+
+  .toolbar-shortcut-setting.is-mobile-only {
+    display: block;
+  }
+}
+
 .setting-description {
   display: grid;
   gap: 3px;

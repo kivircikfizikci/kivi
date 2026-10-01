@@ -35,7 +35,11 @@ export class RectangleTool implements Tool {
   deactivate() { this.setSnapshot(initial('inactive')) }
 
   updatePointer(point: Point, snap: SnapCandidate | null, style: LineStyle) {
-    if (this.snapshot.phase !== 'placing' || !this.snapshot.start) return
+    if (this.snapshot.phase !== 'placing') return
+    if (!this.snapshot.start) {
+      this.setSnapshot({ ...this.snapshot, pointer: { ...point }, snap })
+      return
+    }
     this.setSnapshot({ ...this.snapshot, pointer: { ...point }, snap, preview: rectangleFromCorners(this.snapshot.start, point, style) })
   }
 

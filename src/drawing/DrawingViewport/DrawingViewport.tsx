@@ -439,9 +439,9 @@ export function DrawingViewport({ store, tools, projectSettings, layers, activeL
       tools.trim.updateCandidate(trimPlanAt(point, event.pointerType))
     } else if (mode === 'edit' && activeTool === 'extend') {
       tools.extend.updateCandidate(extendPlanAt(point, event.pointerType))
-    } else if (mode === 'edit' && activeTool === 'dimension' && dimension.phase === 'waitingSecond') {
+    } else if (mode === 'edit' && activeTool === 'dimension' && (dimension.phase === 'waitingFirst' || dimension.phase === 'waitingSecond')) {
       const resolved = resolveSnap(point, event.pointerType)
-      tools.dimension.updateSecondPoint(resolved.point, resolved.snap)
+      tools.dimension.updatePointer(resolved.point, resolved.snap)
     } else if (mode === 'edit' && activeTool === 'dimension' && dimension.phase === 'positioning') {
       tools.dimension.position(screenToWorld(point, camera, viewport), 20 / camera.zoom)
     }
@@ -621,6 +621,12 @@ export function DrawingViewport({ store, tools, projectSettings, layers, activeL
   const circleInputPosition = circle.edge
     ? positionLengthInput(worldToScreen(circle.edge, camera, viewport), viewport, { width: 252, height: 118 })
     : undefined
+  const moveInputPosition = move.base
+    ? positionLengthInput(worldToScreen({ x: move.base.x + move.delta.x, y: move.base.y + move.delta.y }, camera, viewport), viewport)
+    : undefined
+  const copyInputPosition = copy.base
+    ? positionLengthInput(worldToScreen({ x: copy.base.x + copy.delta.x, y: copy.base.y + copy.delta.y }, camera, viewport), viewport)
+    : undefined
   const offsetInputPosition = offset.pointer
     ? positionLengthInput(worldToScreen(offset.pointer, camera, viewport), viewport)
     : undefined
@@ -758,10 +764,10 @@ export function DrawingViewport({ store, tools, projectSettings, layers, activeL
           />
         )}
         {mode === 'edit' && activeTool === 'move' && move.phase === 'distance' && (
-          <DistanceInput value={move.distanceInput} valid={move.canConfirm} onChange={(value) => tools.move.updateDistance(value)} onBack={() => tools.move.back()} onConfirm={confirmMove} />
+          <DistanceInput value={move.distanceInput} valid={move.canConfirm} position={moveInputPosition} onChange={(value) => tools.move.updateDistance(value)} onBack={() => tools.move.back()} onConfirm={confirmMove} />
         )}
         {mode === 'edit' && activeTool === 'copy' && copy.phase === 'distance' && (
-          <DistanceInput value={copy.distanceInput} valid={copy.canConfirm} onChange={(value) => tools.copy.updateDistance(value)} onBack={() => tools.copy.back()} onConfirm={confirmCopy} />
+          <DistanceInput value={copy.distanceInput} valid={copy.canConfirm} position={copyInputPosition} onChange={(value) => tools.copy.updateDistance(value)} onBack={() => tools.copy.back()} onConfirm={confirmCopy} />
         )}
         {mode === 'edit' && activeTool === 'repeat' && repeat.phase === 'parameters' && (
           <RepeatInput spacing={repeat.spacingInput} copies={repeat.copiesInput} valid={repeat.canConfirm}

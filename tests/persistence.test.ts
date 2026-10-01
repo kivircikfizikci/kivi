@@ -10,6 +10,7 @@ import { migrateProject } from '../src/project/projectMigrations.ts'
 import { CURRENT_PROJECT_VERSION, type Project } from '../src/types/project.ts'
 import type { LineEntity } from '../src/drawing/entities/LineEntity.ts'
 import { appSettingsRepository } from '../src/storage/AppSettingsRepository.ts'
+import { canvasColorsForTheme } from '../src/settings/themeCanvasPalette.ts'
 
 const service = new ProjectService(projectRepository)
 
@@ -30,6 +31,24 @@ function line(id: string): LineEntity {
 test('app theme preference persists in settings', async () => {
   await appSettingsRepository.save(settings({ theme: 'dark' }))
   assert.equal((await appSettingsRepository.get()).theme, 'dark')
+})
+
+test('theme canvas palettes provide matching background, grid, and line colors', () => {
+  assert.deepEqual(canvasColorsForTheme('light'), { backgroundColor: '#f8faf9', gridColor: '#d8dfdc', lineColor: '#2f4940' })
+  assert.deepEqual(canvasColorsForTheme('dark'), { backgroundColor: '#101214', gridColor: '#343a31', lineColor: '#e9fbcb' })
+})
+
+test('changing project line color updates existing geometry in one undoable drawing action', () => {
+  const project = migrateProject({
+    id: 'recolor', name: 'Recolor', version: 1, createdAt: '2026-01-01T00:00:00.000Z', updatedAt: '2026-01-01T00:00:00.000Z',
+    data: { version: 1, entities: [line('existing-line')] },
+  })
+  const session = new ProjectSession(project, async () => {}, 1)
+  session.updateProjectSettings({ lineColor: '#abcdef' })
+  assert.equal((session.store.getSnapshot().state.entities[0] as LineEntity).style.color, '#abcdef')
+  assert.equal(session.getSnapshot().project.projectSettings.lineColor, '#abcdef')
+  assert.equal(session.store.undo(), true)
+  assert.equal((session.store.getSnapshot().state.entities[0] as LineEntity).style.color, '#123456')
 })
 
 test('repository creates, loads, lists, updates, and deletes a project', async () => {

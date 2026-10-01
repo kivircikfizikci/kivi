@@ -93,6 +93,23 @@ test('dimension labels support mm suffix and no suffix in SVG and PDF', () => {
   assert.match(createDrawingSvg(noUnit).svg, />275<\/text>/)
 })
 
+test('PNG and PDF styling keeps screen-like proportions when drawings are fitted to export', () => {
+  const project = exportProject([line('short', { x: 0, y: 0 }, { x: 100, y: 0 }), dimension('short-dim', 'short', 20)])
+  const model = createDrawingExportModel(project)
+  const rendered = createDrawingSvg(model, 1200)
+  const label = model.labels[0]!
+  const geometryStroke = model.strokes[0]!
+  const renderedFontPixels = label.size / model.bounds.width * rendered.width
+  const renderedStrokePixels = geometryStroke.width / model.bounds.width * rendered.width
+
+  assert.ok(renderedFontPixels > 10 && renderedFontPixels < 20)
+  assert.ok(renderedStrokePixels > 1 && renderedStrokePixels < 4)
+
+  const pdf = new TextDecoder().decode(createDrawingPdf(model))
+  const pdfFontSize = Number(pdf.match(/\/F1 ([\d.]+) Tf/)?.[1])
+  assert.ok(pdfFontSize >= 8 && pdfFontSize <= 14)
+})
+
 test('command registry matches prefixes and aliases and executes the selected command', () => {
   assert.equal(commandRegistry.some((command) => command.id === 'share'), true)
   assert.deepEqual(getCommandSuggestions('d').slice(0, 2).map((command) => command.id), ['dim', 'delete'])

@@ -46,9 +46,18 @@ export class DimensionTool implements Tool {
     this.begin(line, line.start, null)
   }
 
+  updatePointer(point: Point, snap: SnapCandidate | null) {
+    if (this.snapshot.phase === 'waitingFirst') {
+      this.setSnapshot({ ...this.snapshot, snap })
+      return
+    }
+    if (this.snapshot.phase === 'waitingSecond') {
+      this.setSnapshot({ ...this.snapshot, secondPoint: { ...point }, snap })
+    }
+  }
+
   updateSecondPoint(point: Point, snap: SnapCandidate | null) {
-    if (this.snapshot.phase !== 'waitingSecond') return
-    this.setSnapshot({ ...this.snapshot, secondPoint: { ...point }, snap })
+    this.updatePointer(point, snap)
   }
 
   chooseSecondPoint(point: Point, snap: SnapCandidate | null) {

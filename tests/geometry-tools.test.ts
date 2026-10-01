@@ -91,6 +91,17 @@ test('rectangle tool creates semantic width and height and selection only uses e
   assert.equal(selection.findEntity({ x: 50, y: 30 }, [rectangle], 4, 8), null)
 })
 
+test('rectangle exposes snap feedback before its first corner is placed', () => {
+  const tool = new RectangleTool()
+  const snap = { kind: 'endpoint', point: { x: 20, y: 30 }, distancePixels: 2 } as const
+  tool.activate()
+  tool.updatePointer(snap.point, snap, style)
+  assert.deepEqual(tool.getSnapshot().snap, snap)
+  assert.deepEqual(tool.getSnapshot().pointer, snap.point)
+  assert.equal(tool.getSnapshot().start, null)
+  assert.equal(tool.getSnapshot().preview, null)
+})
+
 test('circle radius and diameter modes update one serializable radius', () => {
   const tool = new CircleTool()
   tool.activate()

@@ -41,6 +41,9 @@ export class ProjectSession {
   getSnapshot = () => this.snapshot
 
   updateProjectSettings(updates: Partial<ProjectSettings>) {
+    if (updates.lineColor && updates.lineColor !== this.project.projectSettings.lineColor) {
+      this.store.updateGeometryColor(updates.lineColor)
+    }
     this.applyChange({ projectSettings: { ...this.project.projectSettings, ...updates } })
   }
 
