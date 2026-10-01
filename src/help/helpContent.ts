@@ -4,15 +4,15 @@ export interface HelpArticle { id: HelpArticleId; title: string; summary: string
 export const editorToolbarHelp = {
   en: {
     guideHeading: 'Editor header',
-    guideBody: 'The top row contains the project name, centered Undo and Redo, and project-level actions. The second row contains the Draw, Dimension, and Modify tool groups. Commands and snap controls remain in the desktop footer.',
+    guideBody: 'The top row contains the project name, centered Undo and Redo, and project-level actions. The second row contains the Draw, Dimension, and Modify tool groups. On mobile, open tools from these three menus; there is no separate bottom tools drawer. Commands and snap controls remain in the desktop footer.',
     releaseHeading: 'Clear two-row editor toolbar',
-    releaseBody: 'Project actions and drawing tools now occupy separate, fixed rows. Undo and Redo stay centered even when the project name or right-side actions change width.',
+    releaseBody: 'Project actions and drawing tools now occupy separate, fixed rows. Undo and Redo stay centered even when neighboring content changes width. Mobile uses Draw, Dimension, and Modify menus with a compact More menu instead of the former bottom tools drawer.',
   },
   tr: {
     guideHeading: 'Editör başlığı',
-    guideBody: 'Üst satırda proje adı, ortalanmış Geri Al ve Yinele ile proje işlemleri bulunur. İkinci satır Çizim, Ölçü ve Düzenle araç gruplarına ayrılır. Komut alanı ve yakalama kontrolleri masaüstü alt çubuğunda kalır.',
+    guideBody: 'Üst satırda proje adı, ortalanmış Geri Al ve Yinele ile proje işlemleri bulunur. İkinci satır Çizim, Ölçü ve Düzenle araç gruplarına ayrılır. Mobilde araçları bu üç menüden açın; ayrıca bir alt araç çekmecesi yoktur. Komut alanı ve yakalama kontrolleri masaüstü alt çubuğunda kalır.',
     releaseHeading: 'Net iki satırlı editör araç çubuğu',
-    releaseBody: 'Proje işlemleri ve çizim araçları artık ayrı, sabit satırlarda bulunuyor. Proje adı veya sağ taraftaki işlemler genişlese bile Geri Al ve Yinele ortada kalıyor.',
+    releaseBody: 'Proje işlemleri ve çizim araçları artık ayrı, sabit satırlarda bulunuyor. Komşu içeriklerin genişliği değişse bile Geri Al ve Yinele ortada kalıyor. Mobilde eski alt araç çekmecesi yerine Çizim, Ölçü, Düzenle menüleri ve kompakt Diğer menüsü kullanılıyor.',
   },
 } as const
 

@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react'
 import { DrawingViewport } from '../drawing/DrawingViewport/DrawingViewport'
 import { useFullscreenMode } from '../hooks/useFullscreenMode'
-import { BottomDrawer } from '../ui/BottomDrawer/BottomDrawer'
 import { FullscreenExit } from '../ui/Fullscreen/FullscreenExit'
 import { SettingsPanel } from '../ui/Settings/SettingsPanel'
 import { TopBar } from '../ui/TopBar/TopBar'
@@ -22,7 +21,6 @@ import { SnapQuickControls } from '../ui/SnapQuickControls/SnapQuickControls.tsx
 export function DrawingWorkspace({ project, mode = 'edit' }: { project: Project; mode?: WorkspaceMode }) {
   const { t } = useI18n()
   const [settingsOpen, setSettingsOpen] = useState(false)
-  const [drawerOpen, setDrawerOpen] = useState(false)
   const [shareOpen, setShareOpen] = useState(false)
   const [layersOpen, setLayersOpen] = useState(false)
   const [projectsOpen, setProjectsOpen] = useState(false)
@@ -68,7 +66,6 @@ export function DrawingWorkspace({ project, mode = 'edit' }: { project: Project;
         else if (layersOpen) setLayersOpen(false)
         else if (shareOpen) setShareOpen(false)
         else if (projectsOpen) setProjectsOpen(false)
-        else if (drawerOpen) setDrawerOpen(false)
         else if (mode === 'edit' && activeTool !== 'select') tools.finishActiveTool()
         return
       }
@@ -90,7 +87,7 @@ export function DrawingWorkspace({ project, mode = 'edit' }: { project: Project;
 
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [activeTool, drawerOpen, layersOpen, mode, projectsOpen, selection.selectedIds, settingsOpen, shareOpen, store, tools])
+  }, [activeTool, layersOpen, mode, projectsOpen, selection.selectedIds, settingsOpen, shareOpen, store, tools])
 
   const deleteSelection = useCallback(() => {
     if (store.deleteEntities(selection.selectedIds)) tools.select.clearSelection()
@@ -167,18 +164,6 @@ export function DrawingWorkspace({ project, mode = 'edit' }: { project: Project;
         <FullscreenExit onExit={() => void fullscreen.exit()} />
       ) : mode === 'edit' ? (
         <>
-          <BottomDrawer
-            open={drawerOpen}
-            onOpen={() => setDrawerOpen(true)}
-            onClose={() => setDrawerOpen(false)}
-            store={store}
-            tools={tools}
-            activeTool={activeTool}
-            selection={selection}
-            canUndo={drawing.canUndo}
-            canRedo={drawing.canRedo}
-            canTransform={canTransform}
-          />
           <SettingsPanel
             open={settingsOpen}
             onClose={() => setSettingsOpen(false)}

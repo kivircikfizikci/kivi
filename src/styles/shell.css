@@ -501,7 +501,7 @@
   background: var(--control-surface);
   border: 1px solid var(--border);
   border-radius: 20px;
-  box-shadow: 0 5px 16px rgb(31 48 42 / 14%);
+  box-shadow: 0 5px 16px rgb(25 29 34 / 14%);
   cursor: pointer;
   transition: transform 180ms ease, background-color 180ms ease;
 }

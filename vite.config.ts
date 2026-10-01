@@ -8,21 +8,19 @@ export default defineConfig(({ command, isPreview }) => ({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['icons/icon.svg', 'icons/apple-touch-icon.png'],
+      includeAssets: ['icons/icon.svg'],
       manifest: {
         name: 'Kivi Draw',
         short_name: 'Kivi',
         description: 'Simple, measured drawings that stay on your device.',
-        theme_color: '#f5f7f8',
-        background_color: '#f5f7f8',
+        theme_color: '#ffffff',
+        background_color: '#ffffff',
         display: 'standalone',
         orientation: 'any',
         start_url: './',
         scope: './',
         icons: [
-          { src: 'icons/pwa-192x192.png', sizes: '192x192', type: 'image/png' },
-          { src: 'icons/pwa-512x512.png', sizes: '512x512', type: 'image/png' },
-          { src: 'icons/pwa-maskable-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' }
+          { src: 'icons/icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' }
         ]
       },
       workbox: {

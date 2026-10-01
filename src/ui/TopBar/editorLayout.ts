@@ -9,3 +9,7 @@ export const editorToolGroups: { id: 'draw' | 'dimensionTools' | 'modify'; tools
 
 export const editorPrimaryLayout = { center: ['undo', 'redo'], right: ['share', 'layers', 'settings', 'help', 'account'] } as const
 export const editorHeaderRows = ['primary', 'tools'] as const
+export const editorResponsiveLayout = {
+  desktop: { primaryZones: ['project', 'history', 'globalActions'], toolGroups: ['draw', 'dimensionTools', 'modify'] },
+  mobile: { primaryZones: ['logo', 'history', 'compactActions'], compactActions: ['settings', 'account', 'more'], moreActions: ['share', 'layers', 'help'], toolGroups: ['draw', 'dimensionTools', 'modify'], bottomToolDrawer: false, projectAccess: 'logo', fullscreen: 'floating' },
+} as const

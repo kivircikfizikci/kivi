@@ -1,6 +1,6 @@
 import type { SVGProps } from 'react'
 
-export type IconName = 'settings' | 'help' | 'account' | 'upload' | 'layers' | 'expand' | 'collapse' | 'close' | 'folder' | 'chevronLeft' | 'chevronUp' | 'chevronDown' | 'line' | 'rectangle' | 'circle' | 'arc' | 'multi' | 'cursor' | 'undo' | 'redo' | 'trash' | 'plus' | 'edit' | 'dimension' | 'menu' | 'tools' | 'share' | 'image' | 'file' | 'link' | 'eye' | 'eyeOff' | 'lock' | 'unlock' | 'endpoint' | 'midpoint' | 'gridSnap' | 'angleSnap' | 'move' | 'copy' | 'repeat' | 'rotate' | 'mirror' | 'offset' | 'trim' | 'extend'
+export type IconName = 'settings' | 'help' | 'account' | 'more' | 'upload' | 'layers' | 'expand' | 'collapse' | 'close' | 'folder' | 'chevronLeft' | 'chevronUp' | 'chevronDown' | 'line' | 'rectangle' | 'circle' | 'arc' | 'multi' | 'cursor' | 'undo' | 'redo' | 'trash' | 'plus' | 'edit' | 'dimension' | 'menu' | 'tools' | 'share' | 'image' | 'file' | 'link' | 'eye' | 'eyeOff' | 'lock' | 'unlock' | 'endpoint' | 'midpoint' | 'gridSnap' | 'angleSnap' | 'move' | 'copy' | 'repeat' | 'rotate' | 'mirror' | 'offset' | 'trim' | 'extend'
 
 const paths: Record<IconName, React.ReactNode> = {
   settings: (
@@ -11,6 +11,7 @@ const paths: Record<IconName, React.ReactNode> = {
   ),
   help: <><circle cx="12" cy="12" r="9" /><path d="M9.8 9a2.4 2.4 0 1 1 3.3 2.2c-.8.35-1.1.9-1.1 1.8M12 17h.01" /></>,
   account: <><circle cx="12" cy="8" r="3.5" /><path d="M5 20a7 7 0 0 1 14 0" /></>,
+  more: <><circle cx="5" cy="12" r="1" fill="currentColor" /><circle cx="12" cy="12" r="1" fill="currentColor" /><circle cx="19" cy="12" r="1" fill="currentColor" /></>,
   upload: <><path d="M12 16V4m0 0L7 9m5-5 5 5" /><path d="M5 15v5h14v-5" /></>,
   layers: <><path d="m12 3 9 5-9 5-9-5 9-5Z" /><path d="m3 12 9 5 9-5M3 16l9 5 9-5" /></>,
   expand: <path d="M8 3H3v5M16 3h5v5M8 21H3v-5m13 5h5v-5M3 8l6-6m12 6-6-6M3 16l6 6m12-6-6 6" />,

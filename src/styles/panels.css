@@ -138,7 +138,7 @@
   border: 0;
   border-bottom: 1px solid var(--border);
   border-radius: var(--radius-sm) var(--radius-sm) 2px 2px;
-  box-shadow: 0 4px 14px rgb(31 48 42 / 8%);
+  box-shadow: 0 4px 14px rgb(25 29 34 / 8%);
 }
 
 .command-bar input {
@@ -153,7 +153,7 @@
 
 .command-bar:focus-within {
   border-bottom-color: var(--accent);
-  box-shadow: 0 5px 18px rgb(31 75 59 / 13%);
+  box-shadow: 0 5px 18px rgb(85 122 27 / 16%);
 }
 
 .command-suggestions {
@@ -922,7 +922,7 @@ button.tool-tile {
     padding: 10px;
     transform: translateX(calc(-100% - 20px));
     border-radius: var(--radius-lg);
-    box-shadow: 12px 0 40px rgb(31 48 42 / 14%);
+    box-shadow: 12px 0 40px rgb(25 29 34 / 14%);
   }
 
   .settings-panel.is-open {

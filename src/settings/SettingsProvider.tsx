@@ -24,7 +24,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     document.documentElement.dataset.theme = settings.theme
     document.querySelector('meta[name="theme-color"]')?.setAttribute(
       'content',
-      settings.theme === 'dark' ? '#111815' : '#f5f7f8',
+      settings.theme === 'dark' ? '#101214' : '#ffffff',
     )
   }, [settings.theme])
 

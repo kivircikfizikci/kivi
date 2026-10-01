@@ -6,7 +6,7 @@ import { defaultProjectName, projectFileName, recentProjects } from '../src/proj
 import type { Project } from '../src/types/project.ts'
 import { precisionCrosshairTools } from '../src/drawing/precisionCrosshair.ts'
 import { settingsPresentationForWidth, settingsTabs } from '../src/ui/Settings/settingsLayout.ts'
-import { editorHeaderRows, editorPrimaryLayout, editorToolGroups } from '../src/ui/TopBar/editorLayout.ts'
+import { editorHeaderRows, editorPrimaryLayout, editorResponsiveLayout, editorToolGroups } from '../src/ui/TopBar/editorLayout.ts'
 
 function project(id: string, updatedAt: string): Project {
   return { id, name: id, updatedAt } as Project
@@ -26,6 +26,14 @@ test('hub recents are newest-first and limited to five', () => {
 
 test('editor layout keeps history centered, global actions right, and all tools categorized', () => {
   assert.deepEqual(editorHeaderRows, ['primary', 'tools'])
+  assert.deepEqual(editorResponsiveLayout.desktop.primaryZones, ['project', 'history', 'globalActions'])
+  assert.deepEqual(editorResponsiveLayout.mobile.primaryZones, ['logo', 'history', 'compactActions'])
+  assert.deepEqual(editorResponsiveLayout.mobile.compactActions, ['settings', 'account', 'more'])
+  assert.deepEqual(editorResponsiveLayout.mobile.moreActions, ['share', 'layers', 'help'])
+  assert.deepEqual(editorResponsiveLayout.mobile.toolGroups, ['draw', 'dimensionTools', 'modify'])
+  assert.equal(editorResponsiveLayout.mobile.bottomToolDrawer, false)
+  assert.equal(editorResponsiveLayout.mobile.projectAccess, 'logo')
+  assert.equal(editorResponsiveLayout.mobile.fullscreen, 'floating')
   assert.deepEqual(editorPrimaryLayout.center, ['undo', 'redo'])
   assert.deepEqual(editorPrimaryLayout.right, ['share', 'layers', 'settings', 'help', 'account'])
   assert.deepEqual(editorToolGroups.map((group) => group.id), ['draw', 'dimensionTools', 'modify'])
