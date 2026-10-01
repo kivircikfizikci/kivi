@@ -198,6 +198,17 @@ test('RotateTool accepts exact signed angles and MirrorTool rejects a degenerate
   assert.equal(mirror.confirm()?.keepOriginal, true)
 })
 
+test('MirrorTool exposes first-axis snap feedback and completes a valid axis', () => {
+  const mirror = new MirrorTool()
+  const snap = { kind: 'midpoint', point: { x: 3, y: 4 }, distancePixels: 2 } as const
+  mirror.activate()
+  mirror.updatePointer(snap.point, snap)
+  assert.deepEqual(mirror.getSnapshot().snap, snap)
+  mirror.placeFirst(snap.point, snap)
+  assert.equal(mirror.placeSecond({ x: 8, y: 4 }, null), true)
+  assert.deepEqual(mirror.confirm(), { axisA: snap.point, axisB: { x: 8, y: 4 }, keepOriginal: true })
+})
+
 test('rotate mirror and extend commands and aliases remain registry-driven', () => {
   const events: string[] = []; const noop = () => {}
   const context: CommandContext = { activateTool: (tool) => events.push(tool), deleteSelection: noop, undo: noop, redo: noop, openProjects: noop, openSettings: noop, openLayers: noop, enterFullscreen: noop, openShare: noop }

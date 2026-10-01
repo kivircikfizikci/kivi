@@ -24,7 +24,7 @@ export class MirrorTool implements Tool {
     this.set({ ...this.snapshot, phase: 'choosingSecond', axisA: { ...point }, pointer: { ...point }, snap })
   }
   updatePointer(point: Point, snap: SnapCandidate | null) {
-    if (this.snapshot.phase !== 'choosingSecond') return
+    if (this.snapshot.phase !== 'waitingFirst' && this.snapshot.phase !== 'choosingSecond') return
     this.set({ ...this.snapshot, pointer: { ...point }, snap })
   }
   placeSecond(point: Point, snap: SnapCandidate | null) {

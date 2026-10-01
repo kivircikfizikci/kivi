@@ -1,7 +1,7 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useEscapeKey } from '../../hooks/useEscapeKey.ts'
 import { useI18n } from '../../i18n/I18nContext.ts'
-import type { AutosaveStatus } from '../../project/AutosaveManager.ts'
 import type { DrawingStore } from '../../project/DrawingStore.ts'
 import { projectFileName } from '../../project/projectPresentation.ts'
 import { useSettings } from '../../settings/useSettings.ts'
@@ -11,9 +11,9 @@ import type { ToolbarShortcut } from '../../types/settings.ts'
 import { KiviLogo } from '../Brand/KiviLogo.tsx'
 import { GlobalActions } from '../GlobalActions/GlobalActions.tsx'
 import { Icon } from '../Icon/Icon.tsx'
-import { editorToolGroups } from './editorLayout.ts'
+import { editorToolGroups, editorToolIcon } from './editorLayout.ts'
 
-interface TopBarProps { projectName: string; onOpenSettings: () => void; onOpenShare: () => void; onOpenLayers: () => void; onOpenProjects: () => void; saveStatus: AutosaveStatus; store: DrawingStore; tools: ToolManager; activeTool: ToolId; canUndo: boolean; canRedo: boolean; canTransform: boolean }
+interface TopBarProps { projectName: string; onOpenSettings: () => void; onOpenShare: () => void; onOpenLayers: () => void; onOpenProjects: () => void; onDeleteSelection: () => void; store: DrawingStore; tools: ToolManager; activeTool: ToolId; canUndo: boolean; canRedo: boolean; canTransform: boolean; canDelete: boolean }
 
 export function TopBar(props: TopBarProps) {
   const { t } = useI18n()
@@ -21,18 +21,20 @@ export function TopBar(props: TopBarProps) {
   const [openGroup, setOpenGroup] = useState<string | null>(null)
   const [mobileMenu, setMobileMenu] = useState<'account' | 'more' | null>(null)
   useEscapeKey(() => { setOpenGroup(null); setMobileMenu(null) }, openGroup !== null || mobileMenu !== null)
-  const disabled = (tool: ToolId | ToolbarShortcut) => ['move', 'copy', 'repeat', 'rotate', 'mirror'].includes(tool) && !props.canTransform
-  const runShortcut = (shortcut: ToolbarShortcut) => { if (shortcut === 'undo') props.store.undo(); else if (shortcut === 'redo') props.store.redo(); else props.tools.activate(shortcut) }
+  const disabled = (tool: ToolId) => ['move', 'copy', 'repeat', 'rotate', 'mirror'].includes(tool) && !props.canTransform
+  const runShortcut = (shortcut: ToolbarShortcut) => props.tools.activate(shortcut)
   const closeMobileMenus = () => setMobileMenu(null)
 
   return <header className="top-bar editor-header">
-    <DesktopPrimaryBar {...props} />
+    <DesktopPrimaryBar {...props} shortcuts={settings.desktopToolbarShortcuts} disabled={disabled} onRunShortcut={runShortcut} />
     <div className="mobile-primary-bar">
       <div className="mobile-primary-left">
-        <button className="mobile-project-button" type="button" onClick={props.onOpenProjects} title={projectFileName(props.projectName)} aria-label={t('projects')}><KiviLogo compact /><i className={`save-indicator is-${props.saveStatus}`} /></button>
-        <ShortcutButtons shortcuts={settings.mobileToolbarShortcuts} className="mobile-configured-shortcuts" activeTool={props.activeTool} canUndo={props.canUndo} canRedo={props.canRedo} disabled={disabled} onRun={runShortcut} />
+        <Link className="editor-home-link" to="/" aria-label={t('appName')} title={t('appName')}><KiviLogo compact /></Link>
       </div>
-      <HistoryControls store={props.store} canUndo={props.canUndo} canRedo={props.canRedo} className="mobile-primary-center" />
+      <div className="mobile-primary-center header-center-actions">
+        <HistoryControls store={props.store} canUndo={props.canUndo} canRedo={props.canRedo} onDelete={props.onDeleteSelection} canDelete={props.canDelete} />
+        <ShortcutButtons shortcuts={settings.mobileToolbarShortcuts} activeTool={props.activeTool} disabled={disabled} onRun={runShortcut} />
+      </div>
       <div className="mobile-primary-right">
         <button className="global-action is-compact" type="button" onClick={props.onOpenSettings} aria-label={t('settings')} title={t('settings')}><Icon name="settings" /></button>
         <div className="menu-anchor">
@@ -44,6 +46,7 @@ export function TopBar(props: TopBarProps) {
           <button className="global-action is-compact" type="button" onClick={() => setMobileMenu(mobileMenu === 'more' ? null : 'more')} aria-expanded={mobileMenu === 'more'} aria-label={t('more')} title={t('more')}><Icon name="more" /></button>
           {mobileMenu === 'more' && <button className="popover-dismiss" type="button" onClick={closeMobileMenus} aria-label={t('close')} />}
           <div className={`compact-popover mobile-global-popover${mobileMenu === 'more' ? ' is-open' : ''}`}>
+            <button type="button" onClick={() => { props.onOpenProjects(); closeMobileMenus() }}><Icon name="folder" />{t('projects')}</button>
             <button type="button" onClick={() => { props.onOpenShare(); closeMobileMenus() }}><Icon name="share" />{t('share')}</button>
             <button type="button" onClick={() => { props.onOpenLayers(); closeMobileMenus() }}><Icon name="layers" />{t('layers')}</button>
             <a href="#/help" target="_blank" rel="noreferrer" onClick={closeMobileMenus}><Icon name="help" />{t('help')}</a>
@@ -52,7 +55,6 @@ export function TopBar(props: TopBarProps) {
       </div>
     </div>
     <div className="editor-tool-bar" role="toolbar" aria-label={t('tools')}>
-      <ShortcutButtons shortcuts={settings.desktopToolbarShortcuts} className="desktop-configured-shortcuts" activeTool={props.activeTool} canUndo={props.canUndo} canRedo={props.canRedo} disabled={disabled} onRun={runShortcut} />
       <div className="editor-tool-groups">
         {editorToolGroups.map((group) => {
           const activeInGroup = group.tools.find((tool) => tool.id === props.activeTool)
@@ -63,26 +65,25 @@ export function TopBar(props: TopBarProps) {
           </div>
         })}
       </div>
-      <div className="editor-tool-balance" aria-hidden="true" />
     </div>
   </header>
 }
 
-function ShortcutButtons({ shortcuts, className, activeTool, canUndo, canRedo, disabled, onRun }: { shortcuts: readonly ToolbarShortcut[]; className: string; activeTool: ToolId; canUndo: boolean; canRedo: boolean; disabled: (shortcut: ToolbarShortcut) => boolean; onRun: (shortcut: ToolbarShortcut) => void }) {
+function ShortcutButtons({ shortcuts, activeTool, disabled, onRun }: { shortcuts: readonly ToolbarShortcut[]; activeTool: ToolId; disabled: (shortcut: ToolbarShortcut) => boolean; onRun: (shortcut: ToolbarShortcut) => void }) {
   const { t } = useI18n()
-  return <div className={className} aria-label={t('shortcuts')}>{shortcuts.map((shortcut) => <button key={shortcut} className={`editor-tool-button shortcut-button${activeTool === shortcut ? ' is-active' : ''}`} type="button" disabled={(shortcut === 'undo' && !canUndo) || (shortcut === 'redo' && !canRedo) || disabled(shortcut)} onClick={() => onRun(shortcut)} aria-label={t(shortcut)} title={t(shortcut)}><Icon name={shortcut === 'select' ? 'cursor' : shortcut} /></button>)}</div>
+  return <div className="configured-shortcuts" aria-label={t('shortcuts')}>{shortcuts.map((shortcut) => <button key={shortcut} className={`editor-tool-button shortcut-button${activeTool === shortcut ? ' is-active' : ''}`} type="button" disabled={disabled(shortcut)} onClick={() => onRun(shortcut)} aria-label={t(shortcut)} title={t(shortcut)}><Icon name={editorToolIcon[shortcut]} /></button>)}</div>
 }
 
-function DesktopPrimaryBar(props: TopBarProps) {
+function DesktopPrimaryBar(props: TopBarProps & { shortcuts: readonly ToolbarShortcut[]; disabled: (shortcut: ToolbarShortcut) => boolean; onRunShortcut: (shortcut: ToolbarShortcut) => void }) {
   const { t } = useI18n()
   return <div className="desktop-primary-bar">
-    <div className="desktop-primary-left"><button className="project-name-button" type="button" onClick={props.onOpenProjects} title={projectFileName(props.projectName)}><KiviLogo compact /><span className="project-name-text">{projectFileName(props.projectName)}</span><i className={`save-indicator is-${props.saveStatus}`} /></button></div>
-    <HistoryControls store={props.store} canUndo={props.canUndo} canRedo={props.canRedo} className="desktop-primary-center" />
+    <div className="desktop-primary-left"><Link className="editor-home-link" to="/" aria-label={t('appName')} title={t('appName')}><KiviLogo compact /></Link><button className="project-name-button" type="button" onClick={props.onOpenProjects} title={projectFileName(props.projectName)}><span className="project-name-text">{projectFileName(props.projectName)}</span></button></div>
+    <div className="desktop-primary-center header-center-actions"><HistoryControls store={props.store} canUndo={props.canUndo} canRedo={props.canRedo} /><ShortcutButtons shortcuts={props.shortcuts} activeTool={props.activeTool} disabled={props.disabled} onRun={props.onRunShortcut} /></div>
     <div className="desktop-primary-right"><button className="global-action is-compact" type="button" onClick={props.onOpenShare} title={t('share')} aria-label={t('share')}><Icon name="share" /><span>{t('share')}</span></button><button className="global-action is-compact" type="button" onClick={props.onOpenLayers} title={t('layers')} aria-label={t('layers')}><Icon name="layers" /><span>{t('layers')}</span></button><GlobalActions compact onOpenSettings={props.onOpenSettings} /></div>
   </div>
 }
 
-function HistoryControls({ store, canUndo, canRedo, className }: { store: DrawingStore; canUndo: boolean; canRedo: boolean; className: string }) {
+function HistoryControls({ store, canUndo, canRedo, onDelete, canDelete = false }: { store: DrawingStore; canUndo: boolean; canRedo: boolean; onDelete?: () => void; canDelete?: boolean }) {
   const { t } = useI18n()
-  return <div className={`${className} history-controls`} role="toolbar" aria-label={t('history')}><button className="icon-button compact" type="button" disabled={!canUndo} onClick={() => store.undo()} aria-label={t('undo')} title={t('undo')}><Icon name="undo" /></button><button className="icon-button compact" type="button" disabled={!canRedo} onClick={() => store.redo()} aria-label={t('redo')} title={t('redo')}><Icon name="redo" /></button></div>
+  return <div className="history-controls" role="toolbar" aria-label={t('history')}><button className="icon-button compact" type="button" disabled={!canUndo} onClick={() => store.undo()} aria-label={t('undo')} title={t('undo')}><Icon name="undo" /></button><button className="icon-button compact" type="button" disabled={!canRedo} onClick={() => store.redo()} aria-label={t('redo')} title={t('redo')}><Icon name="redo" /></button>{onDelete && <button className="icon-button compact mobile-delete-action" type="button" disabled={!canDelete} onClick={onDelete} aria-label={t('delete')} title={t('delete')}><Icon name="trash" /></button>}</div>
 }

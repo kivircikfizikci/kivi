@@ -108,6 +108,16 @@ test('circle radius and diameter modes update one serializable radius', () => {
   assert.equal(selection.findEntity(circle.center, [circle], 4, 8), null)
 })
 
+test('circle exposes snap feedback before its center is placed', () => {
+  const tool = new CircleTool()
+  const snap = { kind: 'endpoint', point: { x: 20, y: 30 }, distancePixels: 2 } as const
+  tool.activate()
+  tool.updatePointer(snap.point, snap, style)
+  assert.deepEqual(tool.getSnapshot().snap, snap)
+  assert.deepEqual(tool.getSnapshot().edge, snap.point)
+  assert.equal(tool.getSnapshot().center, null)
+})
+
 test('arc tool uses center-start-end and chooses the shortest direction', () => {
   const tool = new ArcTool()
   tool.activate()

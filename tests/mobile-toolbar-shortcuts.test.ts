@@ -8,19 +8,21 @@ import {
 
 test('mobile toolbar shortcuts keep a maximum of three unique supported actions', () => {
   assert.deepEqual(
-    normalizeMobileToolbarShortcuts(['undo', 'undo', 'copy', 'invalid', 'redo', 'select']),
-    ['undo', 'copy', 'redo'],
+    normalizeMobileToolbarShortcuts(['arc', 'arc', 'copy', 'invalid', 'trim', 'select']),
+    ['arc', 'copy', 'trim'],
   )
   assert.deepEqual(normalizeMobileToolbarShortcuts(undefined), ['select', 'move', 'copy'])
+  assert.deepEqual(normalizeMobileToolbarShortcuts(['undo', 'redo']), ['select', 'move', 'copy'])
 })
 
-test('desktop toolbar shortcuts preserve supported actions and default to undo and redo', () => {
-  assert.deepEqual(normalizeDesktopToolbarShortcuts(undefined), ['undo', 'redo'])
-  assert.deepEqual(normalizeDesktopToolbarShortcuts(['select', 'invalid', 'copy', 'select']), ['select', 'copy'])
+test('desktop toolbar shortcuts accept every drawing tool and exclude fixed history actions', () => {
+  assert.deepEqual(normalizeDesktopToolbarShortcuts(undefined), ['select', 'move', 'copy'])
+  assert.deepEqual(normalizeDesktopToolbarShortcuts(['line', 'dimension', 'rotate', 'offset', 'extend', 'arc']), ['line', 'dimension', 'rotate', 'offset', 'extend'])
+  assert.deepEqual(normalizeDesktopToolbarShortcuts(['undo', 'redo']), ['select', 'move', 'copy'])
 })
 
 test('mobile toolbar shortcut selection can remove, append, and enforce its limit', () => {
-  assert.deepEqual(toggleToolbarShortcut(['select', 'move'], 'undo', 3), ['select', 'move', 'undo'])
-  assert.deepEqual(toggleToolbarShortcut(['select', 'move', 'undo'], 'copy', 3), ['select', 'move', 'undo'])
-  assert.deepEqual(toggleToolbarShortcut(['select', 'move', 'undo'], 'move', 3), ['select', 'undo'])
+  assert.deepEqual(toggleToolbarShortcut(['select', 'move'], 'arc', 3), ['select', 'move', 'arc'])
+  assert.deepEqual(toggleToolbarShortcut(['select', 'move', 'arc'], 'copy', 3), ['select', 'move', 'arc'])
+  assert.deepEqual(toggleToolbarShortcut(['select', 'move', 'arc'], 'move', 3), ['select', 'arc'])
 })

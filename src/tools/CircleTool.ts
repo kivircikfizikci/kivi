@@ -31,7 +31,11 @@ export class CircleTool implements Tool {
   deactivate() { this.setSnapshot(initial('inactive')) }
 
   updatePointer(point: Point, snap: SnapCandidate | null, style: LineStyle) {
-    if (this.snapshot.phase !== 'placing' || !this.snapshot.center) return
+    if (this.snapshot.phase !== 'placing') return
+    if (!this.snapshot.center) {
+      this.setSnapshot({ ...this.snapshot, edge: { ...point }, snap })
+      return
+    }
     const radius = distance(this.snapshot.center, point)
     if (radius <= Number.EPSILON) return
     this.direction = normalize(vector(this.snapshot.center, point)) ?? this.direction

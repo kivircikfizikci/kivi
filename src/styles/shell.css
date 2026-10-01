@@ -107,34 +107,6 @@
   letter-spacing: -.04em;
 }
 
-.brand-status {
-  position: relative;
-}
-
-.save-indicator {
-  position: absolute;
-  right: -2px;
-  bottom: 5px;
-  width: 7px;
-  height: 7px;
-  background: #77a793;
-  border: 2px solid var(--surface-soft);
-  border-radius: 50%;
-}
-
-.save-indicator.is-saving {
-  background: #d5a33e;
-  animation: save-pulse 900ms ease-in-out infinite alternate;
-}
-
-.save-indicator.is-error {
-  background: #c95656;
-}
-
-@keyframes save-pulse {
-  to { opacity: .35; }
-}
-
 .app-loading {
   display: grid;
   width: 100%;
@@ -159,7 +131,7 @@
 .drawing-stage {
   min-width: 0;
   min-height: 0;
-  padding: 0 6px calc(12px + env(safe-area-inset-bottom));
+  padding: 4px;
 }
 
 .drawing-viewport {
@@ -441,7 +413,25 @@
   display: none;
 }
 
+.mobile-autosave-status {
+  position:absolute;
+  z-index:4;
+  bottom:calc(8px + env(safe-area-inset-bottom));
+  left:8px;
+  padding:3px 6px;
+  color:var(--accent);
+  background:color-mix(in srgb,var(--surface) 88%,transparent);
+  border-radius:var(--radius-sm);
+  font-size:10px;
+  font-weight:650;
+  pointer-events:none;
+}
+
+.mobile-autosave-status.is-saving { opacity:.72; }
+.mobile-autosave-status.is-error { color:var(--danger); }
+
 @media (min-width: 700px) {
+  .mobile-autosave-status { display:none; }
   .snap-quick-controls {
     display: flex;
     gap: 6px;
@@ -457,7 +447,7 @@
     align-items: center;
     justify-content: space-between;
     gap: 12px;
-    padding: 4px 10px 10px;
+    padding: 4px;
     background: var(--surface-soft);
   }
 
@@ -711,7 +701,7 @@
   }
 
   .drawing-stage {
-    padding: 0 10px 10px;
+    padding: 4px;
   }
 
   .drawing-viewport {
@@ -744,10 +734,6 @@
     min-height: 32px;
     padding: 0 10px;
     font-size: 12px;
-  }
-
-  .save-indicator {
-    display: none;
   }
 
   .brand-mark {

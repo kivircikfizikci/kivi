@@ -26,13 +26,15 @@ test('hub recents are newest-first and limited to five', () => {
 
 test('editor layout keeps history centered, global actions right, and all tools categorized', () => {
   assert.deepEqual(editorHeaderRows, ['primary', 'tools'])
-  assert.deepEqual(editorResponsiveLayout.desktop.primaryZones, ['project', 'history', 'globalActions'])
-  assert.deepEqual(editorResponsiveLayout.mobile.primaryZones, ['logo', 'history', 'compactActions'])
+  assert.deepEqual(editorResponsiveLayout.desktop.primaryZones, ['project', 'historyAndShortcuts', 'globalActions'])
+  assert.deepEqual(editorResponsiveLayout.mobile.primaryZones, ['logo', 'historyAndShortcuts', 'compactActions'])
+  assert.deepEqual(editorResponsiveLayout.mobile.fixedCenterActions, ['undo', 'redo', 'delete'])
   assert.deepEqual(editorResponsiveLayout.mobile.compactActions, ['settings', 'account', 'more'])
-  assert.deepEqual(editorResponsiveLayout.mobile.moreActions, ['share', 'layers', 'help'])
+  assert.deepEqual(editorResponsiveLayout.mobile.moreActions, ['projects', 'share', 'layers', 'help'])
   assert.deepEqual(editorResponsiveLayout.mobile.toolGroups, ['draw', 'dimensionTools', 'modify'])
   assert.equal(editorResponsiveLayout.mobile.bottomToolDrawer, false)
-  assert.equal(editorResponsiveLayout.mobile.projectAccess, 'logo')
+  assert.equal(editorResponsiveLayout.mobile.projectAccess, 'more')
+  assert.equal(editorResponsiveLayout.mobile.logoTarget, 'home')
   assert.equal(editorResponsiveLayout.mobile.fullscreen, 'floating')
   assert.deepEqual(editorPrimaryLayout.center, ['undo', 'redo'])
   assert.deepEqual(editorPrimaryLayout.right, ['share', 'layers', 'settings', 'help', 'account'])
@@ -42,7 +44,7 @@ test('editor layout keeps history centered, global actions right, and all tools 
 })
 
 test('settings use requested tabs and responsive presentation', () => {
-  assert.deepEqual(settingsTabs, ['preferences', 'language', 'theme', 'shortcuts', 'canvas', 'dimensions', 'snap'])
+  assert.deepEqual(settingsTabs, ['preferences', 'shortcuts', 'canvas', 'dimensions', 'snap'])
   assert.equal(settingsPresentationForWidth(390), 'fullscreen')
   assert.equal(settingsPresentationForWidth(1200), 'modal')
 })

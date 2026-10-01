@@ -113,8 +113,18 @@ function ProjectTable({ projects, onChange }: { projects: Project[]; onChange: (
 function ProjectEmptyState() {
   const { t } = useI18n()
   return <div className="hub-empty-state" data-testid="project-empty-state">
-    <svg className="architect-illustration" viewBox="0 0 260 190" role="img" aria-label={t('emptyIllustration')}>
-      <path className="empty-ground" d="M32 168h200" /><path className="empty-shirt" d="M88 158c3-38 15-57 42-57s40 20 43 57" /><circle className="empty-skin" cx="132" cy="66" r="28" /><path className="empty-hair" d="M106 60c2-26 44-37 57-5-17-5-24-13-34-22-3 14-10 23-23 27Z" /><path className="empty-line" d="M151 43c13-13 24-7 19 7M165 49l11-9M113 75c8 7 20 8 30 2M105 105c-14 5-22 16-27 30M159 106c14 9 21 18 24 31" /><rect className="empty-paper" x="70" y="118" width="115" height="55" rx="3" /><path className="empty-line" d="M80 129h42M80 139h27M149 130l24 24m0-24-24 24" /><circle className="empty-seed" cx="120" cy="62" r="1.5" /><circle className="empty-seed" cx="145" cy="62" r="1.5" />
+    <svg className="architect-illustration kiwi-mascot" viewBox="0 0 260 190" role="img" aria-label={t('emptyIllustration')}>
+      <path className="empty-ground" d="M35 171h190" />
+      <path className="kiwi-leg" d="M108 150v16m42-16v16" /><path className="kiwi-foot" d="M96 168c7-5 14-5 20 0m26 0c7-5 14-5 20 0" />
+      <path className="kiwi-leaf" d="M128 31c-5-15 5-24 22-22-1 16-9 24-22 22Z" /><path className="kiwi-stem" d="M128 32c2-10 7-17 16-21" />
+      <ellipse className="kiwi-body" cx="130" cy="96" rx="53" ry="67" />
+      <ellipse className="kiwi-belly" cx="130" cy="99" rx="39" ry="49" />
+      <circle className="kiwi-eye" cx="116" cy="80" r="3" /><circle className="kiwi-eye" cx="144" cy="80" r="3" />
+      <path className="kiwi-smile" d="M120 91c6 7 14 7 20 0" />
+      <g className="kiwi-seeds"><circle cx="111" cy="104" r="2" /><circle cx="122" cy="111" r="2" /><circle cx="138" cy="111" r="2" /><circle cx="149" cy="104" r="2" /><circle cx="116" cy="121" r="2" /><circle cx="144" cy="121" r="2" /></g>
+      <path className="kiwi-arm" d="M82 98c-15 5-21 14-22 27m118-27c15 5 21 14 22 27" />
+      <rect className="empty-paper" x="65" y="119" width="130" height="45" rx="4" />
+      <path className="empty-line" d="M76 130h48m-48 10h31m50-11 25 24m0-24-25 24" />
     </svg><h2>{t('nothingHere')}</h2><p>{t('emptyProjectsHint')}</p>
   </div>
 }

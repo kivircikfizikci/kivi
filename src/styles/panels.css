@@ -911,6 +911,16 @@ button.tool-tile {
     grid-template-columns: 58px minmax(0, 1fr);
   }
 
+  .circle-input,
+  .rectangle-input {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .circle-input .geometry-input-heading,
+  .rectangle-input > label {
+    grid-column: 1 / -1;
+  }
+
   .rectangle-input {
     width: 280px;
   }

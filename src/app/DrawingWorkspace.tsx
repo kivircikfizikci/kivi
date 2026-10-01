@@ -17,6 +17,7 @@ import { parseCoordinate } from '../commands/coordinateParser.ts'
 import { canTransformSelection } from '../tools/transformEligibility.ts'
 import { ProjectsPanel } from '../project/ProjectsPage.tsx'
 import { SnapQuickControls } from '../ui/SnapQuickControls/SnapQuickControls.tsx'
+import { autosaveStatusKey } from '../ui/CommandBar/autosaveStatus.ts'
 
 export function DrawingWorkspace({ project, mode = 'edit' }: { project: Project; mode?: WorkspaceMode }) {
   const { t } = useI18n()
@@ -131,13 +132,14 @@ export function DrawingWorkspace({ project, mode = 'edit' }: { project: Project;
           onOpenShare={() => setShareOpen(true)}
           onOpenLayers={() => setLayersOpen(true)}
           onOpenProjects={() => setProjectsOpen(true)}
-          saveStatus={projectSnapshot.saveStatus}
+          onDeleteSelection={deleteSelection}
           store={store}
           tools={tools}
           activeTool={activeTool}
           canUndo={drawing.canUndo}
           canRedo={drawing.canRedo}
           canTransform={canTransform}
+          canDelete={selection.selectedIds.size > 0}
         />
       )}
       {!fullscreen.active && mode === 'view' && <div className="view-mode-badge">{t('viewOnly')}</div>}
@@ -154,6 +156,7 @@ export function DrawingWorkspace({ project, mode = 'edit' }: { project: Project;
         onMoveSelection={moveSelectionToLayer}
         onDeleteSelection={deleteSelection}
       />
+      {!fullscreen.active && mode === 'edit' && <span className={`mobile-autosave-status is-${projectSnapshot.saveStatus}`} role="status">{t(autosaveStatusKey(projectSnapshot.saveStatus, projectSnapshot.dirty))}</span>}
       {!fullscreen.active && mode === 'edit' && (
         <footer className="workspace-footer">
           <CommandBar context={commandContext} saveStatus={projectSnapshot.saveStatus} dirty={projectSnapshot.dirty} prompt={commandPrompt} />

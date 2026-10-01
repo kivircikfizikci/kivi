@@ -430,7 +430,7 @@ export function DrawingViewport({ store, tools, projectSettings, layers, activeL
     } else if (mode === 'edit' && activeTool === 'rotate' && rotate.phase === 'choosingAngle') {
       const resolved = resolveSnap(point, event.pointerType)
       tools.rotate.updatePointer(resolved.point, resolved.snap)
-    } else if (mode === 'edit' && activeTool === 'mirror' && mirror.phase === 'choosingSecond') {
+    } else if (mode === 'edit' && activeTool === 'mirror' && (mirror.phase === 'waitingFirst' || mirror.phase === 'choosingSecond')) {
       const resolved = resolveSnap(point, event.pointerType)
       tools.mirror.updatePointer(resolved.point, resolved.snap)
     } else if (mode === 'edit' && activeTool === 'offset' && offset.phase === 'choosingSide') {
@@ -627,6 +627,10 @@ export function DrawingViewport({ store, tools, projectSettings, layers, activeL
   const rotateInputPosition = rotate.pointer
     ? positionLengthInput(worldToScreen(rotate.pointer, camera, viewport), viewport)
     : undefined
+  const mirrorInputAnchor = mirror.axisB ?? mirror.pointer
+  const mirrorInputPosition = mirrorInputAnchor
+    ? positionLengthInput(worldToScreen(mirrorInputAnchor, camera, viewport), viewport, { width: 252, height: 126 })
+    : undefined
 
   return (
     <main className="drawing-stage">
@@ -768,7 +772,7 @@ export function DrawingViewport({ store, tools, projectSettings, layers, activeL
             onChange={(value) => tools.rotate.updateAngle(value)} onBack={() => tools.rotate.back()} onConfirm={confirmRotate} />
         )}
         {mode === 'edit' && activeTool === 'mirror' && mirror.phase !== 'waitingFirst' && (
-          <MirrorInput keepOriginal={mirror.keepOriginal} ready={mirror.phase === 'ready'}
+          <MirrorInput keepOriginal={mirror.keepOriginal} ready={mirror.phase === 'ready'} position={mirrorInputPosition}
             onKeepOriginalChange={(value) => tools.mirror.setKeepOriginal(value)} onBack={() => tools.mirror.back()} onConfirm={confirmMirror} />
         )}
         {mode === 'edit' && activeTool === 'offset' && offset.phase === 'distance' && (

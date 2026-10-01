@@ -35,9 +35,9 @@ export function AngleInput({ value, valid, onChange, onBack, onConfirm, position
   </form>
 }
 
-export function MirrorInput({ keepOriginal, ready, onKeepOriginalChange, onBack, onConfirm }: { keepOriginal: boolean; ready: boolean; onKeepOriginalChange: (value: boolean) => void; onBack: () => void; onConfirm: () => void }) {
+export function MirrorInput({ keepOriginal, ready, position, onKeepOriginalChange, onBack, onConfirm }: { keepOriginal: boolean; ready: boolean; position?: Point; onKeepOriginalChange: (value: boolean) => void; onBack: () => void; onConfirm: () => void }) {
   const { t } = useI18n()
-  return <form className="length-input mirror-input" onSubmit={(event) => { event.preventDefault(); if (ready) onConfirm() }}>
+  return <form className="length-input mirror-input" style={position ? { '--length-input-x': `${position.x}px`, '--length-input-y': `${position.y}px` } as CSSProperties : undefined} onSubmit={(event) => { event.preventDefault(); if (ready) onConfirm() }}>
     <label>{t('mirror')}</label>
     <label className="mirror-keep"><span>{t('keepOriginal')}</span><input type="checkbox" checked={keepOriginal} onChange={(event) => onKeepOriginalChange(event.target.checked)} /></label>
     <div className="length-actions"><button type="button" className="secondary-button" disabled={!ready} onClick={onBack}>{t('back')}</button><button type="submit" className="primary-button" disabled={!ready}>{t('confirm')}</button></div>
