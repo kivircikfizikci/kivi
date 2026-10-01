@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import { InactiveFeedbackService, validateFeedback } from '../src/feedback/FeedbackService.ts'
-import { editorToolbarHelp, helpArticleForPath, helpArticles } from '../src/help/helpContent.ts'
+import { helpArticleForPath, helpArticles, helpArticlesForLocale, validateHelpManifest } from '../src/help/helpContent.ts'
 import { defaultProjectName, projectFileName, recentProjects } from '../src/project/projectPresentation.ts'
 import type { Project } from '../src/types/project.ts'
 import { precisionCrosshairTools } from '../src/drawing/precisionCrosshair.ts'
@@ -50,12 +50,12 @@ test('settings use requested tabs and responsive presentation', () => {
 test('help routes resolve maintainable articles including release notes', () => {
   assert.equal(helpArticleForPath('/help').id, 'home')
   assert.equal(helpArticleForPath('/help/release-notes').id, 'release-notes')
+  assert.equal(helpArticleForPath('/help/drawing/line').id, 'line')
+  assert.equal(helpArticleForPath('/help/modify/extend', 'tr').title, 'Uzat')
   assert.ok(helpArticles.some((article) => article.id === 'layers'))
   assert.ok(helpArticles.some((article) => article.id === 'commands'))
-  assert.match(editorToolbarHelp.en.guideBody, /top row/)
-  assert.match(editorToolbarHelp.tr.guideBody, /Üst satır/)
-  assert.match(editorToolbarHelp.en.releaseBody, /separate, fixed rows/)
-  assert.match(editorToolbarHelp.tr.releaseBody, /ayrı, sabit satırlarda/)
+  assert.deepEqual(validateHelpManifest(), [])
+  assert.deepEqual(helpArticlesForLocale('en').map((article) => article.id), helpArticlesForLocale('tr').map((article) => article.id))
 })
 
 test('feedback validates locally and inactive service never fakes a submission', async () => {

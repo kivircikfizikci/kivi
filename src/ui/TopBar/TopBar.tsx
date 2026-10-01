@@ -21,8 +21,8 @@ export function TopBar(props: TopBarProps) {
   const [openGroup, setOpenGroup] = useState<string | null>(null)
   const [mobileMenu, setMobileMenu] = useState<'account' | 'more' | null>(null)
   useEscapeKey(() => { setOpenGroup(null); setMobileMenu(null) }, openGroup !== null || mobileMenu !== null)
-  const desktopShortcuts = new Set<ToolId>(settings.desktopToolbarShortcuts.filter((item): item is Exclude<ToolbarShortcut, 'undo' | 'redo'> => item !== 'undo' && item !== 'redo'))
   const disabled = (tool: ToolId | ToolbarShortcut) => ['move', 'copy', 'repeat', 'rotate', 'mirror'].includes(tool) && !props.canTransform
+  const runShortcut = (shortcut: ToolbarShortcut) => { if (shortcut === 'undo') props.store.undo(); else if (shortcut === 'redo') props.store.redo(); else props.tools.activate(shortcut) }
   const closeMobileMenus = () => setMobileMenu(null)
 
   return <header className="top-bar editor-header">
@@ -30,6 +30,7 @@ export function TopBar(props: TopBarProps) {
     <div className="mobile-primary-bar">
       <div className="mobile-primary-left">
         <button className="mobile-project-button" type="button" onClick={props.onOpenProjects} title={projectFileName(props.projectName)} aria-label={t('projects')}><KiviLogo compact /><i className={`save-indicator is-${props.saveStatus}`} /></button>
+        <ShortcutButtons shortcuts={settings.mobileToolbarShortcuts} className="mobile-configured-shortcuts" activeTool={props.activeTool} canUndo={props.canUndo} canRedo={props.canRedo} disabled={disabled} onRun={runShortcut} />
       </div>
       <HistoryControls store={props.store} canUndo={props.canUndo} canRedo={props.canRedo} className="mobile-primary-center" />
       <div className="mobile-primary-right">
@@ -51,16 +52,25 @@ export function TopBar(props: TopBarProps) {
       </div>
     </div>
     <div className="editor-tool-bar" role="toolbar" aria-label={t('tools')}>
-      {editorToolGroups.map((group) => {
-        const activeInGroup = group.tools.find((tool) => tool.id === props.activeTool)
-        return <div className={`editor-tool-group${activeInGroup ? ' has-active-tool' : ''}`} key={group.id}>
-          <span className="editor-tool-group-label">{t(group.id)}</span>
-          <button className="tool-group-trigger" type="button" onClick={() => setOpenGroup(openGroup === group.id ? null : group.id)} aria-expanded={openGroup === group.id}><span>{t(group.id)}{activeInGroup ? ` · ${t(activeInGroup.id)}` : ''}</span><Icon name="chevronDown" /></button>
-          <div className={`editor-tool-items tool-group-items${openGroup === group.id ? ' is-open' : ''}`}>{[...group.tools].sort((a, b) => Number(desktopShortcuts.has(b.id)) - Number(desktopShortcuts.has(a.id))).map((tool) => <button key={tool.id} className={`editor-tool-button${props.activeTool === tool.id ? ' is-active' : ''}${desktopShortcuts.has(tool.id) ? ' is-shortcut' : ''}`} type="button" disabled={disabled(tool.id)} onClick={() => { props.tools.activate(tool.id); setOpenGroup(null) }} title={t(tool.id)} aria-label={t(tool.id)}><Icon name={tool.icon} /><span>{t(tool.id)}</span></button>)}</div>
-        </div>
-      })}
+      <ShortcutButtons shortcuts={settings.desktopToolbarShortcuts} className="desktop-configured-shortcuts" activeTool={props.activeTool} canUndo={props.canUndo} canRedo={props.canRedo} disabled={disabled} onRun={runShortcut} />
+      <div className="editor-tool-groups">
+        {editorToolGroups.map((group) => {
+          const activeInGroup = group.tools.find((tool) => tool.id === props.activeTool)
+          return <div className={`editor-tool-group${activeInGroup ? ' has-active-tool' : ''}`} key={group.id}>
+            <span className="editor-tool-group-label">{t(group.id)}</span>
+            <button className="tool-group-trigger" type="button" onClick={() => setOpenGroup(openGroup === group.id ? null : group.id)} aria-expanded={openGroup === group.id}><span>{t(group.id)}{activeInGroup ? ` · ${t(activeInGroup.id)}` : ''}</span><Icon name="chevronDown" /></button>
+            <div className={`editor-tool-items tool-group-items${openGroup === group.id ? ' is-open' : ''}`}>{group.tools.map((tool) => <button key={tool.id} className={`editor-tool-button${props.activeTool === tool.id ? ' is-active' : ''}`} type="button" disabled={disabled(tool.id)} onClick={() => { props.tools.activate(tool.id); setOpenGroup(null) }} title={t(tool.id)} aria-label={t(tool.id)}><Icon name={tool.icon} /><span>{t(tool.id)}</span></button>)}</div>
+          </div>
+        })}
+      </div>
+      <div className="editor-tool-balance" aria-hidden="true" />
     </div>
   </header>
+}
+
+function ShortcutButtons({ shortcuts, className, activeTool, canUndo, canRedo, disabled, onRun }: { shortcuts: readonly ToolbarShortcut[]; className: string; activeTool: ToolId; canUndo: boolean; canRedo: boolean; disabled: (shortcut: ToolbarShortcut) => boolean; onRun: (shortcut: ToolbarShortcut) => void }) {
+  const { t } = useI18n()
+  return <div className={className} aria-label={t('shortcuts')}>{shortcuts.map((shortcut) => <button key={shortcut} className={`editor-tool-button shortcut-button${activeTool === shortcut ? ' is-active' : ''}`} type="button" disabled={(shortcut === 'undo' && !canUndo) || (shortcut === 'redo' && !canRedo) || disabled(shortcut)} onClick={() => onRun(shortcut)} aria-label={t(shortcut)} title={t(shortcut)}><Icon name={shortcut === 'select' ? 'cursor' : shortcut} /></button>)}</div>
 }
 
 function DesktopPrimaryBar(props: TopBarProps) {

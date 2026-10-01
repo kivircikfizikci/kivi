@@ -2,6 +2,7 @@ import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from 
 import { executeCommand, getCommandSuggestions, type AppCommand, type CommandContext } from '../../commands/commandRegistry.ts'
 import { useI18n } from '../../i18n/I18nContext'
 import type { AutosaveStatus } from '../../project/AutosaveManager.ts'
+import { Icon } from '../Icon/Icon.tsx'
 import { autosaveStatusKey } from './autosaveStatus.ts'
 
 interface CommandBarProps {
@@ -122,6 +123,7 @@ export function CommandBar({ context, saveStatus, dirty, prompt }: CommandBarPro
           autoComplete="off"
           spellCheck="false"
         />
+        <a className="command-help-link" href="#/help/commands" target="_blank" rel="noreferrer" aria-label={t('help')} title={t('help')}><Icon name="help" /></a>
       </form>
       <span className={`command-save-status is-${displayedSaveStatus}`} role="status">{t(autosaveStatusKey(saveStatus, dirty))}</span>
     </div>

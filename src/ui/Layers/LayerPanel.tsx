@@ -27,7 +27,7 @@ export function LayerPanel({ open, layers, activeLayerId, onClose, onCreate, onR
       <aside className={`layer-panel${open ? ' is-open' : ''}`} aria-hidden={!open} aria-label={t('layers')}>
         <header className="panel-heading">
           <h2>{t('layers')}</h2>
-          <button className="icon-button small" type="button" onClick={onClose} aria-label={t('close')}><Icon name="close" /></button>
+          <span className="panel-heading-actions"><a className="icon-button small" href="#/help/layers" target="_blank" rel="noreferrer" aria-label={t('help')} title={t('help')}><Icon name="help" /></a><button className="icon-button small" type="button" onClick={onClose} aria-label={t('close')}><Icon name="close" /></button></span>
         </header>
         <div className="layer-list">
           {layers.map((layer) => (

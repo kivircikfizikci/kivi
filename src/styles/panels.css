@@ -156,6 +156,18 @@
   box-shadow: 0 5px 18px rgb(85 122 27 / 16%);
 }
 
+.command-help-link {
+  display:grid;
+  width:20px;
+  height:24px;
+  flex:0 0 auto;
+  place-items:center;
+  color:var(--ink-muted);
+}
+
+.command-help-link:hover { color:var(--accent); }
+.command-help-link svg { width:15px; height:15px; }
+
 .command-suggestions {
   position: absolute;
   bottom: calc(100% + 5px);
@@ -298,15 +310,15 @@
   position: fixed;
   z-index: 14;
   top: calc(var(--top-bar-height) + env(safe-area-inset-top) - 2px);
-  right: 8px;
+  right: auto;
   bottom: auto;
-  left: auto;
+  left: 8px;
   width: min(380px, calc(100vw - 16px));
   visibility: hidden;
   max-height: calc(100dvh - var(--top-bar-height) - env(safe-area-inset-top) - 8px);
   overflow: hidden;
   transform: translateY(-8px) scale(.98);
-  transform-origin: top right;
+  transform-origin: top left;
   opacity: 0;
   background: var(--panel-surface);
   border: 1px solid var(--border);
@@ -439,6 +451,9 @@
   align-items: center;
   justify-content: space-between;
 }
+
+.panel-heading-actions { display:flex; align-items:center; gap:3px; }
+.panel-heading-actions a { color:var(--ink-muted); text-decoration:none; }
 
 .sheet-heading {
   position: relative;
@@ -957,13 +972,13 @@ button.tool-tile {
 
   .projects-panel {
     top: calc(var(--top-bar-height) + env(safe-area-inset-top) - 2px);
-    right: 10px;
+    right: auto;
     bottom: auto;
-    left: auto;
+    left: 10px;
     width: min(380px, calc(100vw - 20px));
     max-height: calc(100dvh - var(--top-bar-height) - 58px);
     transform: translateY(-8px) scale(.98);
-    transform-origin: top right;
+    transform-origin: top left;
     border-radius: var(--radius-md);
     opacity: 0;
   }
