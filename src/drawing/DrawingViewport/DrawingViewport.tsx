@@ -763,7 +763,7 @@ export function DrawingViewport({ store, tools, projectSettings, layers, activeL
     ? positionLengthInput(worldToScreen(scale.pointer, camera, viewport), viewport)
     : undefined
   const textInputPosition = text.draft
-    ? positionLengthInput(worldToScreen(text.draft.position, camera, viewport), viewport, { width: 340, height: 360 })
+    ? positionLengthInput(worldToScreen(text.draft.position, camera, viewport), viewport, { width: 380, height: 360 })
     : undefined
 
   return (

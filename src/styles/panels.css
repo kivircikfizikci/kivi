@@ -889,13 +889,31 @@ button.tool-tile {
   background: var(--accent-soft);
 }
 
-.text-editor {
-  width: min(340px, calc(100vw - 24px));
-  gap: 8px;
+.length-input.text-editor {
+  grid-template-columns: minmax(0, 1fr);
+  width: min(380px, calc(100vw - 24px));
+  max-width: none;
+  align-items: stretch;
+  gap: 10px;
+  padding: 12px;
 }
 
-.text-editor textarea {
+.text-editor-content {
+  display: grid;
+  min-width: 0;
+  gap: 5px;
+  white-space: nowrap;
+}
+
+.text-editor-content textarea {
+  width: 100%;
+  min-width: 0;
   min-height: 72px;
+  padding: 8px 10px;
+  color: var(--ink);
+  background: var(--surface-soft);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
   resize: vertical;
 }
 
@@ -905,15 +923,36 @@ button.tool-tile {
   gap: 7px;
 }
 
-.text-editor-grid label { display: grid; gap: 3px; font-size: 11px; }
+.text-editor-grid label { display: grid; min-width: 0; gap: 3px; font-size: 11px; white-space: nowrap; }
+.text-editor-grid select,
+.text-editor-grid input { min-width: 0; width: 100%; }
 .text-editor-grid label:last-child { grid-column: 1 / -1; }
 .text-color-input { display: grid; grid-template-columns: 40px 1fr; gap: 6px; }
-.text-format-controls { display: flex; gap: 5px; }
-.text-format-controls button { min-width: 34px; min-height: 34px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface-soft); }
+.text-format-controls { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; min-width: 0; }
+.text-format-controls button { display: grid; min-width: 0; min-height: 36px; padding: 0; place-items: center; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface-soft); }
 .text-format-controls button.is-active { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
 
+.text-align-icon {
+  display: flex;
+  width: 18px;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.text-align-icon i {
+  display: block;
+  width: 18px;
+  height: 2px;
+  background: currentColor;
+  border-radius: 2px;
+}
+
+.text-align-icon i:nth-child(2) { width: 12px; }
+.text-align-icon.is-center { align-items: center; }
+.text-align-icon.is-right { align-items: flex-end; }
+
 @media (max-width: 699px) {
-  .text-editor {
+  .length-input.text-editor {
     position: absolute;
     right: 8px;
     bottom: 8px;
@@ -922,6 +961,8 @@ button.tool-tile {
     max-height: min(54dvh, 420px);
     overflow: auto;
   }
+
+  .text-editor-grid { grid-template-columns: minmax(0, 1fr) 92px; }
 
   .text-resize-handle { stroke-width: 2; }
 }

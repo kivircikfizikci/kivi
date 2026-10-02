@@ -61,7 +61,8 @@ function HelpHome({ locale, articles }: { locale: Locale; articles: LocalizedHel
 }
 
 function ArticleSections({ article }: { article: LocalizedHelpArticle }) {
-  return <>{article.sections.map((section) => <section key={section.heading}><h2>{section.heading}</h2>{section.paragraphs?.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}{section.steps && <ol>{section.steps.map((step) => <li key={step}>{step}</li>)}</ol>}{section.bullets && <ul>{section.bullets.map((item) => <li key={item}>{item}</li>)}</ul>}</section>)}</>
+  const sections = article.sections.map((section) => <section className={article.kind === 'release-notes' ? 'help-release-note' : undefined} key={section.heading}><h2>{section.heading}</h2>{section.date && <time className="help-release-date">{section.date}</time>}{section.paragraphs?.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}{section.steps && <ol>{section.steps.map((step) => <li key={step}>{step}</li>)}</ol>}{section.bullets && <ul>{section.bullets.map((item) => <li key={item}>{item}</li>)}</ul>}</section>)
+  return article.kind === 'release-notes' ? <div className="help-release-list">{sections}</div> : <>{sections}</>
 }
 
 function FeedbackForm({ locale }: { locale: Locale }) {

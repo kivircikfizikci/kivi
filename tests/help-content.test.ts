@@ -7,6 +7,7 @@ import {
   helpArticlesForLocale,
   helpLocaleForSetting,
   helpManifest,
+  helpMetadata,
   helpPath,
   helpUi,
   validateHelpManifest,
@@ -60,12 +61,17 @@ test('release notes, support and feedback are bilingual and honest about unavail
     const release = helpArticleForPath('/help/release-notes', locale)
     const sharing = helpArticleForPath('/help/export', locale)
     assert.ok(release.sections.length >= 5)
+    assert.equal(release.kind, 'release-notes')
     assert.match(release.sections[0]!.heading, /0\.1\.8/)
+    assert.ok(release.sections[0]!.date)
+    assert.ok(release.sections[0]!.paragraphs?.[0])
     assert.equal(sharing.sections.length, 3)
     assert.ok(helpUi[locale].unavailable.length > 20)
   }
   assert.match(helpArticleForPath('/help/export', 'en').sections[2]!.paragraphs![0]!, /not active/)
   assert.match(helpArticleForPath('/help/projects', 'en').sections[2]!.paragraphs![0]!, /not available/)
   assert.equal(helpArticleForPath('/help/support', 'tr').title, 'Destek')
+  assert.equal(helpMetadata.appVersion, '0.1.8')
+  assert.equal(helpMetadata.lastUpdated, '2026-10-02')
   assert.match(developerSupportEmail, /^[^@]+@[^@]+\.[^@]+$/)
 })

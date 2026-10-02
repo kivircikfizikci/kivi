@@ -8,10 +8,11 @@ export type HelpArticleId =
   | 'release-notes' | 'about' | 'social' | 'feedback' | 'support'
 
 export type HelpCategoryId = 'start' | 'draw' | 'organize' | 'modify' | 'reference' | 'product'
-export type HelpArticleKind = 'standard' | 'home' | 'commands' | 'feedback' | 'support'
+export type HelpArticleKind = 'standard' | 'home' | 'commands' | 'release-notes' | 'feedback' | 'support'
 
 export interface HelpSection {
   heading: string
+  date?: string
   paragraphs?: string[]
   steps?: string[]
   bullets?: string[]
@@ -51,6 +52,8 @@ const article = (
   tr: HelpTranslation,
   options: { aliases?: string[]; kind?: HelpArticleKind } = {},
 ): HelpArticleDefinition => ({ id, category, slug, order, kind: options.kind ?? 'standard', aliases: options.aliases, locales: { en, tr } })
+
+export const helpMetadata = { appVersion: '0.1.8', lastUpdated: '2026-10-02' } as const
 
 export const helpManifest: readonly HelpArticleDefinition[] = [
   article('home', 'start', '', 0,
@@ -283,25 +286,26 @@ export const helpManifest: readonly HelpArticleDefinition[] = [
     ] }),
   article('release-notes', 'product', 'release-notes', 500,
     { title: 'Release Notes', summary: 'Recent user-visible improvements in KIVI.', keywords: ['release', 'new', 'changes'], sections: [
-      { heading: '0.1.8 · 2 October 2026', bullets: ['Improved: Measure now analyzes nearby geometry automatically as you move around the drawing.', 'Improved: Nearby angles and distances update live without selecting each object.'] },
-      { heading: '0.1.7 · 2 October 2026', bullets: ['New: Added formatted, multiline text annotations with editable and resizable text boxes.', 'New: Added Scale for resizing selected geometry around a shared pivot.'] },
-      { heading: '0.1.6 · 2 October 2026', bullets: ['New: Draw regular Polygons with 3–50 sides, exact radius and snap-aware orientation.', 'New: Measure geometry, point-to-point distances and angles with temporary non-destructive overlays.'] },
-      { heading: '0.1.5 · 1 October 2026', bullets: ['Improved: Any drawing or modify tool can be placed as a centered top-row shortcut.', 'Improved: Mobile now keeps an undoable Delete action beside Undo and Redo.', 'Improved: Language and theme now live together under Preferences.', 'Improved: Autosave status moved to a clear lower-left label on mobile, and the empty Project Hub now has a KIVI mascot.'] },
-      { heading: '0.1.4 · 1 October 2026', bullets: ['New: Complete bilingual Help Center with synchronized English and Turkish articles.', 'Improved: Responsive editor header, centered tool groups, working configurable shortcuts and left-side Projects panel.', 'Fixed: Matching transparent light and dark logo assets and clearer mobile Settings navigation.'] },
-      { heading: '0.1.3 · Drawing and editing tools', bullets: ['New: Rectangle, Circle, Arc, Move, Copy, Repeat, Rotate, Mirror and Extend.', 'New: Offset and Trim with visual previews.', 'Improved: Line coordinate starts and precise base-point snapping.'] },
-      { heading: '0.1.2 · Measurement and organization', bullets: ['New: Free two-point dimensions and line-linked dimensions.', 'New: Default, Dimensions and custom layers with visibility and locking.', 'Improved: Desktop snap quick controls and configurable angle interval.'] },
-      { heading: '0.1.1 · Projects and output', bullets: ['Improved: Project Hub and two-level desktop/mobile editor interface.', 'Fixed: Transparent PNG/PDF output, correct orientation and visible-layer export.', 'Improved: Local autosave and offline-ready application behavior.'] },
+      { heading: `Release note - ${helpMetadata.appVersion} · Live Measure Inspection`, date: '2 October 2026', paragraphs: ['Measure now analyzes nearby geometry automatically as you move around the drawing. Nearby angles and distances update live without selecting each object.'] },
+      { heading: 'Release note - 0.1.7 · Text and Scale', date: '2 October 2026', paragraphs: ['Added formatted, multiline text annotations with editable and resizable text boxes, plus Scale for resizing selected geometry around a shared pivot.'] },
+      { heading: 'Release note - 0.1.6 · Polygon and Measure', date: '2 October 2026', paragraphs: ['Added regular Polygons with 3–50 sides, exact radius and snap-aware orientation, plus temporary non-destructive geometry, distance and angle measurements.'] },
+      { heading: 'Release note - 0.1.5 · Editor Workflow', date: '1 October 2026', paragraphs: ['Any drawing or modify tool can be placed as a centered top-row shortcut. Mobile gained an undoable Delete action, language and theme moved under Preferences, autosave status moved to the lower-left, and the empty Project Hub gained a KIVI mascot.'] },
+      { heading: 'Release note - 0.1.4 · Help and Interface', date: '1 October 2026', paragraphs: ['Added the complete bilingual Help Center and improved the responsive editor header, centered tool groups, configurable shortcuts, left-side Projects panel, matching transparent logos and mobile Settings navigation.'] },
+      { heading: 'Release note - 0.1.3 · Drawing and Editing Tools', date: '1 October 2026', paragraphs: ['Added Rectangle, Circle, Arc, Move, Copy, Repeat, Rotate, Mirror, Extend, Offset and Trim, with visual previews, coordinate-based Line starts and precise base-point snapping.'] },
+      { heading: 'Release note - 0.1.2 · Measurement and Organization', date: '1 October 2026', paragraphs: ['Added free two-point and line-linked dimensions, visibility and locking for built-in and custom layers, desktop snap controls and a configurable angle interval.'] },
+      { heading: 'Release note - 0.1.1 · Projects and Output', date: '1 October 2026', paragraphs: ['Improved the Project Hub and desktop/mobile editor, fixed transparent PNG/PDF output and visible-layer export, and added local autosave with offline-ready behavior.'] },
     ] },
     { title: 'Sürüm Notları', summary: 'KIVI’deki son kullanıcıya dönük iyileştirmeler.', keywords: ['sürüm', 'yeni', 'değişiklikler'], sections: [
-      { heading: '0.1.8 · 2 Ekim 2026', bullets: ['İyileştirildi: Ölç artık çizimde hareket ederken yakındaki geometriyi otomatik olarak inceliyor.', 'İyileştirildi: Yakındaki açılar ve mesafeler her nesneyi seçmeye gerek kalmadan canlı güncelleniyor.'] },
-      { heading: '0.1.7 · 2 Ekim 2026', bullets: ['Yeni: Düzenlenebilir ve boyutlandırılabilir kutularla biçimlendirilmiş çok satırlı metin açıklamaları.', 'Yeni: Seçili geometriyi ortak bir merkez çevresinde boyutlandıran Ölçekle aracı.'] },
-      { heading: '0.1.6 · 2 Ekim 2026', bullets: ['Yeni: 3–50 kenarlı, kesin yarıçaplı ve yakalamayla yönlendirilebilen düzgün Çokgen çizimi.', 'Yeni: Geometriyi, iki nokta mesafelerini ve açıları geçici, çizimi değiştirmeyen katmanlarla inceleyen Ölç aracı.'] },
-      { heading: '0.1.5 · 1 Ekim 2026', bullets: ['İyileştirildi: Her çizim veya düzenleme aracı üst satırın ortasına kısayol olarak eklenebilir.', 'İyileştirildi: Mobilde Geri Al ve Yinele yanında geri alınabilir sabit Sil işlemi bulunuyor.', 'İyileştirildi: Dil ve tema artık Tercihler altında birlikte bulunuyor.', 'İyileştirildi: Otomatik kayıt durumu mobilde anlaşılır bir sol alt yazıya taşındı; boş Proje Merkezi’ne KIVI maskotu eklendi.'] },
-      { heading: '0.1.4 · 1 Ekim 2026', bullets: ['Yeni: Eşlenmiş İngilizce ve Türkçe makalelerle eksiksiz iki dilli Yardım Merkezi.', 'İyileştirildi: Duyarlı editör başlığı, ortalanmış araç grupları, çalışan ayarlanabilir kısayollar ve soldan açılan Projeler paneli.', 'Düzeltildi: Birbiriyle uyumlu şeffaf açık/koyu logo dosyaları ve daha anlaşılır mobil Ayarlar gezintisi.'] },
-      { heading: '0.1.3 · Çizim ve düzenleme araçları', bullets: ['Yeni: Dikdörtgen, Çember, Yay, Taşı, Kopyala, Tekrarla, Döndür, Aynala ve Uzat.', 'Yeni: Görsel önizlemeli Ofset ve Kırp.', 'İyileştirildi: Koordinatla Çizgi başlangıcı ve hassas temel nokta yakalama.'] },
-      { heading: '0.1.2 · Ölçüm ve düzen', bullets: ['Yeni: Serbest iki nokta ölçüleri ve çizgiye bağlı ölçüler.', 'Yeni: Görünürlük ve kilitleme destekli Varsayılan, Ölçüler ve özel katmanlar.', 'İyileştirildi: Masaüstü hızlı yakalama kontrolleri ve ayarlanabilir açı aralığı.'] },
-      { heading: '0.1.1 · Projeler ve çıktı', bullets: ['İyileştirildi: Proje Merkezi ve iki seviyeli masaüstü/mobil editör arayüzü.', 'Düzeltildi: Şeffaf PNG/PDF çıktısı, doğru yön ve görünür katman dışa aktarımı.', 'İyileştirildi: Yerel otomatik kayıt ve çevrimdışına hazır uygulama davranışı.'] },
-    ] }),
+      { heading: `Sürüm notu - ${helpMetadata.appVersion} · Canlı Ölçüm İncelemesi`, date: '2 Ekim 2026', paragraphs: ['Ölç artık çizimde hareket ederken yakındaki geometriyi otomatik olarak inceliyor. Yakındaki açılar ve mesafeler, her nesneyi seçmeye gerek kalmadan canlı güncelleniyor.'] },
+      { heading: 'Sürüm notu - 0.1.7 · Metin ve Ölçekle', date: '2 Ekim 2026', paragraphs: ['Düzenlenebilir ve boyutlandırılabilir kutularla biçimlendirilmiş çok satırlı metin açıklamaları ile seçili geometriyi ortak bir merkez çevresinde boyutlandıran Ölçekle aracı eklendi.'] },
+      { heading: 'Sürüm notu - 0.1.6 · Çokgen ve Ölç', date: '2 Ekim 2026', paragraphs: ['3–50 kenarlı, kesin yarıçaplı ve yakalamayla yönlendirilebilen düzgün Çokgen çizimi ile geçici, çizimi değiştirmeyen geometri, mesafe ve açı ölçümleri eklendi.'] },
+      { heading: 'Sürüm notu - 0.1.5 · Editör İş Akışı', date: '1 Ekim 2026', paragraphs: ['Her çizim veya düzenleme aracı üst satırın ortasına kısayol olarak eklenebilir hale geldi. Mobilde geri alınabilir Sil işlemi eklendi; dil ve tema Tercihler altına, otomatik kayıt durumu sol alta taşındı ve boş Proje Merkezi’ne KIVI maskotu eklendi.'] },
+      { heading: 'Sürüm notu - 0.1.4 · Yardım ve Arayüz', date: '1 Ekim 2026', paragraphs: ['Eksiksiz iki dilli Yardım Merkezi eklendi; duyarlı editör başlığı, ortalanmış araç grupları, ayarlanabilir kısayollar, soldan açılan Projeler paneli, şeffaf logolar ve mobil Ayarlar gezintisi iyileştirildi.'] },
+      { heading: 'Sürüm notu - 0.1.3 · Çizim ve Düzenleme Araçları', date: '1 Ekim 2026', paragraphs: ['Dikdörtgen, Çember, Yay, Taşı, Kopyala, Tekrarla, Döndür, Aynala, Uzat, Ofset ve Kırp araçları; görsel önizlemeler, koordinatla Çizgi başlangıcı ve hassas temel nokta yakalama eklendi.'] },
+      { heading: 'Sürüm notu - 0.1.2 · Ölçüm ve Düzen', date: '1 Ekim 2026', paragraphs: ['Serbest iki nokta ve çizgiye bağlı ölçüler; yerleşik ve özel katmanlarda görünürlük ile kilitleme; masaüstü yakalama kontrolleri ve ayarlanabilir açı aralığı eklendi.'] },
+      { heading: 'Sürüm notu - 0.1.1 · Projeler ve Çıktı', date: '1 Ekim 2026', paragraphs: ['Proje Merkezi ile masaüstü/mobil editör iyileştirildi; şeffaf PNG/PDF çıktısı ve görünür katman dışa aktarımı düzeltildi; yerel otomatik kayıt ve çevrimdışı kullanım desteği eklendi.'] },
+    ] },
+    { kind: 'release-notes' }),
   article('about', 'product', 'about', 510,
     { title: 'About KIVI', summary: 'A fast measured drawing tool that anyone can use.', keywords: ['about', 'kivi', 'motto'], sections: [{ heading: 'Built for practical work', paragraphs: ['KIVI helps people plan workshop, metalwork, carpentry, tile and home projects without a heavy CAD interface. Draw quickly, enter real measurements and keep work local.'] }, { heading: 'Our motto', paragraphs: ['Everyone can use it.'] }] },
     { title: 'KIVI Hakkında', summary: 'Herkesin kullanabileceği hızlı bir ölçülü çizim aracı.', keywords: ['hakkında', 'kivi', 'slogan'], sections: [{ heading: 'Pratik işler için', paragraphs: ['KIVI; atölye, metal işleri, marangozluk, fayans ve ev projelerini ağır bir CAD arayüzü olmadan planlamaya yardımcı olur. Hızla çizin, gerçek ölçüleri girin ve çalışmanızı yerelde tutun.'] }, { heading: 'Sloganımız', paragraphs: ['Herkes kullanabilir.'] }] }),
@@ -318,7 +322,6 @@ export const helpManifest: readonly HelpArticleDefinition[] = [
     { kind: 'support' }),
 ] as const
 
-export const helpMetadata = { appVersion: '0.1.0', lastUpdated: '2026-10-01' } as const
 export const developerSupportEmail = 'u.burak.tomac@gmail.com'
 
 export const helpCategories: Record<Locale, Record<HelpCategoryId, string>> = {
