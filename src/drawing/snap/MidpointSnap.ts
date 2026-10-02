@@ -2,6 +2,7 @@ import type { SnapCandidate, SnapContext } from './types.ts'
 import { distance } from '../geometry/distance.ts'
 import { rectangleEdges } from '../geometry/rectangle.ts'
 import { arcSweep, pointOnCircle } from '../geometry/arc.ts'
+import { polygonEdges } from '../geometry/polygon.ts'
 
 export function findMidpointSnap(context: SnapContext): SnapCandidate | null {
   let best: SnapCandidate | null = null
@@ -15,6 +16,8 @@ export function findMidpointSnap(context: SnapContext): SnapCandidate | null {
           ? [entity.center]
           : entity.type === 'arc'
             ? [entity.center, pointOnCircle(entity.center, entity.radius, entity.direction === 'ccw' ? entity.startAngle + arcSweep(entity.startAngle, entity.endAngle, entity.direction) / 2 : entity.startAngle - arcSweep(entity.startAngle, entity.endAngle, entity.direction) / 2)]
+            : entity.type === 'polygon'
+              ? polygonEdges(entity).map((edge) => ({ x: (edge.start.x + edge.end.x) / 2, y: (edge.start.y + edge.end.y) / 2 }))
             : []
     for (const point of points) {
       const distancePixels = distance(context.pointer, point) * context.zoom

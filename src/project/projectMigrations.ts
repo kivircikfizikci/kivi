@@ -25,7 +25,7 @@ export function migrateProject(value: unknown): Project {
     }
   }
 
-  if (value.version === 4 && isDrawingState(value.drawing) && isProjectSettings(value.projectSettings) && isLayers(value.layers)) {
+  if ((value.version === 4 || value.version === 5) && isDrawingState(value.drawing) && isProjectSettings(value.projectSettings) && isLayers(value.layers)) {
     const project = value as unknown as Omit<Project, 'version' | 'drawing'> & { drawing: DrawingState }
     return {
       ...project,

@@ -92,7 +92,7 @@
 .editor-tool-button:disabled { opacity:.32; cursor:default; }
 .precision-crosshair { stroke:var(--accent); stroke-width:1; vector-effect:non-scaling-stroke; }
 .precision-crosshair circle { fill:var(--accent); stroke:none; }
-.drawing-svg.tool-line,.drawing-svg.tool-dimension,.drawing-svg.tool-rectangle,.drawing-svg.tool-circle,.drawing-svg.tool-arc { cursor:none; }
+.drawing-svg.tool-line,.drawing-svg.tool-dimension,.drawing-svg.tool-measure,.drawing-svg.tool-rectangle,.drawing-svg.tool-circle,.drawing-svg.tool-arc,.drawing-svg.tool-polygon { cursor:none; }
 .layer-panel { right:10px; left:auto; transform-origin:top right; }
 
 .settings-backdrop { z-index:30; background:var(--backdrop)!important; }

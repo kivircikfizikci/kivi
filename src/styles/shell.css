@@ -242,6 +242,45 @@
   stroke-width: 1.8;
 }
 
+.measure-overlay {
+  color: var(--measure-color);
+}
+
+.measure-helper,
+.measure-angle-arc {
+  fill: none;
+  stroke: var(--measure-color);
+  stroke-width: 1.4;
+  stroke-dasharray: 5 4;
+}
+
+.measure-marker {
+  fill: var(--measure-surface);
+  stroke: var(--measure-color);
+  stroke-width: 1.6;
+}
+
+.measure-card {
+  display: grid;
+  gap: 3px;
+  padding: 7px 9px;
+  color: var(--measure-color);
+  background: var(--measure-surface);
+  border: 1px solid color-mix(in srgb, var(--measure-color) 35%, transparent);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-soft);
+  font-size: 11px;
+}
+
+.measure-card > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.measure-card span { opacity: .76; }
+.measure-card strong { font-variant-numeric: tabular-nums; }
+
 .extend-endpoint-preview {
   fill: var(--accent-soft);
   stroke: var(--accent);
@@ -423,7 +462,7 @@
   background:color-mix(in srgb,var(--surface) 88%,transparent);
   border-radius:var(--radius-sm);
   font-size:10px;
-  font-weight:650;
+  font-weight:normal;
   pointer-events:none;
 }
 

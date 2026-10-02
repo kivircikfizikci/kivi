@@ -14,6 +14,8 @@ import { TrimTool } from './TrimTool.ts'
 import { RotateTool } from './RotateTool.ts'
 import { MirrorTool } from './MirrorTool.ts'
 import { ExtendTool } from './ExtendTool.ts'
+import { PolygonTool } from './PolygonTool.ts'
+import { MeasureTool } from './MeasureTool.ts'
 
 export class ToolManager {
   readonly line = new LineTool()
@@ -22,6 +24,8 @@ export class ToolManager {
   readonly rectangle = new RectangleTool()
   readonly circle = new CircleTool()
   readonly arc = new ArcTool()
+  readonly polygon = new PolygonTool()
+  readonly measure = new MeasureTool()
   readonly move = new MoveTool()
   readonly copy = new CopyTool()
   readonly repeat = new RepeatTool()
@@ -64,7 +68,9 @@ export class ToolManager {
       case 'rectangle': return this.rectangle
       case 'circle': return this.circle
       case 'arc': return this.arc
+      case 'polygon': return this.polygon
       case 'dimension': return this.dimension
+      case 'measure': return this.measure
       case 'move': return this.move
       case 'copy': return this.copy
       case 'repeat': return this.repeat

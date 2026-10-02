@@ -15,6 +15,7 @@ import {
 } from './intersections.ts'
 import { projectPointToSegment } from './projection.ts'
 import { rectangleEdges } from './rectangle.ts'
+import { polygonEdges } from './polygon.ts'
 
 export type TrimmableEntity = LineEntity | ArcEntity
 
@@ -74,13 +75,15 @@ function collectParameters(target: TrimmableEntity, boundaries: readonly Entity[
       else if (boundary.type === 'rectangle') {
         for (const edge of rectangleEdges(boundary)) parameters.push(...lineLineIntersections(target, edge).map((item) => item.parameterA))
       } else if (boundary.type === 'circle') parameters.push(...lineCircleIntersections(target, boundary).map((item) => item.parameterA))
-      else parameters.push(...lineArcIntersections(target, boundary).map((item) => item.parameterA))
+      else if (boundary.type === 'arc') parameters.push(...lineArcIntersections(target, boundary).map((item) => item.parameterA))
+      else for (const edge of polygonEdges(boundary)) parameters.push(...lineLineIntersections(target, edge).map((item) => item.parameterA))
     } else {
       if (boundary.type === 'line') parameters.push(...arcLineIntersections(target, boundary).map((item) => item.parameterA))
       else if (boundary.type === 'rectangle') {
         for (const edge of rectangleEdges(boundary)) parameters.push(...arcLineIntersections(target, edge).map((item) => item.parameterA))
       } else if (boundary.type === 'circle') parameters.push(...arcCircleIntersections(target, boundary).map((item) => item.parameterA))
-      else parameters.push(...arcArcIntersections(target, boundary).map((item) => item.parameterA))
+      else if (boundary.type === 'arc') parameters.push(...arcArcIntersections(target, boundary).map((item) => item.parameterA))
+      else for (const edge of polygonEdges(boundary)) parameters.push(...arcLineIntersections(target, edge).map((item) => item.parameterA))
     }
   }
   return parameters

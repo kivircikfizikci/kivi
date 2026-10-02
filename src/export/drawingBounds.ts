@@ -4,6 +4,7 @@ import { formatDimension } from '../drawing/geometry/formatDimension.ts'
 import type { ProjectSettings } from '../types/project.ts'
 import { rectangleCorners } from '../drawing/geometry/rectangle.ts'
 import { angleIsOnArc, pointOnCircle } from '../drawing/geometry/arc.ts'
+import { getPolygonVertices } from '../drawing/geometry/polygon.ts'
 
 export interface DrawingBounds {
   minX: number
@@ -50,6 +51,10 @@ export function calculateDrawingExportLayout(entities: readonly Entity[], settin
       for (const angle of [0, 90, 180, 270]) {
         if (angleIsOnArc(angle, entity)) points.push(pointOnCircle(entity.center, entity.radius, angle))
       }
+      continue
+    }
+    if (entity.type === 'polygon') {
+      points.push(...getPolygonVertices(entity))
       continue
     }
     const segment = resolveDimensionSegment(entity, entities)

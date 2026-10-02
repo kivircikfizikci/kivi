@@ -8,6 +8,7 @@ import {
   infiniteLineSegmentIntersections,
 } from './intersections.ts'
 import { rectangleEdges } from './rectangle.ts'
+import { polygonEdges } from './polygon.ts'
 
 export interface LineExtendPlan {
   targetId: string
@@ -36,7 +37,9 @@ export function createLineExtendPlan(target: LineEntity, boundaries: readonly En
         ? rectangleEdges(boundary).flatMap((edge) => infiniteLineSegmentIntersections(ray, edge))
         : boundary.type === 'circle'
           ? infiniteLineCircleIntersections(ray, boundary)
-          : infiniteLineArcIntersections(ray, boundary)
+          : boundary.type === 'arc'
+            ? infiniteLineArcIntersections(ray, boundary)
+            : polygonEdges(boundary).flatMap((edge) => infiniteLineSegmentIntersections(ray, edge))
     for (const intersection of intersections) {
       if (intersection.parameterA > GEOMETRY_EPSILON) candidates.push({ point: intersection.point, distance: intersection.parameterA })
     }

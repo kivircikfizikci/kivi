@@ -2,6 +2,7 @@ import type { Entity } from '../entities/Entity.ts'
 import type { Point } from './Point.ts'
 import { normalizeDegrees } from './arc.ts'
 import { rectangleCorners } from './rectangle.ts'
+import { getPolygonVertices } from './polygon.ts'
 
 export interface Delta { x: number; y: number }
 export const MAX_REPEAT_COPIES = 500
@@ -17,6 +18,7 @@ export function translateEntity(entity: Entity, delta: Delta): Entity {
     case 'rectangle': return { ...entity, origin: translatePoint(entity.origin, delta), style: { ...entity.style } }
     case 'circle': return { ...entity, center: translatePoint(entity.center, delta), style: { ...entity.style } }
     case 'arc': return { ...entity, center: translatePoint(entity.center, delta), style: { ...entity.style } }
+    case 'polygon': return { ...entity, center: translatePoint(entity.center, delta), style: { ...entity.style } }
     case 'dimension': return entity.source.type === 'points'
       ? { ...entity, source: { type: 'points', start: translatePoint(entity.source.start, delta), end: translatePoint(entity.source.end, delta) }, style: { ...entity.style } }
       : { ...entity, source: { ...entity.source }, style: { ...entity.style } }
@@ -39,6 +41,7 @@ export function rotateEntity(entity: Entity, pivot: Point, angle: number): Entit
     case 'rectangle': return { ...entity, origin: rotatePoint(entity.origin, pivot, angle), rotation: normalizeDegrees((entity.rotation ?? 0) + angle), style: { ...entity.style } }
     case 'circle': return { ...entity, center: rotatePoint(entity.center, pivot, angle), style: { ...entity.style } }
     case 'arc': return { ...entity, center: rotatePoint(entity.center, pivot, angle), startAngle: normalizeDegrees(entity.startAngle + angle), endAngle: normalizeDegrees(entity.endAngle + angle), style: { ...entity.style } }
+    case 'polygon': return { ...entity, center: rotatePoint(entity.center, pivot, angle), rotation: normalizeDegrees(entity.rotation + angle), style: { ...entity.style } }
     case 'dimension': return entity.source.type === 'points'
       ? { ...entity, source: { type: 'points', start: rotatePoint(entity.source.start, pivot, angle), end: rotatePoint(entity.source.end, pivot, angle) }, style: { ...entity.style } }
       : { ...entity, source: { ...entity.source }, style: { ...entity.style } }
@@ -77,6 +80,11 @@ export function mirrorEntity(entity: Entity, axisA: Point, axisB: Point): Entity
         direction: entity.direction === 'ccw' ? 'cw' : 'ccw',
         style: { ...entity.style },
       }
+    }
+    case 'polygon': {
+      const center = mirrorPointAcrossLine(entity.center, axisA, axisB)
+      const firstVertex = mirrorPointAcrossLine(getPolygonVertices(entity)[0]!, axisA, axisB)
+      return { ...entity, center, rotation: normalizeDegrees(Math.atan2(firstVertex.y - center.y, firstVertex.x - center.x) * 180 / Math.PI), style: { ...entity.style } }
     }
     case 'dimension': return entity.source.type === 'points'
       ? { ...entity, source: { type: 'points', start: mirrorPointAcrossLine(entity.source.start, axisA, axisB), end: mirrorPointAcrossLine(entity.source.end, axisA, axisB) }, side: entity.side === 1 ? -1 : 1, style: { ...entity.style } }
@@ -125,7 +133,8 @@ function entityReferencePoints(entity: Entity): Point[] {
     case 'line': return [entity.start, entity.end]
     case 'rectangle': return rectangleCorners(entity)
     case 'circle':
-    case 'arc': return [entity.center]
+    case 'arc':
+    case 'polygon': return [entity.center]
     case 'dimension': return entity.source.type === 'points' ? [entity.source.start, entity.source.end] : []
   }
 }

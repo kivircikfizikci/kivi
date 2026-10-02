@@ -2,6 +2,7 @@ import type { SnapCandidate, SnapContext } from './types.ts'
 import { distance } from '../geometry/distance.ts'
 import { rectangleCorners } from '../geometry/rectangle.ts'
 import { pointOnCircle } from '../geometry/arc.ts'
+import { getPolygonVertices } from '../geometry/polygon.ts'
 
 export function findEndpointSnap(context: SnapContext): SnapCandidate | null {
   let best: SnapCandidate | null = null
@@ -13,6 +14,8 @@ export function findEndpointSnap(context: SnapContext): SnapCandidate | null {
         ? rectangleCorners(entity)
         : entity.type === 'arc'
           ? [pointOnCircle(entity.center, entity.radius, entity.startAngle), pointOnCircle(entity.center, entity.radius, entity.endAngle)]
+          : entity.type === 'polygon'
+            ? getPolygonVertices(entity)
           : []
     for (const point of points) {
       const distancePixels = distance(context.pointer, point) * context.zoom

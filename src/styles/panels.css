@@ -926,16 +926,19 @@ button.tool-tile {
   }
 
   .circle-input,
-  .rectangle-input {
+  .rectangle-input,
+  .polygon-input {
     grid-template-columns: minmax(0, 1fr);
   }
 
   .circle-input .geometry-input-heading,
-  .rectangle-input > label {
+  .rectangle-input > label,
+  .polygon-input > label {
     grid-column: 1 / -1;
   }
 
-  .rectangle-input {
+  .rectangle-input,
+  .polygon-input {
     width: 280px;
   }
 

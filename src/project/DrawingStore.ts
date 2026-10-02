@@ -3,6 +3,7 @@ import type { DimensionEntity } from '../drawing/entities/DimensionEntity.ts'
 import type { RectangleEntity } from '../drawing/entities/RectangleEntity.ts'
 import type { CircleEntity } from '../drawing/entities/CircleEntity.ts'
 import type { ArcEntity } from '../drawing/entities/ArcEntity.ts'
+import type { PolygonEntity } from '../drawing/entities/PolygonEntity.ts'
 import type { Entity } from '../drawing/entities/Entity.ts'
 import { EMPTY_DRAWING_STATE, type DrawingState } from './DrawingState.ts'
 import { HistoryManager } from './HistoryManager.ts'
@@ -51,6 +52,8 @@ export class DrawingStore {
   addCircle(circle: CircleEntity, layerId?: string) { return this.addEntity(layerId ? { ...circle, layerId } : circle) }
 
   addArc(arc: ArcEntity, layerId?: string) { return this.addEntity(layerId ? { ...arc, layerId } : arc) }
+
+  addPolygon(polygon: PolygonEntity, layerId?: string) { return this.addEntity(layerId ? { ...polygon, layerId } : polygon) }
 
   addEntity(entity: Entity) {
     if (this.readOnly) return false

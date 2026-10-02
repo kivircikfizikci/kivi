@@ -59,7 +59,7 @@ export function BottomDrawer({ open, onOpen, onClose, store, tools, activeTool, 
             <Icon name="line" />
             <span>{t('line')}</span>
           </button>
-          {(['rectangle', 'circle', 'arc'] as const).map((tool) => (
+          {(['rectangle', 'circle', 'arc', 'polygon'] as const).map((tool) => (
             <button key={tool} className={`tool-tile${activeTool === tool ? ' is-active' : ''}`} type="button" onClick={() => activate(tool)}>
               <Icon name={tool} /><span>{t(tool)}</span>
             </button>
@@ -67,6 +67,9 @@ export function BottomDrawer({ open, onOpen, onClose, store, tools, activeTool, 
           <button className={`tool-tile${activeTool === 'dimension' ? ' is-active' : ''}`} type="button" onClick={() => activate('dimension')}>
             <Icon name="dimension" />
             <span>{t('dimension')}</span>
+          </button>
+          <button className={`tool-tile${activeTool === 'measure' ? ' is-active' : ''}`} type="button" onClick={() => activate('measure')}>
+            <Icon name="measure" /><span>{t('measure')}</span>
           </button>
           <button className={`tool-tile${activeTool === 'select' ? ' is-active' : ''}`} type="button" onClick={() => activate('select')}>
             <Icon name="cursor" />

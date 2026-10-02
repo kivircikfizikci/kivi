@@ -8,6 +8,7 @@ import { resolveDimensionColor } from '../drawing/geometry/dimensionColor.ts'
 import { rectangleCorners } from '../drawing/geometry/rectangle.ts'
 import type { ArcDirection } from '../drawing/entities/ArcEntity.ts'
 import { createBuiltInLayers, entitiesOnVisibleLayers } from '../project/layers.ts'
+import { getPolygonVertices } from '../drawing/geometry/polygon.ts'
 
 export interface ExportStroke {
   start: Point
@@ -74,6 +75,11 @@ export function createDrawingExportModel(project: Pick<Project, 'drawing' | 'pro
     }
     if (entity.type === 'arc') {
       arcs.push({ center: mapPoint(entity.center), radius: entity.radius, startAngle: entity.startAngle, endAngle: entity.endAngle, direction: entity.direction, color: entity.style.color, strokeWidth: visualSize(entity.style.width) })
+      continue
+    }
+    if (entity.type === 'polygon') {
+      const vertices = getPolygonVertices(entity).map(mapPoint)
+      vertices.forEach((start, index) => strokes.push({ start, end: vertices[(index + 1) % vertices.length]!, color: entity.style.color, width: visualSize(entity.style.width) }))
       continue
     }
     const segment = resolveDimensionSegment(entity, entities)

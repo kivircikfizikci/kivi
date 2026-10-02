@@ -2,7 +2,7 @@ import type { Locale } from '../i18n/types.ts'
 
 export type HelpArticleId =
   | 'home' | 'getting-started' | 'projects' | 'editor' | 'navigation' | 'offline'
-  | 'line' | 'rectangle' | 'circle' | 'arc' | 'dimensions' | 'snapping' | 'selection' | 'layers'
+  | 'line' | 'rectangle' | 'circle' | 'arc' | 'polygon' | 'dimensions' | 'measure' | 'snapping' | 'selection' | 'layers'
   | 'move' | 'copy' | 'repeat' | 'rotate' | 'mirror' | 'offset' | 'trim' | 'extend'
   | 'context-menu' | 'commands' | 'shortcuts' | 'export-sharing' | 'fullscreen' | 'settings'
   | 'release-notes' | 'about' | 'social' | 'feedback' | 'support'
@@ -144,6 +144,15 @@ export const helpManifest: readonly HelpArticleDefinition[] = [
       { heading: 'Yay oluşturma', steps: ['Yay’ı seçin.', 'Merkezi seçin.', 'Yarıçapı belirlemek için başlangıç noktasını seçin.', 'Bitiş noktasını seçin.'] },
       { heading: 'Yay davranışı', paragraphs: ['KIVI, başlangıç ve bitiş arasındaki desteklenen en kısa yayı oluşturur. Gelişmiş yay kipleri yoktur.'] },
     ] }),
+  article('polygon', 'draw', 'drawing/polygon', 135,
+    { title: 'Polygon', summary: 'Draw a regular polygon with an exact radius and side count.', keywords: ['polygon', 'triangle', 'hexagon', 'sides', 'radius'], sections: [
+      { heading: 'Create a regular polygon', steps: ['Choose Polygon.', 'Choose the center.', 'Choose a rough radius and the direction of the first vertex.', 'Enter a side count from 3 to 50 and an exact radius in cm.', 'Confirm.'] },
+      { heading: 'Orientation and reuse', paragraphs: ['Angle Snap can guide the first-vertex direction. KIVI remembers the last confirmed side count for the current session. Polygon vertices support Endpoint snap and edge centers support Midpoint snap.'] },
+    ] },
+    { title: 'Çokgen', summary: 'Kesin yarıçap ve kenar sayısıyla düzgün çokgen çizin.', keywords: ['çokgen', 'üçgen', 'altıgen', 'kenar', 'yarıçap'], sections: [
+      { heading: 'Düzgün çokgen oluşturma', steps: ['Çokgen’i seçin.', 'Merkezi seçin.', 'Yaklaşık yarıçapı ve ilk köşenin yönünü belirleyin.', '3 ile 50 arasında kenar sayısı ve cm cinsinden kesin yarıçap girin.', 'Onaylayın.'] },
+      { heading: 'Yön ve yeniden kullanım', paragraphs: ['Açı Yakalama ilk köşenin yönünü belirlemeye yardım eder. KIVI, geçerli oturumda son onaylanan kenar sayısını hatırlar. Çokgen köşeleri Uç Nokta, kenar merkezleri Orta Nokta yakalamayı destekler.'] },
+    ] }),
   article('dimensions', 'draw', 'dimensions', 140,
     { title: 'Dimensions', summary: 'Measure a line or any two points.', keywords: ['dimension', 'measure', 'cm', 'mm'], sections: [
       { heading: 'Measure an existing line', steps: ['Choose Dimension.', 'Choose the line.', 'Move away from the line and choose where the dimension should sit.'] },
@@ -154,6 +163,17 @@ export const helpManifest: readonly HelpArticleDefinition[] = [
       { heading: 'Var olan çizgiyi ölçme', steps: ['Ölçü’yü seçin.', 'Çizgiyi seçin.', 'Çizgiden uzaklaşıp ölçünün duracağı yeri seçin.'] },
       { heading: 'İki noktayı ölçme', steps: ['Ölçü’yü seçin.', 'A noktasını seçin.', 'B noktasını seçin.', 'Ölçünün duracağı yeri seçin.'] },
       { heading: 'Ölçülerin davranışı', bullets: ['Gösterim cm veya mm olabilir; birim yazısı gösterilebilir ya da gizlenebilir.', 'Ölçüler otomatik olarak Ölçüler katmanına gider.', 'Çizgiye bağlı ölçü, desteklenen çizgi değişikliklerini izler.', 'Serbest iki nokta ölçüsü bağımsız kalır.'] },
+    ] }),
+  article('measure', 'draw', 'measure', 145,
+    { title: 'Measure', summary: 'Inspect geometry, distances and angles without adding drawing objects.', keywords: ['measure', 'distance', 'angle', 'temporary'], sections: [
+      { heading: 'Inspect geometry', paragraphs: ['Choose Measure and click or tap a Line, Rectangle, Circle, Arc or Polygon. KIVI shows the most useful values, such as length and angle, width and height, radius and diameter, or polygon side information.'] },
+      { heading: 'Measure points and angles', bullets: ['Choose two snapped or empty points to see direct distance, ΔX, ΔY and angle.', 'Choose two line-like edges to see the angle and its supplementary angle near their intersection.', 'Endpoint, Midpoint and Grid snaps are available. Angle Snap does not alter Measure points.'] },
+      { heading: 'Temporary by design', paragraphs: ['Measure graphics are temporary UI overlays. They are not saved, do not enter Undo/Redo or layers, and are never included in PNG or PDF exports. Done, Escape or switching tools clears them. Hidden geometry cannot be measured; visible locked geometry can.'] },
+    ] },
+    { title: 'Ölç', summary: 'Çizime nesne eklemeden geometriyi, mesafeleri ve açıları inceleyin.', keywords: ['ölç', 'mesafe', 'açı', 'geçici'], sections: [
+      { heading: 'Geometriyi inceleme', paragraphs: ['Ölç’ü seçip Çizgi, Dikdörtgen, Çember, Yay veya Çokgen’e tıklayın ya da dokunun. KIVI; uzunluk ve açı, genişlik ve yükseklik, yarıçap ve çap ya da çokgen kenar bilgileri gibi en yararlı değerleri gösterir.'] },
+      { heading: 'Nokta ve açı ölçme', bullets: ['Doğrudan mesafe, ΔX, ΔY ve açıyı görmek için iki yakalanmış veya boş nokta seçin.', 'Kesişim yakınında açı ve bütünler açıyı görmek için çizgi benzeri iki kenar seçin.', 'Uç Nokta, Orta Nokta ve Izgara yakalama kullanılabilir. Açı Yakalama, Ölç noktalarını değiştirmez.'] },
+      { heading: 'Geçici çalışma', paragraphs: ['Ölç grafikleri geçici arayüz katmanlarıdır. Kaydedilmez, Geri Al/Yinele geçmişine veya katmanlara girmez ve PNG/PDF çıktısına eklenmez. Bitir, Escape veya başka araca geçmek bunları temizler. Gizli geometri ölçülemez; görünür kilitli geometri ölçülebilir.'] },
     ] }),
   article('snapping', 'draw', 'snapping', 150,
     { title: 'Snapping', summary: 'Place points accurately without difficult coordinate work.', keywords: ['snap', 'endpoint', 'midpoint', 'grid', 'angle'], sections: [
@@ -249,6 +269,7 @@ export const helpManifest: readonly HelpArticleDefinition[] = [
     ] }),
   article('release-notes', 'product', 'release-notes', 500,
     { title: 'Release Notes', summary: 'Recent user-visible improvements in KIVI.', keywords: ['release', 'new', 'changes'], sections: [
+      { heading: '0.1.6 · 2 October 2026', bullets: ['New: Draw regular Polygons with 3–50 sides, exact radius and snap-aware orientation.', 'New: Measure geometry, point-to-point distances and angles with temporary non-destructive overlays.'] },
       { heading: '0.1.5 · 1 October 2026', bullets: ['Improved: Any drawing or modify tool can be placed as a centered top-row shortcut.', 'Improved: Mobile now keeps an undoable Delete action beside Undo and Redo.', 'Improved: Language and theme now live together under Preferences.', 'Improved: Autosave status moved to a clear lower-left label on mobile, and the empty Project Hub now has a KIVI mascot.'] },
       { heading: '0.1.4 · 1 October 2026', bullets: ['New: Complete bilingual Help Center with synchronized English and Turkish articles.', 'Improved: Responsive editor header, centered tool groups, working configurable shortcuts and left-side Projects panel.', 'Fixed: Matching transparent light and dark logo assets and clearer mobile Settings navigation.'] },
       { heading: '0.1.3 · Drawing and editing tools', bullets: ['New: Rectangle, Circle, Arc, Move, Copy, Repeat, Rotate, Mirror and Extend.', 'New: Offset and Trim with visual previews.', 'Improved: Line coordinate starts and precise base-point snapping.'] },
@@ -256,6 +277,7 @@ export const helpManifest: readonly HelpArticleDefinition[] = [
       { heading: '0.1.1 · Projects and output', bullets: ['Improved: Project Hub and two-level desktop/mobile editor interface.', 'Fixed: Transparent PNG/PDF output, correct orientation and visible-layer export.', 'Improved: Local autosave and offline-ready application behavior.'] },
     ] },
     { title: 'Sürüm Notları', summary: 'KIVI’deki son kullanıcıya dönük iyileştirmeler.', keywords: ['sürüm', 'yeni', 'değişiklikler'], sections: [
+      { heading: '0.1.6 · 2 Ekim 2026', bullets: ['Yeni: 3–50 kenarlı, kesin yarıçaplı ve yakalamayla yönlendirilebilen düzgün Çokgen çizimi.', 'Yeni: Geometriyi, iki nokta mesafelerini ve açıları geçici, çizimi değiştirmeyen katmanlarla inceleyen Ölç aracı.'] },
       { heading: '0.1.5 · 1 Ekim 2026', bullets: ['İyileştirildi: Her çizim veya düzenleme aracı üst satırın ortasına kısayol olarak eklenebilir.', 'İyileştirildi: Mobilde Geri Al ve Yinele yanında geri alınabilir sabit Sil işlemi bulunuyor.', 'İyileştirildi: Dil ve tema artık Tercihler altında birlikte bulunuyor.', 'İyileştirildi: Otomatik kayıt durumu mobilde anlaşılır bir sol alt yazıya taşındı; boş Proje Merkezi’ne KIVI maskotu eklendi.'] },
       { heading: '0.1.4 · 1 Ekim 2026', bullets: ['Yeni: Eşlenmiş İngilizce ve Türkçe makalelerle eksiksiz iki dilli Yardım Merkezi.', 'İyileştirildi: Duyarlı editör başlığı, ortalanmış araç grupları, çalışan ayarlanabilir kısayollar ve soldan açılan Projeler paneli.', 'Düzeltildi: Birbiriyle uyumlu şeffaf açık/koyu logo dosyaları ve daha anlaşılır mobil Ayarlar gezintisi.'] },
       { heading: '0.1.3 · Çizim ve düzenleme araçları', bullets: ['Yeni: Dikdörtgen, Çember, Yay, Taşı, Kopyala, Tekrarla, Döndür, Aynala ve Uzat.', 'Yeni: Görsel önizlemeli Ofset ve Kırp.', 'İyileştirildi: Koordinatla Çizgi başlangıcı ve hassas temel nokta yakalama.'] },

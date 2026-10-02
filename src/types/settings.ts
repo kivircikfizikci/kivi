@@ -3,7 +3,7 @@ import type { ToolId } from '../tools/Tool.ts'
 
 export type AppTheme = 'light' | 'dark'
 
-export const toolbarShortcutIds = ['select', 'line', 'rectangle', 'circle', 'arc', 'dimension', 'move', 'copy', 'repeat', 'rotate', 'mirror', 'offset', 'trim', 'extend'] as const satisfies readonly ToolId[]
+export const toolbarShortcutIds = ['select', 'line', 'rectangle', 'circle', 'arc', 'polygon', 'dimension', 'measure', 'move', 'copy', 'repeat', 'rotate', 'mirror', 'offset', 'trim', 'extend'] as const satisfies readonly ToolId[]
 export type ToolbarShortcut = ToolId
 export const MAX_MOBILE_TOOLBAR_SHORTCUTS = 3
 export const MAX_DESKTOP_TOOLBAR_SHORTCUTS = 5

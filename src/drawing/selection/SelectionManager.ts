@@ -5,6 +5,7 @@ import { projectPointToSegment } from '../geometry/projection.ts'
 import { buildDimensionGeometry, resolveDimensionSegment } from '../geometry/dimension.ts'
 import { rectangleEdges } from '../geometry/rectangle.ts'
 import { angleFromCenter, angleIsOnArc } from '../geometry/arc.ts'
+import { polygonEdges } from '../geometry/polygon.ts'
 
 export const SELECTION_TOLERANCE_MOUSE_PX = 8
 export const SELECTION_TOLERANCE_TOUCH_PX = 16
@@ -51,12 +52,14 @@ export class SelectionManager {
         distancePixels = Math.min(...rectangleEdges(entity).map((edge) => Math.sqrt(projectPointToSegment(pointer, edge.start, edge.end).distanceSquared) * zoom))
       } else if (entity.type === 'circle') {
         distancePixels = Math.abs(Math.hypot(pointer.x - entity.center.x, pointer.y - entity.center.y) - entity.radius) * zoom
-      } else {
+      } else if (entity.type === 'arc') {
         const radialDistance = Math.abs(Math.hypot(pointer.x - entity.center.x, pointer.y - entity.center.y) - entity.radius) * zoom
         const angularTolerance = entity.radius > 0 ? tolerancePixels / (entity.radius * zoom) * 180 / Math.PI : 0
         distancePixels = angleIsOnArc(angleFromCenter(entity.center, pointer), entity, angularTolerance)
           ? radialDistance
           : Number.POSITIVE_INFINITY
+      } else {
+        distancePixels = Math.min(...polygonEdges(entity).map((edge) => Math.sqrt(projectPointToSegment(pointer, edge.start, edge.end).distanceSquared) * zoom))
       }
       if (distancePixels <= tolerancePixels && distancePixels <= bestDistance) {
         selected = entity

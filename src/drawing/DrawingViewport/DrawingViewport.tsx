@@ -54,6 +54,9 @@ import { isOffsettable, offsetDistanceFromPointer, offsetEntity } from '../geome
 import { createTrimPlan, isTrimmable } from '../geometry/trim.ts'
 import { createLineExtendPlan } from '../geometry/extend.ts'
 import { precisionCrosshairTools } from '../precisionCrosshair.ts'
+import { PolygonRenderer } from '../renderer/PolygonRenderer.tsx'
+import { PolygonInput } from '../renderer/PolygonInput.tsx'
+import { MeasureOverlayRenderer } from '../renderer/MeasureOverlayRenderer.tsx'
 
 interface DrawingViewportProps {
   store: DrawingStore
@@ -97,6 +100,8 @@ export function DrawingViewport({ store, tools, projectSettings, layers, activeL
   const rectangle = useSyncExternalStore(tools.rectangle.subscribe, tools.rectangle.getSnapshot)
   const circle = useSyncExternalStore(tools.circle.subscribe, tools.circle.getSnapshot)
   const arc = useSyncExternalStore(tools.arc.subscribe, tools.arc.getSnapshot)
+  const polygon = useSyncExternalStore(tools.polygon.subscribe, tools.polygon.getSnapshot)
+  const measure = useSyncExternalStore(tools.measure.subscribe, tools.measure.getSnapshot)
   const move = useSyncExternalStore(tools.move.subscribe, tools.move.getSnapshot)
   const copy = useSyncExternalStore(tools.copy.subscribe, tools.copy.getSnapshot)
   const repeat = useSyncExternalStore(tools.repeat.subscribe, tools.repeat.getSnapshot)
@@ -176,25 +181,25 @@ export function DrawingViewport({ store, tools, projectSettings, layers, activeL
     return { x: event.clientX - bounds.left, y: event.clientY - bounds.top }
   }, [])
 
-  const resolveSnap = useCallback((screenPoint: Point, pointerType: string) => {
+  const resolveSnap = useCallback((screenPoint: Point, pointerType: string, allowAngle = true) => {
     const worldPoint = screenToWorld(screenPoint, camera, viewport)
     const tolerance = pointerType === 'touch' ? SELECTION_TOLERANCE_TOUCH_PX : 10
     return snapManager.resolve({
       pointer: worldPoint,
       entities: visibleEntities,
       zoom: camera.zoom,
-      angleOrigin: rotate.pivot ?? mirror.axisA ?? move.base ?? copy.base ?? repeat.origin ?? dimension.firstPoint ?? line.start ?? rectangle.start ?? circle.center ?? arc.center ?? undefined,
+      angleOrigin: rotate.pivot ?? mirror.axisA ?? move.base ?? copy.base ?? repeat.origin ?? dimension.firstPoint ?? line.start ?? rectangle.start ?? circle.center ?? arc.center ?? polygon.center ?? undefined,
       settings: {
         endpoint: settings.endpointSnapEnabled,
         midpoint: settings.midpointSnapEnabled,
         grid: settings.gridSnapEnabled,
-        angle: settings.angleSnapEnabled,
+        angle: allowAngle && settings.angleSnapEnabled,
         gridSpacing: projectSettings.gridSpacing,
         pixelTolerance: tolerance,
         angles: snapAnglesForIncrement(settings.angleSnapIncrement),
       },
     })
-  }, [arc.center, camera, circle.center, copy.base, dimension.firstPoint, line.start, mirror.axisA, move.base, projectSettings.gridSpacing, rectangle.start, repeat.origin, rotate.pivot, settings, snapManager, viewport, visibleEntities])
+  }, [arc.center, camera, circle.center, copy.base, dimension.firstPoint, line.start, mirror.axisA, move.base, polygon.center, projectSettings.gridSpacing, rectangle.start, repeat.origin, rotate.pivot, settings, snapManager, viewport, visibleEntities])
 
   const trimPlanAt = useCallback((screenPoint: Point, pointerType: string) => {
     const worldPoint = screenToWorld(screenPoint, camera, viewport)
@@ -240,6 +245,21 @@ export function DrawingViewport({ store, tools, projectSettings, layers, activeL
       const resolved = resolveSnap(screenPoint, pointerType)
       const placed = tools.arc.placePoint(resolved.point, resolved.snap, style)
       if (placed) store.addArc(placed, activeLayerId)
+      return
+    }
+    if (activeTool === 'polygon') {
+      const resolved = resolveSnap(screenPoint, pointerType)
+      tools.polygon.placePoint(resolved.point, resolved.snap, style)
+      return
+    }
+
+    if (activeTool === 'measure') {
+      const resolved = resolveSnap(screenPoint, pointerType, false)
+      const tolerance = pointerType === 'touch' ? SELECTION_TOLERANCE_TOUCH_PX : SELECTION_TOLERANCE_MOUSE_PX
+      const measurable = visibleEntities.filter((entity) => entity.type !== 'dimension')
+      const entity = selectionManager.findEntity(worldPoint, measurable, camera.zoom, tolerance)
+      if (entity && (!resolved.snap || measure.firstEntity)) tools.measure.selectEntity(entity, worldPoint)
+      else tools.measure.selectPoint(resolved.point, resolved.snap)
       return
     }
 
@@ -335,7 +355,7 @@ export function DrawingViewport({ store, tools, projectSettings, layers, activeL
     const toggle = toggleSelection || (pointerType === 'touch' && selection.multiMode)
     if (entity && toggle) tools.select.toggleSelection(entity.id)
     else tools.select.select(entity?.id ?? null)
-  }, [activeLayerId, activeTool, camera, extendPlanAt, lineStyle, mirror.phase, mode, offset.phase, offsetSource, resolveSnap, rotate.phase, selectableEntities, selection.multiMode, selectionManager, store, tools, transformSelectionValid, trimPlanAt, viewport])
+  }, [activeLayerId, activeTool, camera, extendPlanAt, lineStyle, measure.firstEntity, mirror.phase, mode, offset.phase, offsetSource, resolveSnap, rotate.phase, selectableEntities, selection.multiMode, selectionManager, store, tools, transformSelectionValid, trimPlanAt, viewport, visibleEntities])
 
   const onPointerDown = (event: ReactPointerEvent<SVGSVGElement>) => {
     const point = toScreenPoint(event)
@@ -418,6 +438,12 @@ export function DrawingViewport({ store, tools, projectSettings, layers, activeL
     } else if (mode === 'edit' && activeTool === 'arc' && arc.phase !== 'inactive') {
       const resolved = resolveSnap(point, event.pointerType)
       tools.arc.updatePointer(resolved.point, resolved.snap, lineStyle)
+    } else if (mode === 'edit' && activeTool === 'polygon' && polygon.phase === 'placing') {
+      const resolved = resolveSnap(point, event.pointerType)
+      tools.polygon.updatePointer(resolved.point, resolved.snap, lineStyle)
+    } else if (mode === 'edit' && activeTool === 'measure') {
+      const resolved = resolveSnap(point, event.pointerType, false)
+      tools.measure.updatePointer(resolved.snap)
     } else if (mode === 'edit' && activeTool === 'move' && (move.phase === 'waitingBase' || move.phase === 'choosingDestination')) {
       const resolved = resolveSnap(point, event.pointerType)
       tools.move.updatePointer(resolved.point, resolved.snap)
@@ -513,6 +539,10 @@ export function DrawingViewport({ store, tools, projectSettings, layers, activeL
   const confirmCircle = () => {
     const entity = tools.circle.confirm(lineStyle)
     if (entity) store.addCircle(entity, activeLayerId)
+  }
+  const confirmPolygon = () => {
+    const entity = tools.polygon.confirm(lineStyle)
+    if (entity) store.addPolygon(entity, activeLayerId)
   }
   const confirmMove = () => {
     const delta = tools.move.confirm()
@@ -621,6 +651,9 @@ export function DrawingViewport({ store, tools, projectSettings, layers, activeL
   const circleInputPosition = circle.edge
     ? positionLengthInput(worldToScreen(circle.edge, camera, viewport), viewport, { width: 252, height: 118 })
     : undefined
+  const polygonInputPosition = polygon.vertex
+    ? positionLengthInput(worldToScreen(polygon.vertex, camera, viewport), viewport, { width: 280, height: 148 })
+    : undefined
   const moveInputPosition = move.base
     ? positionLengthInput(worldToScreen({ x: move.base.x + move.delta.x, y: move.base.y + move.delta.y }, camera, viewport), viewport)
     : undefined
@@ -679,6 +712,7 @@ export function DrawingViewport({ store, tools, projectSettings, layers, activeL
               if (entity.type === 'rectangle') return <RectangleRenderer key={entity.id} rectangle={entity} camera={camera} viewport={viewport} selected={mode === 'edit' && selection.selectedIds.has(entity.id)} />
               if (entity.type === 'circle') return <CircleRenderer key={entity.id} circle={entity} camera={camera} viewport={viewport} selected={mode === 'edit' && selection.selectedIds.has(entity.id)} />
               if (entity.type === 'arc') return <ArcRenderer key={entity.id} arc={entity} camera={camera} viewport={viewport} selected={mode === 'edit' && selection.selectedIds.has(entity.id)} />
+              if (entity.type === 'polygon') return <PolygonRenderer key={entity.id} polygon={entity} camera={camera} viewport={viewport} selected={mode === 'edit' && selection.selectedIds.has(entity.id)} />
               const segment = resolveDimensionSegment(entity, visibleEntities)
               return segment
                 ? <DimensionRenderer key={entity.id} dimension={entity} segment={segment} camera={camera} viewport={viewport} settings={projectSettings} selected={mode === 'edit' && selection.selectedIds.has(entity.id)} />
@@ -707,9 +741,12 @@ export function DrawingViewport({ store, tools, projectSettings, layers, activeL
             {mode === 'edit' && activeTool === 'rectangle' && rectangle.preview && <RectangleRenderer rectangle={rectangle.preview} camera={camera} viewport={viewport} preview />}
             {mode === 'edit' && activeTool === 'circle' && circle.preview && <CircleRenderer circle={circle.preview} camera={camera} viewport={viewport} preview />}
             {mode === 'edit' && activeTool === 'arc' && arc.preview && <ArcRenderer arc={arc.preview} camera={camera} viewport={viewport} preview />}
+            {mode === 'edit' && activeTool === 'polygon' && polygon.preview && <PolygonRenderer polygon={polygon.preview} camera={camera} viewport={viewport} preview />}
             {mode === 'edit' && activeTool === 'rectangle' && <SnapIndicatorRenderer snap={rectangle.snap} camera={camera} viewport={viewport} />}
             {mode === 'edit' && activeTool === 'circle' && <SnapIndicatorRenderer snap={circle.snap} camera={camera} viewport={viewport} />}
             {mode === 'edit' && activeTool === 'arc' && <SnapIndicatorRenderer snap={arc.snap} camera={camera} viewport={viewport} />}
+            {mode === 'edit' && activeTool === 'polygon' && <SnapIndicatorRenderer snap={polygon.snap} camera={camera} viewport={viewport} />}
+            {mode === 'edit' && activeTool === 'measure' && <><MeasureOverlayRenderer snapshot={measure} entities={visibleEntities} camera={camera} viewport={viewport} settings={projectSettings} /><SnapIndicatorRenderer snap={measure.snap} camera={camera} viewport={viewport} /></>}
             {mode === 'edit' && transformPreview.length > 0 && <TransformPreviewRenderer entities={transformPreview} camera={camera} viewport={viewport} settings={projectSettings} />}
             {mode === 'edit' && activeTool === 'move' && <SnapIndicatorRenderer snap={move.snap} camera={camera} viewport={viewport} />}
             {mode === 'edit' && activeTool === 'copy' && <SnapIndicatorRenderer snap={copy.snap} camera={camera} viewport={viewport} />}
@@ -732,9 +769,11 @@ export function DrawingViewport({ store, tools, projectSettings, layers, activeL
           </g>
         </svg>
 
-        {mode === 'edit' && (activeTool === 'dimension' || activeTool === 'arc' || activeTool === 'move' || activeTool === 'copy' || activeTool === 'repeat' || activeTool === 'rotate' || activeTool === 'mirror' || activeTool === 'offset' || activeTool === 'trim' || activeTool === 'extend' || (activeTool === 'line' && line.phase === 'placing') || (activeTool === 'rectangle' && rectangle.phase === 'placing') || (activeTool === 'circle' && circle.phase === 'placing')) && (
+        {mode === 'edit' && (activeTool === 'dimension' || activeTool === 'measure' || activeTool === 'arc' || activeTool === 'move' || activeTool === 'copy' || activeTool === 'repeat' || activeTool === 'rotate' || activeTool === 'mirror' || activeTool === 'offset' || activeTool === 'trim' || activeTool === 'extend' || (activeTool === 'line' && line.phase === 'placing') || (activeTool === 'rectangle' && rectangle.phase === 'placing') || (activeTool === 'circle' && circle.phase === 'placing') || (activeTool === 'polygon' && polygon.phase === 'placing')) && (
           <button className="finish-tool-button" type="button" onClick={() => tools.finishActiveTool()}>{t('done')}</button>
         )}
+        {mode === 'edit' && activeTool === 'polygon' && polygon.phase === 'placing' && <div className="tool-prompt" role="status">{t(polygon.center ? 'polygonRadius' : 'polygonCenter')}</div>}
+        {mode === 'edit' && activeTool === 'measure' && <div className="tool-prompt" role="status">{t(measure.firstPoint || measure.firstEntity ? 'measureSecondPoint' : 'measurePrompt')}</div>}
         {mode === 'edit' && (activeTool === 'move' || activeTool === 'copy') && (activeTool === 'move' ? move.phase : copy.phase) !== 'distance' && (
           <div className="tool-prompt" role="status">{t((activeTool === 'move' ? move.phase : copy.phase) === 'waitingBase' ? 'basePoint' : 'destinationPoint')}</div>
         )}
@@ -752,6 +791,10 @@ export function DrawingViewport({ store, tools, projectSettings, layers, activeL
             onChange={(value) => tools.circle.updateValue(value, lineStyle)}
             onModeChange={(inputMode) => tools.circle.setInputMode(inputMode, lineStyle)}
             onBack={() => tools.circle.back()} onConfirm={confirmCircle} />
+        )}
+        {mode === 'edit' && polygon.phase === 'parameters' && (
+          <PolygonInput sides={polygon.sidesInput} radius={polygon.radiusInput} canConfirm={polygon.canConfirm} position={polygonInputPosition}
+            onChange={(sides, radius) => tools.polygon.updateParameters(sides, radius, lineStyle)} onBack={() => tools.polygon.back()} onConfirm={confirmPolygon} />
         )}
         {mode === 'edit' && line.phase === 'length' && (
           <LengthInput

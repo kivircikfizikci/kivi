@@ -30,6 +30,8 @@
   --viewport-highlight: rgb(255 255 255 / 45%);
   --grabber: #aeb9b4;
   --local-indicator: #9ebf6a;
+  --measure-color: #46685c;
+  --measure-surface: rgb(248 250 244 / 94%);
   --danger: #a34444;
   --shadow-soft: 0 8px 28px rgb(25 29 34 / 10%);
   --shadow-panel: 0 -12px 40px rgb(25 29 34 / 14%);
@@ -75,6 +77,8 @@
   --viewport-highlight: rgb(255 255 255 / 5%);
   --grabber: #6f8079;
   --local-indicator: #86ad48;
+  --measure-color: #c7dda2;
+  --measure-surface: rgb(25 29 34 / 94%);
   --danger: #f08b8b;
   --shadow-soft: 0 8px 28px rgb(0 0 0 / 28%);
   --shadow-panel: 0 -12px 40px rgb(0 0 0 / 38%);
