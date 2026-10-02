@@ -260,6 +260,43 @@
   stroke-width: 1.6;
 }
 
+.measure-highlight {
+  fill: none;
+  stroke: color-mix(in srgb, var(--measure-color) 68%, transparent);
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.measure-highlight.is-primary {
+  stroke: var(--measure-color);
+  stroke-width: 5;
+  filter: drop-shadow(0 0 3px color-mix(in srgb, var(--measure-color) 45%, transparent));
+}
+
+.measure-inspection-anchor {
+  fill: var(--measure-color);
+  stroke: var(--measure-surface);
+  stroke-width: 1.5;
+}
+
+.measure-angle-label {
+  fill: var(--measure-color);
+  stroke: var(--measure-surface);
+  stroke-width: 3px;
+  paint-order: stroke fill;
+  font-size: 12px;
+  font-weight: 700;
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+
+.measure-angle-arc.secondary,
+.measure-angle-label.secondary {
+  opacity: .78;
+}
+
 .measure-card {
   display: grid;
   gap: 3px;

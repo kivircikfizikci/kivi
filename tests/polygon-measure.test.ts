@@ -6,7 +6,7 @@ import type { RectangleEntity } from '../src/drawing/entities/RectangleEntity.ts
 import type { CircleEntity } from '../src/drawing/entities/CircleEntity.ts'
 import type { ArcEntity } from '../src/drawing/entities/ArcEntity.ts'
 import { getPolygonVertices, pointNearPolygonEdge, polygonBounds, polygonInteriorAngle, polygonPerimeter, polygonSideLength } from '../src/drawing/geometry/polygon.ts'
-import { angleBetweenVectors, entityMeasureValues, formatMeasureAngle, getEntityMeasureSegments, intersectionAngleGeometry, pointMeasurement, supplementaryAngle } from '../src/drawing/geometry/measure.ts'
+import { angleBetweenVectors, entityMeasureValues, formatMeasureAngle, getEntityMeasureSegments, getMeasurePrimitives, inspectNearbyGeometry, intersectionAngleGeometry, pointMeasurement, supplementaryAngle } from '../src/drawing/geometry/measure.ts'
 import { SelectionManager } from '../src/drawing/selection/SelectionManager.ts'
 import { entitiesInSelectionBox, selectionBox } from '../src/drawing/selection/boxSelection.ts'
 import { SnapManager } from '../src/drawing/snap/SnapManager.ts'
@@ -19,7 +19,6 @@ import { createBuiltInLayers, entitiesOnSelectableLayers, entitiesOnVisibleLayer
 import { CURRENT_PROJECT_VERSION, type Project } from '../src/types/project.ts'
 import { defaultProjectSettings, defaultSyncMetadata, migrateProject } from '../src/project/projectMigrations.ts'
 import { PolygonTool } from '../src/tools/PolygonTool.ts'
-import { MeasureTool } from '../src/tools/MeasureTool.ts'
 import { ToolManager } from '../src/tools/ToolManager.ts'
 import { ProjectSession } from '../src/project/ProjectSession.ts'
 import { getCommandSuggestions, resolveCommand } from '../src/commands/commandRegistry.ts'
@@ -171,37 +170,94 @@ test('measurement formatting respects units and concise degree precision', () =>
   assert.equal(formatMeasureAngle(77.1234), '77.12°')
 })
 
-test('MeasureTool remains transient and clears without drawing, history, autosave or export changes', async () => {
-  const drawingProject = project([line('measured')])
+test('live Measure detects the nearest Line, Rectangle edge, Circle, Arc and Polygon edge', () => {
+  const rectangle: RectangleEntity = { id: 'rectangle', type: 'rectangle', origin: { x: 30, y: 0 }, width: 20, height: 10, rotation: 0, style, layerId: 'default' }
+  const circle: CircleEntity = { id: 'circle', type: 'circle', center: { x: 80, y: 0 }, radius: 10, style, layerId: 'default' }
+  const arc: ArcEntity = { id: 'arc', type: 'arc', center: { x: 120, y: 0 }, radius: 10, startAngle: 0, endAngle: 90, direction: 'ccw', style, layerId: 'default' }
+  const localPolygon = { ...polygon, id: 'polygon', center: { x: 160, y: 0 } }
+  const entities = [line('line'), rectangle, circle, arc, localPolygon]
+  assert.equal(inspectNearbyGeometry({ x: 5, y: 1 }, entities, 4, 30).candidates[0]?.primitive.entityId, 'line')
+  const rectangleResult = inspectNearbyGeometry({ x: 40, y: 1 }, entities, 4, 30).candidates[0]
+  assert.equal(rectangleResult?.primitive.entityId, 'rectangle'); assert.equal(rectangleResult?.primitive.kind, 'segment')
+  assert.equal(inspectNearbyGeometry({ x: 90, y: 1 }, entities, 4, 30).candidates[0]?.primitive.kind, 'circle')
+  assert.equal(inspectNearbyGeometry({ x: 130, y: 1 }, entities, 4, 30).candidates[0]?.primitive.kind, 'arc')
+  assert.equal(inspectNearbyGeometry({ x: 170, y: 1 }, entities, 4, 30).candidates[0]?.primitive.entityId, 'polygon')
+  assert.equal(getMeasurePrimitives(rectangle).length, 4)
+})
+
+test('live Measure search radius remains screen-pixel based across zoom levels', () => {
+  const target = line('screen-distance', { x: -10, y: 20 }, { x: 10, y: 20 })
+  assert.equal(inspectNearbyGeometry({ x: 0, y: 0 }, [target], 2, 50).candidates[0]?.primitive.entityId, target.id)
+  assert.equal(inspectNearbyGeometry({ x: 0, y: 0 }, [target], 3, 50).candidates.length, 0)
+})
+
+test('live Measure ranks two compatible segments and derives angle, supplement, parallel distance and line/rectangle relationships', () => {
+  const horizontal = line('horizontal', { x: -10, y: 0 }, { x: 10, y: 0 })
+  const diagonal = line('diagonal', { x: -10, y: -10 }, { x: 10, y: 10 })
+  const angleInspection = inspectNearbyGeometry({ x: 1, y: 0 }, [horizontal, diagonal], 5, 80)
+  assert.equal(angleInspection.candidates.length >= 2, true)
+  assert.equal(angleInspection.relationship?.kind, 'segment-angle')
+  if (angleInspection.relationship?.kind === 'segment-angle') {
+    assert.equal(Math.round(angleInspection.relationship.measurement.angle), 45)
+    assert.equal(Math.round(angleInspection.relationship.measurement.supplementary), 135)
+  }
+  const parallel = inspectNearbyGeometry({ x: 0, y: 2 }, [horizontal, line('parallel', { x: -10, y: 4 }, { x: 10, y: 4 })], 5, 80)
+  assert.equal(parallel.relationship?.kind, 'distance')
+  if (parallel.relationship?.kind === 'distance') { assert.equal(parallel.relationship.parallel, true); assert.equal(parallel.relationship.distance, 4) }
+  const rectangle: RectangleEntity = { id: 'rectangle', type: 'rectangle', origin: { x: 0, y: 0 }, width: 20, height: 10, rotation: 0, style, layerId: 'default' }
+  const crossing = line('crossing', { x: 10, y: -10 }, { x: 10, y: 20 })
+  const lineRectangle = inspectNearbyGeometry({ x: 10, y: 0 }, [crossing, rectangle], 5, 60)
+  assert.equal(lineRectangle.relationship?.kind, 'segment-angle')
+  if (lineRectangle.relationship?.kind === 'segment-angle') assert.equal(lineRectangle.relationship.measurement.angle, 90)
+})
+
+test('live Measure hysteresis keeps a nearly equal current candidate and releases it for a clearly closer one', () => {
+  const first = line('first', { x: -10, y: 0 }, { x: 10, y: 0 })
+  const second = line('second', { x: -10, y: 4 }, { x: 10, y: 4 })
+  const initial = inspectNearbyGeometry({ x: 0, y: 2.1 }, [first, second], 5, 80)
+  assert.equal(initial.candidates[0]?.primitive.entityId, 'second')
+  const stable = inspectNearbyGeometry({ x: 0, y: 1.9 }, [first, second], 5, 80, initial.candidates.map((candidate) => candidate.primitive.key))
+  assert.equal(stable.candidates[0]?.primitive.entityId, 'second')
+  const released = inspectNearbyGeometry({ x: 0, y: 0 }, [first, second], 5, 80, stable.candidates.map((candidate) => candidate.primitive.key))
+  assert.equal(released.candidates[0]?.primitive.entityId, 'first')
+})
+
+test('MeasureTool pointer and mobile tap anchors stay transient without changing selection, history, autosave or export', async () => {
+  const measured = line('measured')
+  const drawingProject = project([measured])
   let saves = 0
   const session = new ProjectSession(drawingProject, async () => { saves += 1 }, 1)
   const tools = new ToolManager()
+  tools.select.select(measured.id)
   tools.activate('measure')
-  tools.measure.selectEntity(drawingProject.drawing.entities[0]!, { x: 5, y: 0 })
-  assert.equal(tools.measure.getSnapshot().firstEntity?.entityId, 'measured')
-  tools.measure.selectEntity(line('second', { x: 0, y: 0 }, { x: 0, y: 10 }), { x: 0, y: 5 })
-  assert.equal(tools.measure.getSnapshot().secondEntity?.entityId, 'second')
-  tools.measure.clear()
-  tools.measure.selectPoint({ x: 0, y: 0 }, null)
-  tools.measure.selectPoint({ x: 3, y: 4 }, null)
-  assert.deepEqual(tools.measure.getSnapshot().secondPoint, { x: 3, y: 4 })
+  tools.measure.inspect({ x: 5, y: 1 }, drawingProject.drawing.entities, 2, 120, 'pointer')
+  assert.deepEqual(tools.measure.getSnapshot().inspection?.anchor, { x: 5, y: 1 })
+  assert.equal(tools.measure.getSnapshot().source, 'pointer')
+  assert.deepEqual([...tools.select.getSnapshot().selectedIds], [measured.id])
+  tools.measure.inspect({ x: 8, y: 2 }, drawingProject.drawing.entities, 2, 160, 'tap')
+  assert.deepEqual(tools.measure.getSnapshot().inspection?.anchor, { x: 8, y: 2 })
+  assert.equal(tools.measure.getSnapshot().source, 'tap')
   assert.equal(session.store.getSnapshot().state.entities.length, 1)
   assert.equal(session.store.getSnapshot().canUndo, false)
   await session.flush()
   assert.equal(saves, 0)
   assert.equal(createDrawingExportModel(drawingProject).strokes.length, 1)
   tools.activate('select')
-  assert.deepEqual(tools.measure.getSnapshot(), { phase: 'inactive', firstEntity: null, secondEntity: null, firstPoint: null, secondPoint: null, snap: null })
+  assert.deepEqual(tools.measure.getSnapshot(), { phase: 'inactive', inspection: null, source: null })
 })
 
-test('MeasureTool can compare two different edges of one rectangle or polygon', () => {
-  const rectangle: RectangleEntity = { id: 'rectangle-edges', type: 'rectangle', origin: { x: 0, y: 0 }, width: 20, height: 10, rotation: 0, style, layerId: 'default' }
-  const tool = new MeasureTool(); tool.activate()
-  tool.selectEntity(rectangle, { x: 10, y: 0 })
-  tool.selectEntity(rectangle, { x: 20, y: 5 })
-  assert.ok(tool.getSnapshot().firstEntity?.segment)
-  assert.ok(tool.getSnapshot().secondEntity?.segment)
-  assert.equal(intersectionAngleGeometry(tool.getSnapshot().firstEntity!.segment!, tool.getSnapshot().secondEntity!.segment!).angle, 90)
+test('Measure ignores hidden geometry and includes visible locked geometry', () => {
+  const hidden = { ...line('hidden'), layerId: 'hidden' }
+  const locked = { ...line('locked', { x: 0, y: 5 }, { x: 10, y: 5 }), layerId: 'locked' }
+  const layers = [
+    ...createBuiltInLayers(),
+    { id: 'hidden', name: 'Hidden', visible: false, locked: false },
+    { id: 'locked', name: 'Locked', visible: true, locked: true },
+  ]
+  const visible = entitiesOnVisibleLayers([hidden, locked], layers)
+  assert.deepEqual(visible.map((entity) => entity.id), ['locked'])
+  assert.equal(inspectNearbyGeometry({ x: 5, y: 5 }, visible, 2, 40).candidates[0]?.primitive.entityId, 'locked')
+  assert.deepEqual(inspectNearbyGeometry({ x: 5, y: 5 }, [], 2, 40).candidates, [])
 })
 
 test('polygon and measure commands resolve aliases and autocomplete prefixes', () => {

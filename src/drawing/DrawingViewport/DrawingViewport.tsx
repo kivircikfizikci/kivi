@@ -96,6 +96,9 @@ interface MarqueeGesture {
 
 interface TextResizeGesture { pointerId: number; original: TextEntity; corner: number }
 
+const MEASURE_DESKTOP_RADIUS_PX = 120
+const MEASURE_MOBILE_RADIUS_PX = 160
+
 export function DrawingViewport({ store, tools, projectSettings, layers, activeLayerId, initialCamera, onCameraSettled, mode = 'edit', onEnterFullscreen, onMoveSelection, onDeleteSelection }: DrawingViewportProps) {
   const { t } = useI18n()
   const { settings } = useSettings()
@@ -278,12 +281,7 @@ export function DrawingViewport({ store, tools, projectSettings, layers, activeL
     }
 
     if (activeTool === 'measure') {
-      const resolved = resolveSnap(screenPoint, pointerType, false)
-      const tolerance = pointerType === 'touch' ? SELECTION_TOLERANCE_TOUCH_PX : SELECTION_TOLERANCE_MOUSE_PX
-      const measurable = visibleEntities.filter((entity) => entity.type !== 'dimension' && entity.type !== 'text')
-      const entity = selectionManager.findEntity(worldPoint, measurable, camera.zoom, tolerance)
-      if (entity && (!resolved.snap || measure.firstEntity)) tools.measure.selectEntity(entity, worldPoint)
-      else tools.measure.selectPoint(resolved.point, resolved.snap)
+      tools.measure.inspect(worldPoint, visibleEntities, camera.zoom, pointerType === 'touch' ? MEASURE_MOBILE_RADIUS_PX : MEASURE_DESKTOP_RADIUS_PX, pointerType === 'touch' ? 'tap' : 'pointer')
       return
     }
 
@@ -392,7 +390,7 @@ export function DrawingViewport({ store, tools, projectSettings, layers, activeL
     const toggle = toggleSelection || (pointerType === 'touch' && selection.multiMode)
     if (entity && toggle) tools.select.toggleSelection(entity.id)
     else tools.select.select(entity?.id ?? null)
-  }, [activeLayerId, activeTool, beginTextEdit, camera, extendPlanAt, lineStyle, measure.firstEntity, mirror.phase, mode, offset.phase, offsetSource, resolveSnap, rotate.phase, scale.phase, selectableEntities, selection.multiMode, selectionManager, store, text.phase, textStyle, tools, transformSelectionValid, trimPlanAt, viewport, visibleEntities])
+  }, [activeLayerId, activeTool, beginTextEdit, camera, extendPlanAt, lineStyle, mirror.phase, mode, offset.phase, offsetSource, resolveSnap, rotate.phase, scale.phase, selectableEntities, selection.multiMode, selectionManager, store, text.phase, textStyle, tools, transformSelectionValid, trimPlanAt, viewport, visibleEntities])
 
   const onPointerDown = (event: ReactPointerEvent<SVGSVGElement>) => {
     const point = toScreenPoint(event)
@@ -497,9 +495,8 @@ export function DrawingViewport({ store, tools, projectSettings, layers, activeL
     } else if (mode === 'edit' && activeTool === 'polygon' && polygon.phase === 'placing') {
       const resolved = resolveSnap(point, event.pointerType)
       tools.polygon.updatePointer(resolved.point, resolved.snap, lineStyle)
-    } else if (mode === 'edit' && activeTool === 'measure') {
-      const resolved = resolveSnap(point, event.pointerType, false)
-      tools.measure.updatePointer(resolved.snap)
+    } else if (mode === 'edit' && activeTool === 'measure' && event.pointerType !== 'touch') {
+      tools.measure.inspect(screenToWorld(point, camera, viewport), visibleEntities, camera.zoom, MEASURE_DESKTOP_RADIUS_PX, 'pointer')
     } else if (mode === 'edit' && activeTool === 'move' && (move.phase === 'waitingBase' || move.phase === 'choosingDestination')) {
       const resolved = resolveSnap(point, event.pointerType)
       tools.move.updatePointer(resolved.point, resolved.snap)
@@ -785,7 +782,10 @@ export function DrawingViewport({ store, tools, projectSettings, layers, activeL
           onWheel={onWheel}
           onContextMenu={handleContextMenu}
           onDoubleClick={handleDoubleClick}
-          onPointerLeave={() => setCursorPoint(null)}
+          onPointerLeave={(event) => {
+            setCursorPoint(null)
+            if (activeTool === 'measure' && event.pointerType !== 'touch') tools.measure.clear()
+          }}
         >
           {projectSettings.gridEnabled && (
             <>
@@ -849,7 +849,7 @@ export function DrawingViewport({ store, tools, projectSettings, layers, activeL
             {mode === 'edit' && activeTool === 'circle' && <SnapIndicatorRenderer snap={circle.snap} camera={camera} viewport={viewport} />}
             {mode === 'edit' && activeTool === 'arc' && <SnapIndicatorRenderer snap={arc.snap} camera={camera} viewport={viewport} />}
             {mode === 'edit' && activeTool === 'polygon' && <SnapIndicatorRenderer snap={polygon.snap} camera={camera} viewport={viewport} />}
-            {mode === 'edit' && activeTool === 'measure' && <><MeasureOverlayRenderer snapshot={measure} entities={visibleEntities} camera={camera} viewport={viewport} settings={projectSettings} /><SnapIndicatorRenderer snap={measure.snap} camera={camera} viewport={viewport} /></>}
+            {mode === 'edit' && activeTool === 'measure' && <MeasureOverlayRenderer snapshot={measure} entities={visibleEntities} camera={camera} viewport={viewport} settings={projectSettings} />}
             {mode === 'edit' && transformPreview.length > 0 && <TransformPreviewRenderer entities={transformPreview} camera={camera} viewport={viewport} settings={projectSettings} />}
             {mode === 'edit' && activeTool === 'move' && <SnapIndicatorRenderer snap={move.snap} camera={camera} viewport={viewport} />}
             {mode === 'edit' && activeTool === 'copy' && <SnapIndicatorRenderer snap={copy.snap} camera={camera} viewport={viewport} />}
@@ -878,7 +878,7 @@ export function DrawingViewport({ store, tools, projectSettings, layers, activeL
           <button className="finish-tool-button" type="button" onClick={() => tools.finishActiveTool()}>{t('done')}</button>
         )}
         {mode === 'edit' && activeTool === 'polygon' && polygon.phase === 'placing' && <div className="tool-prompt" role="status">{t(polygon.center ? 'polygonRadius' : 'polygonCenter')}</div>}
-        {mode === 'edit' && activeTool === 'measure' && <div className="tool-prompt" role="status">{t(measure.firstPoint || measure.firstEntity ? 'measureSecondPoint' : 'measurePrompt')}</div>}
+        {mode === 'edit' && activeTool === 'measure' && <div className="tool-prompt" role="status">{t('measurePrompt')}</div>}
         {mode === 'edit' && activeTool === 'text' && text.phase === 'placing' && <div className="tool-prompt" role="status">{t('placeText')}</div>}
         {mode === 'edit' && (activeTool === 'move' || activeTool === 'copy') && (activeTool === 'move' ? move.phase : copy.phase) !== 'distance' && (
           <div className="tool-prompt" role="status">{t((activeTool === 'move' ? move.phase : copy.phase) === 'waitingBase' ? 'basePoint' : 'destinationPoint')}</div>

@@ -60,7 +60,7 @@ test('release notes, support and feedback are bilingual and honest about unavail
     const release = helpArticleForPath('/help/release-notes', locale)
     const sharing = helpArticleForPath('/help/export', locale)
     assert.ok(release.sections.length >= 5)
-    assert.match(release.sections[0]!.heading, /0\.1\.7/)
+    assert.match(release.sections[0]!.heading, /0\.1\.8/)
     assert.equal(sharing.sections.length, 3)
     assert.ok(helpUi[locale].unavailable.length > 20)
   }
