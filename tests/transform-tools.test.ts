@@ -173,7 +173,7 @@ test('move copy and repeat commands and aliases remain registry driven', () => {
 })
 
 test('desktop context menu exposes selection transform actions', () => {
-  assert.deepEqual(transformContextActions, ['move', 'copy', 'repeat', 'rotate', 'mirror'])
+  assert.deepEqual(transformContextActions, ['move', 'copy', 'repeat', 'rotate', 'mirror', 'scale'])
 })
 
 test('committed transformed state autosaves through ProjectSession', async () => {

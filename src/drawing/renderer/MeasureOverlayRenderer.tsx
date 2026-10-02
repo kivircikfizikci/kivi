@@ -81,7 +81,9 @@ function AngleArc({ center, first, second }: { center: Point; first: Point; seco
 function entityAnchor(entity: Entity, camera: Camera, viewport: ViewportSize) {
   if (entity.type === 'line') return midpoint(worldToScreen(entity.start, camera, viewport), worldToScreen(entity.end, camera, viewport))
   if (entity.type === 'dimension') return { x: viewport.width / 2, y: viewport.height / 2 }
-  return worldToScreen(entity.type === 'rectangle' ? entity.origin : entity.center, camera, viewport)
+  if (entity.type === 'rectangle') return worldToScreen(entity.origin, camera, viewport)
+  if (entity.type === 'text') return worldToScreen(entity.position, camera, viewport)
+  return worldToScreen(entity.center, camera, viewport)
 }
 function midpoint(a: Point, b: Point) { return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 } }
 function formatSignedLength(value: number, settings: ProjectSettings) { const formatted = formatDimension(Math.abs(value), settings); return `${value < 0 ? '−' : '+'}${formatted}` }

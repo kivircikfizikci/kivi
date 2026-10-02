@@ -25,12 +25,13 @@ export function migrateProject(value: unknown): Project {
     }
   }
 
-  if ((value.version === 4 || value.version === 5) && isDrawingState(value.drawing) && isProjectSettings(value.projectSettings) && isLayers(value.layers)) {
+  if ((value.version === 4 || value.version === 5 || value.version === 6) && isDrawingState(value.drawing) && isProjectSettings(value.projectSettings) && isLayers(value.layers)) {
     const project = value as unknown as Omit<Project, 'version' | 'drawing'> & { drawing: DrawingState }
     return {
       ...project,
       version: CURRENT_PROJECT_VERSION,
       drawing: { version: 1, entities: migrateRectangleRotation(project.drawing.entities) },
+      projectSettings: { ...defaultProjectSettings(), ...project.projectSettings },
       activeLayerId: resolveActiveLayer(project.layers, project.activeLayerId),
       view: isProjectView(project.view) ? project.view : { camera: structuredClone(DEFAULT_CAMERA) },
       sync: { ...defaultSyncMetadata(), ...(isRecord(project.sync) ? project.sync : {}) },
@@ -43,6 +44,7 @@ export function migrateProject(value: unknown): Project {
       ...project,
       version: CURRENT_PROJECT_VERSION,
       drawing: { version: 1, entities: migrateRectangleRotation(migrateDimensionSources(project.drawing.entities)) },
+      projectSettings: { ...defaultProjectSettings(), ...project.projectSettings },
       activeLayerId: resolveActiveLayer(project.layers, project.activeLayerId),
       view: isProjectView(project.view) ? project.view : { camera: structuredClone(DEFAULT_CAMERA) },
       sync: { ...defaultSyncMetadata(), ...(isRecord(project.sync) ? project.sync : {}) },
@@ -110,6 +112,9 @@ export function defaultProjectSettings(): ProjectSettings {
     dimensionColor: '#315c4c',
     lineColor: '#2f4940',
     lineWidth: 2,
+    textFontFamily: 'Arial',
+    textFontSize: 16,
+    textColor: '#2f4940',
   }
 }
 

@@ -6,6 +6,7 @@ import { buildDimensionGeometry, resolveDimensionSegment } from '../geometry/dim
 import { rectangleEdges } from '../geometry/rectangle.ts'
 import { angleFromCenter, angleIsOnArc } from '../geometry/arc.ts'
 import { polygonEdges } from '../geometry/polygon.ts'
+import { pointInTextBox } from '../geometry/text.ts'
 
 export const SELECTION_TOLERANCE_MOUSE_PX = 8
 export const SELECTION_TOLERANCE_TOUCH_PX = 16
@@ -58,8 +59,10 @@ export class SelectionManager {
         distancePixels = angleIsOnArc(angleFromCenter(entity.center, pointer), entity, angularTolerance)
           ? radialDistance
           : Number.POSITIVE_INFINITY
-      } else {
+      } else if (entity.type === 'polygon') {
         distancePixels = Math.min(...polygonEdges(entity).map((edge) => Math.sqrt(projectPointToSegment(pointer, edge.start, edge.end).distanceSquared) * zoom))
+      } else {
+        distancePixels = pointInTextBox(pointer, entity, tolerancePixels / zoom) ? 0 : Number.POSITIVE_INFINITY
       }
       if (distancePixels <= tolerancePixels && distancePixels <= bestDistance) {
         selected = entity

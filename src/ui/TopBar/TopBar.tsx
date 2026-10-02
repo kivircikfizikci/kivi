@@ -21,7 +21,7 @@ export function TopBar(props: TopBarProps) {
   const [openGroup, setOpenGroup] = useState<string | null>(null)
   const [mobileMenu, setMobileMenu] = useState<'account' | 'more' | null>(null)
   useEscapeKey(() => { setOpenGroup(null); setMobileMenu(null) }, openGroup !== null || mobileMenu !== null)
-  const disabled = (tool: ToolId) => ['move', 'copy', 'repeat', 'rotate', 'mirror'].includes(tool) && !props.canTransform
+  const disabled = (tool: ToolId) => ['move', 'copy', 'repeat', 'rotate', 'mirror', 'scale'].includes(tool) && !props.canTransform
   const runShortcut = (shortcut: ToolbarShortcut) => props.tools.activate(shortcut)
   const closeMobileMenus = () => setMobileMenu(null)
 

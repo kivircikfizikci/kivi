@@ -281,6 +281,19 @@
 .measure-card span { opacity: .76; }
 .measure-card strong { font-variant-numeric: tabular-nums; }
 
+.text-selection-frame {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1;
+  stroke-dasharray: 4 3;
+}
+
+.text-resize-handle {
+  fill: var(--surface);
+  stroke: var(--accent);
+  stroke-width: 1.5;
+}
+
 .extend-endpoint-preview {
   fill: var(--accent-soft);
   stroke: var(--accent);

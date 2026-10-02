@@ -3,7 +3,7 @@ import type { ToolId } from '../tools/Tool.ts'
 
 export type AppTheme = 'light' | 'dark'
 
-export const toolbarShortcutIds = ['select', 'line', 'rectangle', 'circle', 'arc', 'polygon', 'dimension', 'measure', 'move', 'copy', 'repeat', 'rotate', 'mirror', 'offset', 'trim', 'extend'] as const satisfies readonly ToolId[]
+export const toolbarShortcutIds = ['select', 'line', 'rectangle', 'circle', 'arc', 'polygon', 'text', 'dimension', 'measure', 'move', 'copy', 'repeat', 'rotate', 'mirror', 'scale', 'offset', 'trim', 'extend'] as const satisfies readonly ToolId[]
 export type ToolbarShortcut = ToolId
 export const MAX_MOBILE_TOOLBAR_SHORTCUTS = 3
 export const MAX_DESKTOP_TOOLBAR_SHORTCUTS = 5
@@ -39,6 +39,9 @@ export interface AppSettings {
   gridSpacing: number
   defaultLineColor: string
   defaultLineWidth: number
+  defaultTextFontFamily: string
+  defaultTextFontSize: number
+  defaultTextColor: string
   defaultDimensionColor: string
   defaultDimensionDisplayUnit: 'cm' | 'mm'
   defaultShowDimensionUnit: boolean
@@ -63,6 +66,9 @@ export const defaultSettings: AppSettings = {
   gridSpacing: 10,
   defaultLineColor: '#2f4940',
   defaultLineWidth: 2,
+  defaultTextFontFamily: 'Arial',
+  defaultTextFontSize: 16,
+  defaultTextColor: '#2f4940',
   defaultDimensionColor: '#315c4c',
   defaultDimensionDisplayUnit: 'cm',
   defaultShowDimensionUnit: false,

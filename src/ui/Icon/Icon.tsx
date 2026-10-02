@@ -1,6 +1,6 @@
 import type { SVGProps } from 'react'
 
-export type IconName = 'settings' | 'help' | 'account' | 'more' | 'upload' | 'layers' | 'expand' | 'collapse' | 'close' | 'folder' | 'chevronLeft' | 'chevronUp' | 'chevronDown' | 'line' | 'rectangle' | 'circle' | 'arc' | 'polygon' | 'measure' | 'multi' | 'cursor' | 'undo' | 'redo' | 'trash' | 'plus' | 'edit' | 'dimension' | 'menu' | 'tools' | 'share' | 'image' | 'file' | 'link' | 'eye' | 'eyeOff' | 'lock' | 'unlock' | 'endpoint' | 'midpoint' | 'gridSnap' | 'angleSnap' | 'move' | 'copy' | 'repeat' | 'rotate' | 'mirror' | 'offset' | 'trim' | 'extend'
+export type IconName = 'settings' | 'help' | 'account' | 'more' | 'upload' | 'layers' | 'expand' | 'collapse' | 'close' | 'folder' | 'chevronLeft' | 'chevronUp' | 'chevronDown' | 'line' | 'rectangle' | 'circle' | 'arc' | 'polygon' | 'text' | 'measure' | 'multi' | 'cursor' | 'undo' | 'redo' | 'trash' | 'plus' | 'edit' | 'dimension' | 'menu' | 'tools' | 'share' | 'image' | 'file' | 'link' | 'eye' | 'eyeOff' | 'lock' | 'unlock' | 'endpoint' | 'midpoint' | 'gridSnap' | 'angleSnap' | 'move' | 'copy' | 'repeat' | 'rotate' | 'mirror' | 'scale' | 'offset' | 'trim' | 'extend'
 
 const paths: Record<IconName, React.ReactNode> = {
   settings: (
@@ -26,6 +26,7 @@ const paths: Record<IconName, React.ReactNode> = {
   circle: <circle cx="12" cy="12" r="8" />,
   arc: <path d="M5 17A10 10 0 0 1 19 7" />,
   polygon: <path d="m12 3 8.5 6.2-3.2 10H6.7l-3.2-10L12 3Z" />,
+  text: <path d="M5 5h14M12 5v14M8 19h8" />,
   measure: <><path d="M4 18 18 4" /><path d="m5 14 5 5m4-14 5 5M8 15l1.5-1.5m1.5 4L12.5 16m1.5-4 1.5-1.5" /></>,
   multi: <><rect x="4" y="4" width="10" height="10" /><rect x="10" y="10" width="10" height="10" /></>,
   cursor: <path d="m5 3 14 9-7 1-3 7L5 3Z" />,
@@ -54,6 +55,7 @@ const paths: Record<IconName, React.ReactNode> = {
   repeat: <><path d="M17 3l4 4-4 4M21 7H9a5 5 0 0 0-5 5M7 21l-4-4 4-4M3 17h12a5 5 0 0 0 5-5" /></>,
   rotate: <><path d="M20 7v5h-5" /><path d="M19 12a7 7 0 1 0-2 5" /></>,
   mirror: <><path d="M12 3v18" strokeDasharray="2 2" /><path d="m4 17 5-10v10H4Zm16 0L15 7v10h5Z" /></>,
+  scale: <><path d="M5 19 19 5M11 5h8v8M13 19H5v-8" /></>,
   offset: <><path d="M4 17 17 4M8 21 21 8" /><path d="m4 12 8-8m0 16 8-8" strokeDasharray="2 3" /></>,
   trim: <><path d="M4 18 18 4M10 12l8 8" /><circle cx="8" cy="14" r="2" /><circle cx="14" cy="8" r="2" /></>,
   extend: <><path d="M4 17 12 9" /><path d="M12 9h8M12 9v8" strokeDasharray="2 2" /><path d="m17 6 3 3-3 3" /></>,

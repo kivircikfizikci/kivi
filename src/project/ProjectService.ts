@@ -95,6 +95,9 @@ export function projectSettingsFromDefaults(defaults: AppSettings): ProjectSetti
     dimensionColor: defaults.defaultDimensionColor,
     lineColor: defaults.defaultLineColor,
     lineWidth: defaults.defaultLineWidth,
+    textFontFamily: defaults.defaultTextFontFamily,
+    textFontSize: defaults.defaultTextFontSize,
+    textColor: defaults.defaultTextColor,
   }
 }
 

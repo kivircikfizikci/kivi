@@ -4,6 +4,7 @@ import type { RectangleEntity } from '../drawing/entities/RectangleEntity.ts'
 import type { CircleEntity } from '../drawing/entities/CircleEntity.ts'
 import type { ArcEntity } from '../drawing/entities/ArcEntity.ts'
 import type { PolygonEntity } from '../drawing/entities/PolygonEntity.ts'
+import type { TextEntity } from '../drawing/entities/TextEntity.ts'
 import type { Entity } from '../drawing/entities/Entity.ts'
 import { EMPTY_DRAWING_STATE, type DrawingState } from './DrawingState.ts'
 import { HistoryManager } from './HistoryManager.ts'
@@ -55,6 +56,8 @@ export class DrawingStore {
 
   addPolygon(polygon: PolygonEntity, layerId?: string) { return this.addEntity(layerId ? { ...polygon, layerId } : polygon) }
 
+  addText(text: TextEntity, layerId?: string) { return this.addEntity(layerId ? { ...text, layerId } : text) }
+
   addEntity(entity: Entity) {
     if (this.readOnly) return false
     this.commit({ ...this.state, entities: [...this.state.entities, entity] })
@@ -99,7 +102,7 @@ export class DrawingStore {
     if (this.readOnly) return false
     let changed = false
     const entities = this.state.entities.map((entity) => {
-      if (entity.type === 'dimension' || entity.style.color === color) return entity
+      if (entity.type === 'dimension' || entity.type === 'text' || entity.style.color === color) return entity
       changed = true
       return { ...entity, style: { ...entity.style, color } }
     })

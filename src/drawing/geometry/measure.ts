@@ -85,6 +85,7 @@ export function entityMeasureValues(entity: Entity): MeasureValue[] {
     { label: 'radius', value: entity.radius, kind: 'length' },
     { label: 'interiorAngle', value: polygonInteriorAngle(entity.sides), kind: 'angle' },
   ]
+  if (entity.type === 'text') return []
   return []
 }
 

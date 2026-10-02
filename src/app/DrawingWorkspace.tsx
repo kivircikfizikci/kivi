@@ -60,7 +60,7 @@ export function DrawingWorkspace({ project, mode = 'edit' }: { project: Project;
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null
-      const isEditing = target?.tagName === 'INPUT' || target?.tagName === 'SELECT' || target?.isContentEditable
+      const isEditing = target?.tagName === 'INPUT' || target?.tagName === 'SELECT' || target?.tagName === 'TEXTAREA' || target?.isContentEditable
 
       if (event.key === 'Escape') {
         if (settingsOpen) setSettingsOpen(false)
@@ -100,7 +100,7 @@ export function DrawingWorkspace({ project, mode = 'edit' }: { project: Project;
 
   const commandContext = useMemo<CommandContext>(() => ({
     activateTool: (tool) => {
-      if ((tool === 'move' || tool === 'copy' || tool === 'repeat') && !canTransform) return
+      if ((tool === 'move' || tool === 'copy' || tool === 'repeat' || tool === 'rotate' || tool === 'mirror' || tool === 'scale') && !canTransform) return
       tools.activate(tool)
     },
     deleteSelection,

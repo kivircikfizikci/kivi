@@ -40,12 +40,12 @@ test('editor layout keeps history centered, global actions right, and all tools 
   assert.deepEqual(editorPrimaryLayout.right, ['share', 'layers', 'settings', 'help', 'account'])
   assert.deepEqual(editorToolGroups.map((group) => group.id), ['draw', 'dimensionTools', 'modify'])
   const tools = editorToolGroups.flatMap((group) => group.tools.map((tool) => tool.id))
-  assert.deepEqual(tools, ['line', 'rectangle', 'circle', 'arc', 'polygon', 'dimension', 'measure', 'select', 'move', 'copy', 'repeat', 'rotate', 'mirror', 'offset', 'trim', 'extend'])
+  assert.deepEqual(tools, ['line', 'rectangle', 'circle', 'arc', 'polygon', 'text', 'dimension', 'measure', 'select', 'move', 'copy', 'repeat', 'rotate', 'mirror', 'scale', 'offset', 'trim', 'extend'])
   assert.deepEqual(editorModifyActions, [{ id: 'delete', icon: 'trash' }])
 })
 
 test('settings use requested tabs and responsive presentation', () => {
-  assert.deepEqual(settingsTabs, ['preferences', 'shortcuts', 'canvas', 'dimensions', 'snap'])
+  assert.deepEqual(settingsTabs, ['preferences', 'shortcuts', 'canvas', 'textSettings', 'dimensions', 'snap'])
   assert.equal(settingsPresentationForWidth(390), 'fullscreen')
   assert.equal(settingsPresentationForWidth(1200), 'modal')
 })
@@ -74,6 +74,8 @@ test('precision crosshair is limited to drawing and measurement workflows', () =
   assert.equal(precisionCrosshairTools.has('dimension'), true)
   assert.equal(precisionCrosshairTools.has('polygon'), true)
   assert.equal(precisionCrosshairTools.has('measure'), true)
+  assert.equal(precisionCrosshairTools.has('text'), true)
+  assert.equal(precisionCrosshairTools.has('scale'), true)
   assert.equal(precisionCrosshairTools.has('select'), false)
   assert.equal(precisionCrosshairTools.has('move'), false)
 })

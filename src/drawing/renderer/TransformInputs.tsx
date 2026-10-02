@@ -43,3 +43,12 @@ export function MirrorInput({ keepOriginal, ready, position, onKeepOriginalChang
     <div className="length-actions"><button type="button" className="secondary-button" disabled={!ready} onClick={onBack}>{t('back')}</button><button type="submit" className="primary-button" disabled={!ready}>{t('confirm')}</button></div>
   </form>
 }
+
+export function ScaleInput({ value, valid, position, onChange, onBack, onConfirm }: { value: string; valid: boolean; position?: Point; onChange: (value: string) => void; onBack: () => void; onConfirm: () => void }) {
+  const { t } = useI18n(); const ref = useRef<HTMLInputElement>(null)
+  useEffect(() => { ref.current?.focus(); ref.current?.select() }, [])
+  return <form className="length-input transform-input" style={position ? { '--length-input-x': `${position.x}px`, '--length-input-y': `${position.y}px` } as CSSProperties : undefined} onSubmit={(event) => { event.preventDefault(); if (valid) onConfirm() }}>
+    <label htmlFor="scale-factor">{t('scaleFactor')}</label><div className="length-field"><input ref={ref} id="scale-factor" inputMode="decimal" value={value} onChange={(event) => onChange(event.target.value)} /><span>×</span></div>
+    <div className="length-actions"><button type="button" className="secondary-button" onClick={onBack}>{t('back')}</button><button type="submit" className="primary-button" disabled={!valid}>{t('confirm')}</button></div>
+  </form>
+}

@@ -1,7 +1,7 @@
 import type { Camera } from '../drawing/camera/Camera.ts'
 import type { DrawingState } from '../project/DrawingState.ts'
 
-export const CURRENT_PROJECT_VERSION = 6 as const
+export const CURRENT_PROJECT_VERSION = 7 as const
 
 export interface Layer {
   id: string
@@ -28,6 +28,9 @@ export interface ProjectSettings {
   dimensionColor: string
   lineColor: string
   lineWidth: number
+  textFontFamily: string
+  textFontSize: number
+  textColor: string
 }
 
 export interface ProjectView {

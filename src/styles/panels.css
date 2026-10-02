@@ -889,6 +889,43 @@ button.tool-tile {
   background: var(--accent-soft);
 }
 
+.text-editor {
+  width: min(340px, calc(100vw - 24px));
+  gap: 8px;
+}
+
+.text-editor textarea {
+  min-height: 72px;
+  resize: vertical;
+}
+
+.text-editor-grid {
+  display: grid;
+  grid-template-columns: 1fr 90px;
+  gap: 7px;
+}
+
+.text-editor-grid label { display: grid; gap: 3px; font-size: 11px; }
+.text-editor-grid label:last-child { grid-column: 1 / -1; }
+.text-color-input { display: grid; grid-template-columns: 40px 1fr; gap: 6px; }
+.text-format-controls { display: flex; gap: 5px; }
+.text-format-controls button { min-width: 34px; min-height: 34px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface-soft); }
+.text-format-controls button.is-active { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
+
+@media (max-width: 699px) {
+  .text-editor {
+    position: absolute;
+    right: 8px;
+    bottom: 8px;
+    left: 8px;
+    width: auto;
+    max-height: min(54dvh, 420px);
+    overflow: auto;
+  }
+
+  .text-resize-handle { stroke-width: 2; }
+}
+
 .settings-section-label {
   width: 100%;
   margin-bottom: 2px;

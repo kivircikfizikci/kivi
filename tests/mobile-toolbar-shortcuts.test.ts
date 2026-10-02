@@ -20,6 +20,7 @@ test('desktop toolbar shortcuts accept every drawing tool and exclude fixed hist
   assert.deepEqual(normalizeDesktopToolbarShortcuts(['line', 'dimension', 'rotate', 'offset', 'extend', 'arc']), ['line', 'dimension', 'rotate', 'offset', 'extend'])
   assert.deepEqual(normalizeDesktopToolbarShortcuts(['undo', 'redo']), ['select', 'move', 'copy'])
   assert.deepEqual(normalizeDesktopToolbarShortcuts(['polygon', 'measure']), ['polygon', 'measure'])
+  assert.deepEqual(normalizeDesktopToolbarShortcuts(['text', 'scale']), ['text', 'scale'])
 })
 
 test('mobile toolbar shortcut selection can remove, append, and enforce its limit', () => {

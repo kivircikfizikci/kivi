@@ -16,6 +16,7 @@ export function ToolsMenu({ tools, activeTool, canTransform }: { tools: ToolMana
     ['circle', 'circle', 'circle'],
     ['arc', 'arc', 'arc'],
     ['polygon', 'polygon', 'polygon'],
+    ['text', 'text', 'text'],
     ['dimension', 'dimension', 'dimension'],
     ['measure', 'measure', 'measure'],
     ['select', 'cursor', 'select'],
@@ -24,6 +25,7 @@ export function ToolsMenu({ tools, activeTool, canTransform }: { tools: ToolMana
     ['repeat', 'repeat', 'repeat'],
     ['rotate', 'rotate', 'rotate'],
     ['mirror', 'mirror', 'mirror'],
+    ['scale', 'scale', 'scale'],
     ['offset', 'offset', 'offset'],
     ['trim', 'trim', 'trim'],
     ['extend', 'extend', 'extend'],
@@ -39,7 +41,7 @@ export function ToolsMenu({ tools, activeTool, canTransform }: { tools: ToolMana
       {open && <button className="popover-dismiss" type="button" onClick={() => setOpen(false)} aria-label={t('close')} />}
       <div className={`compact-popover tools-popover${open ? ' is-open' : ''}`} aria-hidden={!open}>
         {items.map(([tool, icon, label]) => (
-          <button className={activeTool === tool ? 'is-active' : ''} type="button" key={tool} disabled={['move', 'copy', 'repeat', 'rotate', 'mirror'].includes(tool) && !canTransform} onClick={() => activateToolFromMenu(tools, tool, () => setOpen(false))}>
+          <button className={activeTool === tool ? 'is-active' : ''} type="button" key={tool} disabled={['move', 'copy', 'repeat', 'rotate', 'mirror', 'scale'].includes(tool) && !canTransform} onClick={() => activateToolFromMenu(tools, tool, () => setOpen(false))}>
             <Icon name={icon} /><span>{t(label)}</span>
           </button>
         ))}

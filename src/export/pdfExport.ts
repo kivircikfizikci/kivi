@@ -58,8 +58,33 @@ export function createDrawingPdf(model: DrawingExportModel) {
       'ET',
     )
   }
+  for (const item of model.texts) appendText(commands, item, x, y, scale)
 
   return assemblePdf(page.width, page.height, commands.join('\n'))
+}
+
+function appendText(commands: string[], item: DrawingExportModel['texts'][number], x: (value: number) => number, y: (value: number) => number, scale: number) {
+  const radians = item.rotation * Math.PI / 180
+  const cosine = Math.cos(radians)
+  const sine = Math.sin(radians)
+  const font = item.style.fontWeight >= 600 ? (item.style.italic ? 'F4' : 'F2') : (item.style.italic ? 'F3' : 'F1')
+  const size = Math.max(1, item.style.fontSize * scale)
+  for (const line of item.lines) {
+    const localX = item.style.textAlign === 'center' ? -estimateHelveticaWidth(line.text, size) / 2 : item.style.textAlign === 'right' ? -estimateHelveticaWidth(line.text, size) : 0
+    const anchorX = x(item.position.x) + (line.x * cosine + line.y * sine) * scale + localX
+    const anchorY = y(item.position.y) + (line.x * sine - line.y * cosine) * scale
+    commands.push('BT', `/${font} ${n(size)} Tf`, `${rgb(item.style.color)} rg`, '0 Tr', `${n(cosine)} ${n(sine)} ${n(-sine)} ${n(cosine)} ${n(anchorX)} ${n(anchorY)} Tm`, `(${escapePdf(line.text)}) Tj`, 'ET')
+    const width = estimateHelveticaWidth(line.text, size)
+    const appendDecoration = (offset: number) => {
+      const startX = anchorX - sine * offset
+      const startY = anchorY + cosine * offset
+      const endX = startX + cosine * width
+      const endY = startY + sine * width
+      commands.push(`${rgb(item.style.color)} RG`, `${n(Math.max(.5, size / 14))} w`, `${n(startX)} ${n(startY)} m ${n(endX)} ${n(endY)} l S`)
+    }
+    if (item.style.underline) appendDecoration(-size * .12)
+    if (item.style.strikeThrough) appendDecoration(size * .3)
+  }
 }
 
 function appendCircle(commands: string[], centerX: number, centerY: number, radius: number, color: string, width: number) {
@@ -95,8 +120,11 @@ function assemblePdf(width: number, height: number, content: string) {
   const objects = [
     '<< /Type /Catalog /Pages 2 0 R >>',
     '<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
-    `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${n(width)} ${n(height)}] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>`,
+    `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${n(width)} ${n(height)}] /Resources << /Font << /F1 4 0 R /F2 5 0 R /F3 6 0 R /F4 7 0 R >> >> /Contents 8 0 R >>`,
     '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>',
+    '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>',
+    '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Oblique >>',
+    '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-BoldOblique >>',
     `<< /Length ${new TextEncoder().encode(content).length} >>\nstream\n${content}\nendstream`,
   ]
   let pdf = '%PDF-1.4\n'

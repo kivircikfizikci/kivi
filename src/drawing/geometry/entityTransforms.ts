@@ -19,6 +19,7 @@ export function translateEntity(entity: Entity, delta: Delta): Entity {
     case 'circle': return { ...entity, center: translatePoint(entity.center, delta), style: { ...entity.style } }
     case 'arc': return { ...entity, center: translatePoint(entity.center, delta), style: { ...entity.style } }
     case 'polygon': return { ...entity, center: translatePoint(entity.center, delta), style: { ...entity.style } }
+    case 'text': return { ...entity, position: translatePoint(entity.position, delta), box: { ...entity.box }, style: { ...entity.style } }
     case 'dimension': return entity.source.type === 'points'
       ? { ...entity, source: { type: 'points', start: translatePoint(entity.source.start, delta), end: translatePoint(entity.source.end, delta) }, style: { ...entity.style } }
       : { ...entity, source: { ...entity.source }, style: { ...entity.style } }
@@ -42,6 +43,7 @@ export function rotateEntity(entity: Entity, pivot: Point, angle: number): Entit
     case 'circle': return { ...entity, center: rotatePoint(entity.center, pivot, angle), style: { ...entity.style } }
     case 'arc': return { ...entity, center: rotatePoint(entity.center, pivot, angle), startAngle: normalizeDegrees(entity.startAngle + angle), endAngle: normalizeDegrees(entity.endAngle + angle), style: { ...entity.style } }
     case 'polygon': return { ...entity, center: rotatePoint(entity.center, pivot, angle), rotation: normalizeDegrees(entity.rotation + angle), style: { ...entity.style } }
+    case 'text': return { ...entity, position: rotatePoint(entity.position, pivot, angle), box: { ...entity.box }, rotation: normalizeDegrees(entity.rotation + angle), style: { ...entity.style } }
     case 'dimension': return entity.source.type === 'points'
       ? { ...entity, source: { type: 'points', start: rotatePoint(entity.source.start, pivot, angle), end: rotatePoint(entity.source.end, pivot, angle) }, style: { ...entity.style } }
       : { ...entity, source: { ...entity.source }, style: { ...entity.style } }
@@ -85,6 +87,11 @@ export function mirrorEntity(entity: Entity, axisA: Point, axisB: Point): Entity
       const center = mirrorPointAcrossLine(entity.center, axisA, axisB)
       const firstVertex = mirrorPointAcrossLine(getPolygonVertices(entity)[0]!, axisA, axisB)
       return { ...entity, center, rotation: normalizeDegrees(Math.atan2(firstVertex.y - center.y, firstVertex.x - center.x) * 180 / Math.PI), style: { ...entity.style } }
+    }
+    case 'text': {
+      const position = mirrorPointAcrossLine(entity.position, axisA, axisB)
+      const direction = mirrorPointAcrossLine({ x: entity.position.x + Math.cos(entity.rotation * Math.PI / 180), y: entity.position.y + Math.sin(entity.rotation * Math.PI / 180) }, axisA, axisB)
+      return { ...entity, position, box: { ...entity.box }, rotation: normalizeDegrees(Math.atan2(direction.y - position.y, direction.x - position.x) * 180 / Math.PI), style: { ...entity.style } }
     }
     case 'dimension': return entity.source.type === 'points'
       ? { ...entity, source: { type: 'points', start: mirrorPointAcrossLine(entity.source.start, axisA, axisB), end: mirrorPointAcrossLine(entity.source.end, axisA, axisB) }, side: entity.side === 1 ? -1 : 1, style: { ...entity.style } }
@@ -135,7 +142,26 @@ function entityReferencePoints(entity: Entity): Point[] {
     case 'circle':
     case 'arc':
     case 'polygon': return [entity.center]
+    case 'text': return [entity.position]
     case 'dimension': return entity.source.type === 'points' ? [entity.source.start, entity.source.end] : []
+  }
+}
+
+export function scalePoint(point: Point, pivot: Point, factor: number): Point {
+  return { x: pivot.x + (point.x - pivot.x) * factor, y: pivot.y + (point.y - pivot.y) * factor }
+}
+
+export function scaleEntity(entity: Entity, pivot: Point, factor: number): Entity {
+  switch (entity.type) {
+    case 'line': return { ...entity, start: scalePoint(entity.start, pivot, factor), end: scalePoint(entity.end, pivot, factor), style: { ...entity.style } }
+    case 'rectangle': return { ...entity, origin: scalePoint(entity.origin, pivot, factor), width: entity.width * factor, height: entity.height * factor, style: { ...entity.style } }
+    case 'circle': return { ...entity, center: scalePoint(entity.center, pivot, factor), radius: entity.radius * factor, style: { ...entity.style } }
+    case 'arc': return { ...entity, center: scalePoint(entity.center, pivot, factor), radius: entity.radius * factor, style: { ...entity.style } }
+    case 'polygon': return { ...entity, center: scalePoint(entity.center, pivot, factor), radius: entity.radius * factor, style: { ...entity.style } }
+    case 'text': return { ...entity, position: scalePoint(entity.position, pivot, factor), box: { width: entity.box.width * factor, height: entity.box.height * factor }, style: { ...entity.style, fontSize: entity.style.fontSize * factor } }
+    case 'dimension': return entity.source.type === 'points'
+      ? { ...entity, source: { type: 'points', start: scalePoint(entity.source.start, pivot, factor), end: scalePoint(entity.source.end, pivot, factor) }, offset: entity.offset * factor, style: { ...entity.style } }
+      : { ...entity, source: { ...entity.source }, offset: entity.offset * factor, style: { ...entity.style } }
   }
 }
 

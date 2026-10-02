@@ -13,13 +13,13 @@ import {
   type HelpArticleId,
 } from '../src/help/helpContent.ts'
 
-const currentTools = ['line', 'rectangle', 'circle', 'arc', 'polygon', 'dimensions', 'measure', 'selection', 'layers', 'move', 'copy', 'repeat', 'rotate', 'mirror', 'offset', 'trim', 'extend'] as const satisfies readonly HelpArticleId[]
+const currentTools = ['line', 'rectangle', 'circle', 'arc', 'polygon', 'text', 'dimensions', 'measure', 'selection', 'layers', 'move', 'copy', 'repeat', 'rotate', 'mirror', 'scale', 'offset', 'trim', 'extend'] as const satisfies readonly HelpArticleId[]
 
 test('English and Turkish Help navigation have exact article and route parity', () => {
   const en = helpArticlesForLocale('en')
   const tr = helpArticlesForLocale('tr')
   assert.equal(en.length, tr.length)
-  assert.equal(en.length, 35)
+  assert.equal(en.length, 37)
   assert.deepEqual(en.map((item) => item.id), tr.map((item) => item.id))
   assert.deepEqual(en.map(helpPath), tr.map(helpPath))
   assert.deepEqual(validateHelpManifest(), [])
@@ -38,6 +38,7 @@ test('all current tool articles and logical nested routes resolve', () => {
   for (const id of currentTools) assert.equal(ids.has(id), true, `Missing Help article: ${id}`)
   assert.equal(helpArticleForPath('/help/drawing/rectangle').id, 'rectangle')
   assert.equal(helpArticleForPath('/help/drawing/polygon').id, 'polygon')
+  assert.equal(helpArticleForPath('/help/drawing/text').id, 'text')
   assert.equal(helpArticleForPath('/help/measure').id, 'measure')
   assert.equal(helpArticleForPath('/help/modify/mirror').id, 'mirror')
   assert.equal(helpArticleForPath('/help/export').id, 'export-sharing')
@@ -45,11 +46,13 @@ test('all current tool articles and logical nested routes resolve', () => {
 
 test('command Help is registry-driven and the registry contains every shipped command', () => {
   assert.equal(helpManifest.find((article) => article.id === 'commands')?.kind, 'commands')
-  assert.deepEqual(commandRegistry.map((command) => command.id), ['line', 'rectangle', 'circle', 'arc', 'polygon', 'dim', 'measure', 'delete', 'select', 'move', 'copy', 'repeat', 'rotate', 'mirror', 'offset', 'trim', 'extend', 'settings', 'layers', 'undo', 'redo', 'projects', 'fullscreen', 'share'])
+  assert.deepEqual(commandRegistry.map((command) => command.id), ['line', 'rectangle', 'circle', 'arc', 'polygon', 'text', 'dim', 'measure', 'delete', 'select', 'move', 'copy', 'repeat', 'rotate', 'mirror', 'scale', 'offset', 'trim', 'extend', 'settings', 'layers', 'undo', 'redo', 'projects', 'fullscreen', 'share'])
   assert.deepEqual(commandRegistry.find((command) => command.id === 'repeat')?.aliases, ['array', 'rep'])
   assert.deepEqual(commandRegistry.find((command) => command.id === 'dim')?.aliases, ['dimension', 'd'])
   assert.deepEqual(commandRegistry.find((command) => command.id === 'polygon')?.aliases, ['poly'])
   assert.deepEqual(commandRegistry.find((command) => command.id === 'measure')?.aliases, ['me'])
+  assert.deepEqual(commandRegistry.find((command) => command.id === 'text')?.aliases, ['txt'])
+  assert.deepEqual(commandRegistry.find((command) => command.id === 'scale')?.aliases, ['sc'])
 })
 
 test('release notes, support and feedback are bilingual and honest about unavailable services', () => {
@@ -57,7 +60,7 @@ test('release notes, support and feedback are bilingual and honest about unavail
     const release = helpArticleForPath('/help/release-notes', locale)
     const sharing = helpArticleForPath('/help/export', locale)
     assert.ok(release.sections.length >= 5)
-    assert.match(release.sections[0]!.heading, /0\.1\.6/)
+    assert.match(release.sections[0]!.heading, /0\.1\.7/)
     assert.equal(sharing.sections.length, 3)
     assert.ok(helpUi[locale].unavailable.length > 20)
   }

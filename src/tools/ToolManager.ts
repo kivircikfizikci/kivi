@@ -16,6 +16,8 @@ import { MirrorTool } from './MirrorTool.ts'
 import { ExtendTool } from './ExtendTool.ts'
 import { PolygonTool } from './PolygonTool.ts'
 import { MeasureTool } from './MeasureTool.ts'
+import { TextTool } from './TextTool.ts'
+import { ScaleTool } from './ScaleTool.ts'
 
 export class ToolManager {
   readonly line = new LineTool()
@@ -26,6 +28,7 @@ export class ToolManager {
   readonly arc = new ArcTool()
   readonly polygon = new PolygonTool()
   readonly measure = new MeasureTool()
+  readonly text = new TextTool()
   readonly move = new MoveTool()
   readonly copy = new CopyTool()
   readonly repeat = new RepeatTool()
@@ -33,6 +36,7 @@ export class ToolManager {
   readonly trim = new TrimTool()
   readonly rotate = new RotateTool()
   readonly mirror = new MirrorTool()
+  readonly scale = new ScaleTool()
   readonly extend = new ExtendTool()
   private activeId: ToolId = 'select'
   private readonly listeners = new Set<() => void>()
@@ -71,6 +75,7 @@ export class ToolManager {
       case 'polygon': return this.polygon
       case 'dimension': return this.dimension
       case 'measure': return this.measure
+      case 'text': return this.text
       case 'move': return this.move
       case 'copy': return this.copy
       case 'repeat': return this.repeat
@@ -78,6 +83,7 @@ export class ToolManager {
       case 'trim': return this.trim
       case 'rotate': return this.rotate
       case 'mirror': return this.mirror
+      case 'scale': return this.scale
       case 'extend': return this.extend
       case 'select': return this.select
     }

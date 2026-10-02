@@ -39,7 +39,9 @@ export function createLineExtendPlan(target: LineEntity, boundaries: readonly En
           ? infiniteLineCircleIntersections(ray, boundary)
           : boundary.type === 'arc'
             ? infiniteLineArcIntersections(ray, boundary)
-            : polygonEdges(boundary).flatMap((edge) => infiniteLineSegmentIntersections(ray, edge))
+            : boundary.type === 'polygon'
+              ? polygonEdges(boundary).flatMap((edge) => infiniteLineSegmentIntersections(ray, edge))
+              : []
     for (const intersection of intersections) {
       if (intersection.parameterA > GEOMETRY_EPSILON) candidates.push({ point: intersection.point, distance: intersection.parameterA })
     }

@@ -5,6 +5,7 @@ import type { ProjectSettings } from '../types/project.ts'
 import { rectangleCorners } from '../drawing/geometry/rectangle.ts'
 import { angleIsOnArc, pointOnCircle } from '../drawing/geometry/arc.ts'
 import { getPolygonVertices } from '../drawing/geometry/polygon.ts'
+import { textBoxCorners } from '../drawing/geometry/text.ts'
 
 export interface DrawingBounds {
   minX: number
@@ -55,6 +56,10 @@ export function calculateDrawingExportLayout(entities: readonly Entity[], settin
     }
     if (entity.type === 'polygon') {
       points.push(...getPolygonVertices(entity))
+      continue
+    }
+    if (entity.type === 'text') {
+      points.push(...textBoxCorners(entity))
       continue
     }
     const segment = resolveDimensionSegment(entity, entities)

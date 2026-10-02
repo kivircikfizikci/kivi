@@ -24,11 +24,17 @@ export function createDrawingSvg(model: DrawingExportModel, maxDimension = 2400)
     return `<path d="M ${n(start.x)} ${n(start.y)} A ${n(arc.radius)} ${n(arc.radius)} 0 ${largeArc} ${sweepFlag} ${n(end.x)} ${n(end.y)}" fill="none" stroke="${escapeXml(arc.color)}" stroke-width="${n(arc.strokeWidth)}" stroke-linecap="round"/>`
   }).join('')
   const labels = model.labels.map((label) => `<text x="${n(label.position.x)}" y="${n(label.position.y)}" text-anchor="middle" font-family="Arial,sans-serif" font-size="${n(label.size)}" font-weight="600" fill="${escapeXml(label.color)}" transform="rotate(${n(label.rotation)} ${n(label.position.x)} ${n(label.position.y)})">${escapeXml(label.text)}</text>`).join('')
+  const texts = model.texts.map((item) => {
+    const decoration = [item.style.underline ? 'underline' : '', item.style.strikeThrough ? 'line-through' : ''].filter(Boolean).join(' ')
+    const anchor = item.style.textAlign === 'center' ? 'middle' : item.style.textAlign === 'right' ? 'end' : 'start'
+    const tspans = item.lines.map((line) => `<tspan x="${n(line.x)}" y="${n(line.y)}">${escapeXml(line.text || ' ')}</tspan>`).join('')
+    return `<g transform="translate(${n(item.position.x)} ${n(item.position.y)}) rotate(${n(-item.rotation)})"><text fill="${escapeXml(item.style.color)}" font-family="${escapeXml(item.style.fontFamily)},sans-serif" font-size="${n(item.style.fontSize)}" font-weight="${item.style.fontWeight}" font-style="${item.style.italic ? 'italic' : 'normal'}" text-decoration="${decoration}" text-anchor="${anchor}">${tspans}</text></g>`
+  }).join('')
 
   return {
     width,
     height,
-    svg: `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${n(bounds.width)} ${n(bounds.height)}">${strokes}${polygons}${rectangles}${circles}${arcs}${labels}</svg>`,
+    svg: `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${n(bounds.width)} ${n(bounds.height)}">${strokes}${polygons}${rectangles}${circles}${arcs}${labels}${texts}</svg>`,
   }
 }
 

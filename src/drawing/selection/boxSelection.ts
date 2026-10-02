@@ -4,6 +4,7 @@ import { arcSweep, pointOnCircle } from '../geometry/arc.ts'
 import { buildDimensionGeometry, resolveDimensionSegment } from '../geometry/dimension.ts'
 import { rectangleCorners, rectangleEdges } from '../geometry/rectangle.ts'
 import { getPolygonVertices, polygonEdges } from '../geometry/polygon.ts'
+import { textBoxCorners } from '../geometry/text.ts'
 
 export interface SelectionBox {
   minX: number
@@ -33,6 +34,10 @@ function entityIntersectsBox(entity: Entity, box: SelectionBox, entities: readon
   }
   if (entity.type === 'circle') return circleIntersectsBox(entity.center, entity.radius, box)
   if (entity.type === 'polygon') return getPolygonVertices(entity).some((point) => pointInBox(point, box)) || polygonEdges(entity).some((edge) => segmentIntersectsBox(edge.start, edge.end, box))
+  if (entity.type === 'text') {
+    const corners = textBoxCorners(entity)
+    return corners.some((point) => pointInBox(point, box)) || corners.some((start, index) => segmentIntersectsBox(start, corners[(index + 1) % corners.length]!, box))
+  }
   if (entity.type === 'arc') {
     const sweep = arcSweep(entity.startAngle, entity.endAngle, entity.direction)
     const steps = Math.max(4, Math.ceil(sweep / 12))
